@@ -3,7 +3,17 @@ import '@fontsource/atkinson-hyperlegible/400.css';
 import '@fontsource/atkinson-hyperlegible/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import './styles/base.css';
+import { createVoice } from './engine/voice';
+import { createSound } from './engine/sound';
+import type { StorageLike } from './engine/progress';
+import { buildRegistry } from './ui/registry';
+import { createStore } from './ui/store';
 import { App } from './ui/App';
 
+function storage(): StorageLike | null {
+  try { return window.localStorage; } catch { return null; }
+}
+const store = createStore({ registry: buildRegistry(), storage: storage(), voice: createVoice(), sound: createSound() });
+document.addEventListener('contextmenu', (event) => event.preventDefault());
 const root = document.getElementById('app');
-if (root) render(<App />, root);
+if (root) render(<App store={store} />, root);

@@ -18,6 +18,17 @@
     "m7-graduation": "nPczCjzI2devNBz1zQrb",
     "default": "iP95p4xoKVk53GoZ742B"
   },
+  "music": {
+    "format": "mp3_44100_64",
+    "style": "Playful sneaky cartoon spy music for a kids game. Plucky pizzicato strings, walking upright bass, finger snaps, light bongos, mischievous detective tiptoe feel. Gentle and not loud, loopable, no vocals.",
+    "tracks": {
+      "hq": { "prompt": "Main theme for the agent headquarters and mission map. Medium tempo, hooky but relaxed.", "seconds": 75 },
+      "terminal": { "prompt": "Quieter, sparser version for thinking and typing at a computer. Soft, slow tiptoe, very calm, minimal melody.", "seconds": 75 },
+      "bootcamp": { "prompt": "Bouncier, cheerful training version with a light march feel, still soft.", "seconds": 60 },
+      "playground": { "prompt": "Extra playful and curious exploring version with little surprises, light glockenspiel touches.", "seconds": 75 },
+      "graduation": { "prompt": "Short proud celebration version, a triumphant spy flourish ending, warm and happy.", "seconds": 25 }
+    }
+  },
   "sfx": {
     "click": { "prompt": "Soft friendly UI button click, gentle plastic tap, kids game", "seconds": 0.5 },
     "success": { "prompt": "Friendly cartoon success chime, short sparkly arcade jingle for a kids game", "seconds": 1.5 },
