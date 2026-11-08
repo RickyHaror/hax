@@ -29,6 +29,14 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 11:55 AM Toronto, 2026-11-08, owner hax-f4. Engine E5 BUILD run 2 checkpointed, all
+agents finished: engine/e5 pushed at c4601aa (E5-3 start up restyle, E5-4a save code v2 and ranks,
+E5-4b hack session engine, E5-4c hack step widget, package.json cleanup). E5-5 and E5-6 not started
+(E5-5 packet ready in build-logs). Owner decided the seasons export, unlock password and check:reading
+(docs/DECISIONS.md "E5 run 2 follow ups"). Tell content C4 run 2 to add `seasons` to index.ts. Next:
+engine E5 BUILD run 3 (E5-5, E5-6), then E5 VERIFY (Edge, focus ring check); content C4 BUILD run 2 then
+VERIFY. Order of integration: E5 first, then C4. No coordinator is running at this handoff.
+
 Updated about 11:45 AM Toronto, 2026-11-08, owner hax-f4. Content C4 BUILD run 1 checkpointed:
 content/c4 pushed at 25fa2eb (six Season 1 missions as data, badges, season test; focused 205 pass; no
 review or gate yet; not yet in the mission index). Owner decided its four questions plus two kid review

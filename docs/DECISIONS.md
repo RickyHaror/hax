@@ -80,3 +80,11 @@
 - Mission 1 lets him try the login before anyone says the password: hint 1 explains factory passwords,
   hint 2 says to try admin, Show me types it.
 - A hint never spells a flag out symbol by symbol; the last rung is Show me, which types it for him.
+
+## 2026-11-08, owner: E5 run 2 follow ups
+
+- Seasons: the content lane exports `export const seasons: Season[]` from `src/missions/index.ts`, next to
+  the missions list. The engine reads seasons only from there.
+- `unlock <file>` uses the machine's login password (or its sudo password when it has no login). No per
+  file password field; content writes locked file puzzles to fit.
+- The engine lane may also point the `check:reading` script in package.json at the real check (or remove it).
