@@ -4,7 +4,12 @@ import { decodeSaveCode, encodeSaveCode, type SaveCodeError } from './savecode';
 export const STORAGE_KEY = 'hax.v1';
 export const SCHEMA_VERSION = 1;
 export type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-export interface Settings { autoRead: boolean; muted: boolean; sessionMinutes: number }
+export type AudioLevel = 'quiet' | 'medium' | 'loud';
+export interface AudioChannel { on: boolean; level: AudioLevel }
+export interface Settings {
+  autoRead: boolean; muted: boolean; sessionMinutes: number;
+  voices: AudioChannel; sounds: AudioChannel; music: AudioChannel; musicLocked: boolean;
+}
 export interface HintUse { rung: number; count: number }
 export interface ResumePoint { missionId: MissionId; stepId: string | null }
 export interface Progress {
@@ -27,7 +32,9 @@ export function createProgress(): Progress {
   return {
     schema: SCHEMA_VERSION, firstWord: null, secondWord: null, sidekick: null,
     completed: {}, extraBits: 0, current: null, hints: {},
-    settings: { autoRead: true, muted: false, sessionMinutes: 0 }, pin: null,
+    settings: { autoRead: true, muted: false, sessionMinutes: 0,
+      voices: { on: true, level: 'medium' }, sounds: { on: true, level: 'medium' },
+      music: { on: true, level: 'quiet' }, musicLocked: false }, pin: null,
   };
 }
 
@@ -40,6 +47,15 @@ function inRange(value: unknown, maximum: number, minimum = 0): value is number 
     && value >= minimum && value <= maximum;
 }
 
+function channelFrom(value: unknown, defaults: AudioChannel): AudioChannel {
+  if (!isRecord(value)) return defaults;
+  return {
+    on: typeof value.on === 'boolean' ? value.on : defaults.on,
+    level: value.level === 'quiet' || value.level === 'medium' || value.level === 'loud'
+      ? value.level : defaults.level,
+  };
+}
+
 function settingsFrom(value: unknown): Settings {
   const defaults = createProgress().settings;
   if (!isRecord(value)) return defaults;
@@ -48,6 +64,10 @@ function settingsFrom(value: unknown): Settings {
     muted: typeof value.muted === 'boolean' ? value.muted : defaults.muted,
     sessionMinutes: inRange(value.sessionMinutes, Number.MAX_SAFE_INTEGER)
       ? value.sessionMinutes : defaults.sessionMinutes,
+    voices: channelFrom(value.voices, defaults.voices),
+    sounds: channelFrom(value.sounds, defaults.sounds),
+    music: channelFrom(value.music, defaults.music),
+    musicLocked: typeof value.musicLocked === 'boolean' ? value.musicLocked : defaults.musicLocked,
   };
 }
 

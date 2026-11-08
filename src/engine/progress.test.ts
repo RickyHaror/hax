@@ -60,10 +60,47 @@ function populated(): Progress {
     ...setIdentity(createProgress(), identity), completed: { first: earlier },
     extraBits: 1 << 22, current: { missionId: 'middle', stepId: 'step' },
     hints: { middle: { step: { rung: 2, count: 3 } } },
-    settings: { autoRead: false, muted: true, sessionMinutes: 15 },
+    settings: { ...createProgress().settings, autoRead: false, muted: true, sessionMinutes: 15 },
     pin: { salt: 'aa', hash: 'bb' },
   };
 }
+
+describe('audio settings storage', () => {
+  it('adds defaults to old saves without changing the old settings', () => {
+    const settings = loadValue({ schema: 1,
+      settings: { autoRead: false, muted: true, sessionMinutes: 15 } }).settings;
+    expect(settings).toEqual({ ...createProgress().settings,
+      autoRead: false, muted: true, sessionMinutes: 15 });
+  });
+  it('repairs malformed channels and individual fields independently', () => {
+    for (const bad of [null, [], 'yes', 1, false, {}]) {
+      const settings = loadValue({ schema: 1,
+        settings: { voices: bad, sounds: bad, music: bad, musicLocked: bad } }).settings;
+      expect(settings).toEqual(createProgress().settings);
+    }
+    expect(loadValue({ schema: 1, settings: {
+      voices: { on: false, level: 'bad' }, sounds: { on: 'yes', level: 'loud' },
+      music: { on: false, level: 'medium' }, musicLocked: true,
+    } }).settings).toMatchObject({ voices: { on: false, level: 'medium' },
+      sounds: { on: true, level: 'loud' }, music: { on: false, level: 'medium' }, musicLocked: true });
+  });
+  it('persists all levels and channel switches without changing other channels', () => {
+    const storage = new MemoryStorage();
+    let progress = createProgress();
+    for (const key of ['voices', 'sounds', 'music'] as const) {
+      for (const level of ['quiet', 'medium', 'loud'] as const) {
+        const before = progress;
+        progress = updateSettings(progress, { [key]: { on: false, level } });
+        for (const other of ['voices', 'sounds', 'music'] as const) {
+          if (other !== key) expect(progress.settings[other]).toEqual(before.settings[other]);
+        }
+        saveProgress(storage, progress); expect(loadProgress(storage)).toEqual(progress);
+      }
+    }
+    const other = createProgress(); progress.settings.voices.on = false;
+    expect(other.settings.voices.on).toBe(true);
+  });
+});
 
 describe('progress storage', () => {
   it('creates independent defaults', () => {
@@ -73,7 +110,9 @@ describe('progress storage', () => {
     expect(p).toEqual({
       schema: 1, firstWord: null, secondWord: null, sidekick: null,
       completed: {}, extraBits: 0, current: null, hints: {},
-      settings: { autoRead: true, muted: false, sessionMinutes: 0 }, pin: null,
+      settings: { autoRead: true, muted: false, sessionMinutes: 0,
+        voices: { on: true, level: 'medium' }, sounds: { on: true, level: 'medium' },
+        music: { on: true, level: 'quiet' }, musicLocked: false }, pin: null,
     });
     const other = freeze(createProgress());
     p.completed.first = earlier;
@@ -124,7 +163,7 @@ describe('progress storage', () => {
       ...createProgress(), firstWord: 0, sidekick: 3, extraBits: 0xffffff,
       completed: { good: earlier }, current: { missionId: 'first', stepId: null },
       hints: { first: { good: { rung: 3, count: 4 } } },
-      settings: { autoRead: false, muted: false, sessionMinutes: 20 },
+      settings: { ...createProgress().settings, autoRead: false, muted: false, sessionMinutes: 20 },
       pin: { salt: 'AABB', hash: 'ccdd' },
     });
   });
@@ -184,7 +223,7 @@ describe('progress storage', () => {
       .toEqual({ salt: 'abc', hash: 'def' });
     for (const sessionMinutes of [-1, 1.5, '15', null]) {
       expect(loadValue({ schema: 1, settings: { muted: true, sessionMinutes } }).settings)
-        .toEqual({ autoRead: true, muted: true, sessionMinutes: 0 });
+        .toEqual({ ...createProgress().settings, autoRead: true, muted: true, sessionMinutes: 0 });
     }
     expect(loadValue(populated()).current).toEqual(populated().current);
   });

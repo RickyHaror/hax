@@ -1,4 +1,5 @@
 import type { AudioManifest } from './audio-manifest';
+import { clampVolume } from './music';
 
 export type SoundName = 'click' | 'success' | 'hint' | 'key' | 'fanfare' | 'tryAgain'
   | 'catch' | 'lock' | 'unlock' | 'door' | 'badge' | 'typing';
@@ -48,6 +49,7 @@ export interface SoundPlayer {
   readonly supported: boolean;
   readonly muted: boolean;
   setMuted(muted: boolean): void;
+  setVolume?(volume: number): void;
   setManifest(m: AudioManifest | null): void;
   play(name: SoundName): void;
 }
@@ -62,7 +64,7 @@ function contextConstructor(deps: SoundDeps): SoundDeps['AudioContext'] {
   }
 }
 
-function scheduleNote(ctx: AudioContext, note: Note, baseTime: number): void {
+function scheduleNote(ctx: AudioContext, note: Note, baseTime: number, output: GainNode): void {
   const oscillator = ctx.createOscillator();
   const envelope = ctx.createGain();
   const start = baseTime + note.start;
@@ -75,7 +77,7 @@ function scheduleNote(ctx: AudioContext, note: Note, baseTime: number): void {
   envelope.gain.setValueAtTime(note.gain, end - edge);
   envelope.gain.linearRampToValueAtTime(0, end);
   oscillator.connect(envelope);
-  envelope.connect(ctx.destination);
+  envelope.connect(output);
   oscillator.onended = () => {
     try { oscillator.disconnect(); envelope.disconnect(); } catch { /* Already released. */ }
   };
@@ -105,10 +107,21 @@ function playRecording(clip: HTMLAudioElement, fallback: () => void, release: ()
   catch { settle(true); }
 }
 
-export function createSound(deps: SoundDeps = {}, opts?: { muted?: boolean }): SoundPlayer {
+function stopClips(clips: Set<HTMLAudioElement>): void {
+  for (const clip of clips) {
+    clip.onerror = null;
+    clip.onended = null;
+    try { clip.pause(); } catch { /* Already stopped. */ }
+  }
+  clips.clear();
+}
+
+export function createSound(deps: SoundDeps = {}, opts?: { muted?: boolean }): SoundPlayer & { setVolume(volume: number): void } {
   const Context = contextConstructor(deps);
   const Audio = audioConstructor(deps);
   let context: AudioContext | undefined;
+  let output: GainNode | undefined;
+  let volume = 1;
   let manifest: AudioManifest | null = null;
   let muted = opts?.muted ?? false;
   const clips = new Set<HTMLAudioElement>();
@@ -116,24 +129,26 @@ export function createSound(deps: SoundDeps = {}, opts?: { muted?: boolean }): S
     if (muted || !Context) return;
     try {
       context ??= new Context();
+      if (!output) { output = context.createGain(); output.connect(context.destination); }
+      output.gain.setValueAtTime(volume, context.currentTime);
       if (context.state === 'suspended') void context.resume().catch(() => {});
       const baseTime = context.currentTime;
-      for (const note of SOUNDS[name]) scheduleNote(context, note, baseTime);
+      for (const note of SOUNDS[name]) scheduleNote(context, note, baseTime, output);
     } catch { /* Audio may be blocked or unavailable. */ }
   }
   return {
     supported: Boolean(Context || Audio),
     get muted() { return muted; },
     setManifest(value) { manifest = value; },
+    setVolume(value) {
+      volume = clampVolume(value);
+      if (context && output) output.gain.setValueAtTime(muted ? 0 : volume, context.currentTime);
+      for (const clip of clips) clip.volume = volume;
+    },
     setMuted(value) {
       muted = value;
-      if (!muted) return;
-      for (const clip of clips) {
-        clip.onerror = null;
-        clip.onended = null;
-        try { clip.pause(); } catch { /* Already stopped. */ }
-      }
-      clips.clear();
+      if (context && output) output.gain.setValueAtTime(muted ? 0 : volume, context.currentTime);
+      if (muted) stopClips(clips);
     },
     play(name) {
       if (muted) return;
@@ -142,6 +157,7 @@ export function createSound(deps: SoundDeps = {}, opts?: { muted?: boolean }): S
       let clip: HTMLAudioElement;
       try { clip = new Audio(`/audio/sfx/${file}`); }
       catch { synthesize(name); return; }
+      clip.volume = volume;
       clips.add(clip);
       playRecording(clip, () => synthesize(name), () => clips.delete(clip));
     },

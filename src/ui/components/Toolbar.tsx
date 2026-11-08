@@ -4,10 +4,11 @@ import { DecoderWheel } from '../widgets/tools';
 import { BigButton } from './BigButton';
 import { SpeechLine } from './SpeechLine';
 import { SpeakerIcon } from './SpeakerIcon';
+import { AudioControls, AudioPanel } from './AudioControls';
 export function Toggles() {
   const store = useStore();
   const { autoRead, muted } = store.progress.value.settings;
-  return <>
+  return <div class="audio-toggles">
     <div class="reading-toggle">
       <BigButton aria-label="Read to me" aria-pressed={autoRead} class={autoRead ? 'reading-on' : undefined}
         onClick={() => store.settings({ autoRead: !autoRead })}>
@@ -15,7 +16,8 @@ export function Toggles() {
       </BigButton>
     </div>
     <BigButton aria-pressed={!muted} onClick={() => store.settings({ muted: !muted })}>{muted ? 'Sound off' : 'Sound on'}</BigButton>
-  </>;
+    <AudioControls />
+  </div>;
 }
 function isolatePanel(panel: HTMLElement) {
   const siblings: { element: HTMLElement; inert: boolean }[] = [];
@@ -75,9 +77,15 @@ export function Toolbar() {
   const [open, setOpen] = useState(false);
   const opener = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
+  const [audioOpen, setAudioOpen] = useState(false);
+  const audioOpener = useRef<HTMLButtonElement>(null);
+  const closeAudio = useCallback(() => setAudioOpen(false), []);
   const unlocked = store.registry.missions.some((mission) => Object.hasOwn(store.progress.value.completed, mission.id)
     && mission.steps.some((step) => step.config.kind === 'decoder'));
-  return <nav class="toolbar" aria-label="Game tools"><Toggles />
+  return <nav class="toolbar" aria-label="Game tools">
+    <BigButton aria-label="Sound controls" aria-expanded={audioOpen}
+      onClick={(event) => { audioOpener.current = event.currentTarget; setAudioOpen(!audioOpen); }}><SpeakerIcon />Sound controls</BigButton>
+    <AudioPanel open={audioOpen} close={closeAudio} opener={audioOpener}><Toggles /></AudioPanel>
     {unlocked && <BigButton onClick={(event) => { opener.current = event.currentTarget; setOpen(true); store.sound.play('click'); }}>Open decoder wheel</BigButton>}
     {unlocked && open && <DecoderPanel close={close} opener={opener} />}
   </nav>;

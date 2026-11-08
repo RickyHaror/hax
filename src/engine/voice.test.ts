@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createVoice, pickVoice, SPEECH_RATE } from './voice';
 
 class TestUtterance {
+  volume = 1;
   rate = 1;
   lang = '';
   voice: SpeechSynthesisVoice | null = null;
@@ -76,6 +77,25 @@ describe('voice selection', () => {
 });
 
 describe('speech playback', () => {
+  it('sets speech volume and reports playback, replacement, ending, and cancellation', () => {
+    const { player, utterances, synth } = setup();
+    const change = vi.fn(); const unsubscribe = player.onSpeakingChange(change);
+    player.setVolume(0.35); player.speak({ text: 'Hello.' });
+    expect(utterances[0]!.volume).toBe(0.35); expect(change).toHaveBeenLastCalledWith(true);
+    player.setVolume(2); expect(utterances[0]!.volume).toBe(1);
+    player.speak({ text: 'Next.' });
+    expect(change.mock.calls).toEqual([[true], [false], [true]]);
+    utterances[0]!.onend?.(); expect(change.mock.calls).toHaveLength(3);
+    utterances[1]!.onend?.(); expect(change).toHaveBeenLastCalledWith(false);
+    player.speak({ text: 'Again.' }); player.cancel();
+    expect(change).toHaveBeenLastCalledWith(false);
+    player.setEnabled(false); const end = vi.fn();
+    player.speak({ text: 'Quiet.' }, { onEnd: end });
+    expect(utterances).toHaveLength(3); expect(end).toHaveBeenCalledOnce();
+    player.setEnabled(true); player.speak({ text: 'Back.' });
+    expect(synth.speak).toHaveBeenCalledTimes(4);
+    unsubscribe(); change.mockClear(); player.cancel(); expect(change).not.toHaveBeenCalled();
+  });
   it('uses say, the gentle rate, and cancels previous speech', () => {
     const { player, synth, utterances } = setup();
     const oldEnd = vi.fn();
@@ -362,6 +382,7 @@ function recordedSetup() {
   const fixture = setup();
   const clips: TestAudio[] = [];
   class TestAudio {
+    volume = 1;
     onended: (() => void) | null = null;
     onerror: (() => void) | null = null;
     currentTime = 0;
@@ -379,6 +400,23 @@ function recordedSetup() {
 }
 
 describe('recorded voice playback', () => {
+  it('updates clip volume and ends ducking on disable, errors, and rejected playback', async () => {
+    const { player, clips, synth } = recordedSetup();
+    const change = vi.fn(); player.onSpeakingChange(change);
+    player.setVolume(0.35); player.speak({ text: 'Hello' });
+    expect(clips[0]!.volume).toBe(0.35);
+    player.setVolume(0.7); expect(clips[0]!.volume).toBe(0.7);
+    player.setEnabled(false); expect(clips[0]!.pause).toHaveBeenCalled();
+    expect(change).toHaveBeenLastCalledWith(false);
+    player.setEnabled(true); player.speak({ text: 'Hello' }); synth.getVoices.mockReturnValue([voice('fr-FR')]);
+    clips[1]!.onerror?.(); expect(change).toHaveBeenLastCalledWith(false);
+    clips[1]!.play.mockRejectedValue(Error('Blocked'));
+    const Audio = vi.fn(function () { return clips[1]; }) as unknown as typeof globalThis.Audio;
+    const rejected = createVoice({ Audio, synth: null, Utterance: null });
+    rejected.setManifest({ lines: { 'bit|Hello': 'bit.mp3' }, sfx: {} });
+    rejected.onSpeakingChange(change); rejected.speak({ text: 'Hello' });
+    await Promise.resolve(); expect(change).toHaveBeenLastCalledWith(false);
+  });
   it('plays clips with remote-only speech but never uses that speech for missing clips', () => {
     const { player, clips, synth } = recordedSetup();
     synth.getVoices.mockReturnValue([voice('en-US', false)]);

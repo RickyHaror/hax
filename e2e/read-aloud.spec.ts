@@ -25,6 +25,7 @@ test('begin unlocks audio and both reading controls play a clip or speech', asyn
   expect(await page.evaluate(() => window.audioCalls)).toEqual([]);
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
+  await page.getByRole('button', { name: 'Sound controls', exact: true }).click();
   const toggle = page.getByRole('button', { name: 'Read to me', exact: true });
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await toggle.click();
@@ -36,6 +37,7 @@ test('begin unlocks audio and both reading controls play a clip or speech', asyn
   await expect(page.getByText('Read to me: ON', { exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
   await toggle.click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.evaluate(() => { window.audioCalls = []; });
   const line = page.getByRole('button', { name: 'Read aloud', exact: true }).first();
   await line.click();

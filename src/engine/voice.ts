@@ -1,4 +1,5 @@
 import type { Line } from './types';
+import { clampVolume } from './music';
 import { lineKey, lineRole, type AudioManifest, type VoiceContext } from './audio-manifest';
 
 export interface VoiceDeps {
@@ -33,6 +34,9 @@ export interface Voice {
   speakAll(lines: readonly Line[], opts?: SpeakOptions): void;
   cancel(): void;
   isSpeaking(): boolean;
+  setVolume?(volume: number): void;
+  setEnabled?(enabled: boolean): void;
+  onSpeakingChange?(listener: (speaking: boolean) => void): () => void;
 }
 
 function resolveDeps(deps: VoiceDeps): VoiceDeps {
@@ -95,6 +99,7 @@ function createVoiceSelection(synth: VoiceDeps['synth']) {
 function speakText(
   deps: VoiceDeps, voice: SpeechSynthesisVoice | null, text: string,
   current: () => boolean, next: (played?: boolean) => void, fail: () => void,
+  state: PlaybackState,
 ): void {
   const { synth, Utterance } = deps;
   if (!synth || !Utterance || !voice) { next(); return; }
@@ -103,6 +108,8 @@ function speakText(
     utterance.rate = SPEECH_RATE;
     utterance.voice = voice;
     utterance.lang = voice.lang;
+    utterance.volume = state.volume;
+    state.utterance = utterance;
     let ended = false;
     const advance = (played: boolean) => {
       if (ended || !current()) return;
@@ -133,11 +140,15 @@ function playClip(
   catch { settle(fallback); }
 }
 
-interface PlaybackState { revision: number; speaking: boolean; clip?: HTMLAudioElement }
+interface PlaybackState {
+  revision: number; speaking: boolean; volume: number;
+  clip?: HTMLAudioElement; utterance?: SpeechSynthesisUtterance;
+}
 
 function stopPlayback(state: PlaybackState, { synth, Utterance }: VoiceDeps): boolean {
   state.revision++;
   state.speaking = false;
+  state.utterance = undefined;
   if (state.clip) {
     state.clip.onended = null;
     state.clip.onerror = null;
@@ -165,26 +176,51 @@ function playLines(lines: readonly Line[], playback: {
     const fallback = () => {
       if (!deps.synth || !deps.Utterance) { next(); return; }
       selection.get((voice) => {
-        if (current()) speakText(deps, voice, line.say ?? line.text, current, next, () => finish(heard));
+        if (current()) speakText(deps, voice, line.say ?? line.text, current, next, () => finish(heard), state);
       });
     };
     const file = fileFor(line);
     if (!file || !deps.Audio) { fallback(); return; }
     try { state.clip = new deps.Audio(`/audio/lines/${file}`); }
     catch { fallback(); return; }
+    state.clip.volume = state.volume;
     playClip(state.clip, current, () => next(true), fallback);
   }
   next();
 }
 
-export function createVoice(deps: VoiceDeps = {}): Voice {
+type VoiceControls = Required<Pick<Voice, 'setVolume' | 'setEnabled' | 'onSpeakingChange'>>;
+function voiceControls(state: PlaybackState, cancel: () => boolean) {
+  let enabled = true;
+  const listeners = new Set<(speaking: boolean) => void>();
+  const notify = () => { for (const listener of listeners) listener(state.speaking); };
+  const stop = () => {
+    const wasSpeaking = state.speaking;
+    const stopped = cancel();
+    if (wasSpeaking) notify();
+    return stopped;
+  };
+  const player: VoiceControls = {
+    setVolume(value) {
+      state.volume = clampVolume(value);
+      if (state.clip) state.clip.volume = state.volume;
+      if (state.utterance) state.utterance.volume = state.volume;
+    },
+    setEnabled(value) { if (enabled === value) return; enabled = value; if (!enabled) stop(); },
+    onSpeakingChange(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+  };
+  return { get enabled() { return enabled; }, stop, notify, player };
+}
+
+export function createVoice(deps: VoiceDeps = {}): Voice & VoiceControls {
   const resolved = resolveDeps(deps);
   const { synth, Utterance, Audio } = resolved;
   let manifest: AudioManifest | null = null;
   let context: VoiceContext = { sidekick: 'bit' };
-  const state: PlaybackState = { revision: 0, speaking: false };
+  const state: PlaybackState = { revision: 0, speaking: false, volume: 1 };
   const selection = createVoiceSelection(synth);
-  const stop = () => { selection.cancel(); return stopPlayback(state, resolved); };
+  const controls = voiceControls(state, () => { selection.cancel(); return stopPlayback(state, resolved); });
+  const { stop, notify } = controls;
 
   function speakAll(lines: readonly Line[], opts?: SpeakOptions): void {
     const stopped = stop();
@@ -197,11 +233,15 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
       state.revision++;
       state.speaking = false;
       state.clip = undefined;
+      state.utterance = undefined;
+      notify();
       if (!played) opts?.onUnavailable?.();
       opts?.onEnd?.();
     };
+    if (!controls.enabled) { opts?.onEnd?.(); return; }
     if (!stopped) { finish(); return; }
     state.speaking = true;
+    notify();
     playLines(queue, { state, deps: resolved, selection, current, finish,
       fileFor: (line) => manifest?.lines[lineKey(line, lineRole(line, ctx))] });
   }
@@ -213,6 +253,7 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
     },
     setManifest: (value) => { manifest = value; },
     setContext: (value) => { context = { ...value }; },
+    ...controls.player,
     cancel: () => { stop(); }, speakAll,
     speak: (line, opts) => speakAll([line], opts),
     isSpeaking: () => state.speaking,

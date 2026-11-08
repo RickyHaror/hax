@@ -19,6 +19,28 @@ async function key(key: string, shiftKey = false) {
   await act(() => { document.activeElement!.dispatchEvent(event); });
   return event;
 }
+describe('toolbar sound controls', () => {
+  it('opens the controls, closes with Escape or Close, and restores focus', async () => {
+    const { root } = await setup();
+    const opener = button(root, 'Sound controls');
+    expect(opener.getAttribute('aria-expanded')).toBe('false');
+    expect(root.querySelector<HTMLElement>('.audio-panel')!.hidden).toBe(true);
+    await click(root, 'Sound controls');
+    expect(opener.getAttribute('aria-expanded')).toBe('true');
+    const panel = root.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(panel.hidden).toBe(false);
+    expect(panel.contains(document.activeElement)).toBe(true);
+    for (const name of ['Voices on', 'Sounds on', 'Music on', 'Read to me', 'Sound on']) {
+      expect(button(panel, name)).toBeTruthy();
+    }
+    await key('Escape');
+    expect(opener.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(opener);
+    await click(root, 'Sound controls'); await click(root, 'Close');
+    expect(root.querySelector<HTMLElement>('.audio-panel')!.hidden).toBe(true);
+    expect(document.activeElement).toBe(opener);
+  });
+});
 describe('toolbar decoder wheel', () => {
   it('unlocks only when a completed mission contains a decoder step', async () => {
     const { root, store } = await setup();

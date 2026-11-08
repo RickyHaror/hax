@@ -27,8 +27,10 @@ async function expectOfflineAudio(page: Page): Promise<void> {
     expect(result.bytes, result.url).toBeGreaterThan(0);
   }
 
+  await page.getByRole('button', { name: 'Sound controls', exact: true }).click();
   const autoRead = page.getByRole('button', { name: 'Read to me', exact: true });
   if (await autoRead.getAttribute('aria-pressed') === 'true') await autoRead.click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.waitForLoadState('networkidle');
   const failed: string[] = [];
   page.on('requestfailed', (request) => {

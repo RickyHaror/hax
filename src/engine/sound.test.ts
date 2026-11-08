@@ -54,7 +54,7 @@ describe('sound recipes', () => {
       expect(context.oscillators).toHaveLength(SOUNDS[name].length);
       SOUNDS[name].forEach((note, index) => {
         const node = context.oscillators[index]!;
-        const envelope = context.gains[index]!;
+        const envelope = context.gains[index + 1]!;
         const start = context.currentTime + note.start;
         const end = start + note.duration;
         const edge = Math.min(0.01, note.duration / 3);
@@ -63,7 +63,8 @@ describe('sound recipes', () => {
         expect(node.start).toHaveBeenCalledWith(start);
         expect(node.stop).toHaveBeenCalledWith(end);
         expect(node.connect).toHaveBeenCalledWith(envelope);
-        expect(envelope.connect).toHaveBeenCalledWith(context.destination);
+        expect(envelope.connect).toHaveBeenCalledWith(context.gains[0]);
+        expect(context.gains[0]!.connect).toHaveBeenCalledWith(context.destination);
         expect(envelope.gain.setValueAtTime.mock.calls).toEqual([[0, start], [note.gain, end - edge]]);
         expect(envelope.gain.linearRampToValueAtTime.mock.calls)
           .toEqual([[note.gain, start + edge], [0, end]]);
@@ -98,6 +99,18 @@ describe('sound recipes', () => {
 });
 
 describe('sound playback', () => {
+  it('scales synthesis at the output and silences already scheduled effects', () => {
+    const { player, instances } = setup();
+    player.setVolume(0.35); player.play('fanfare');
+    const output = instances[0]!.gains[0]!;
+    expect(output.gain.setValueAtTime).toHaveBeenLastCalledWith(0.35, 10);
+    player.setMuted(true);
+    expect(output.gain.setValueAtTime).toHaveBeenLastCalledWith(0, 10);
+    player.setVolume(0.7);
+    expect(output.gain.setValueAtTime).toHaveBeenLastCalledWith(0, 10);
+    player.setMuted(false);
+    expect(output.gain.setValueAtTime).toHaveBeenLastCalledWith(0.7, 10);
+  });
   it('creates one lazy context, reused for later plays', () => {
     const { player, instances } = setup();
     expect(player.supported).toBe(true);
@@ -219,6 +232,7 @@ function recordedSound() {
   const fixture = setup();
   const clips: TestAudio[] = [];
   class TestAudio {
+    volume = 1;
     onended: (() => void) | null = null;
     onerror: (() => void) | null = null;
     play = vi.fn((): Promise<void> => Promise.resolve());
@@ -232,6 +246,16 @@ function recordedSound() {
 }
 
 describe('recorded sounds', () => {
+  it('updates recorded volume, clamps it, and keeps muted clips paused', () => {
+    const { player, clips } = recordedSound();
+    player.setVolume(0.35); player.play('click'); expect(clips[0]!.volume).toBe(0.35);
+    player.setVolume(0.7); expect(clips[0]!.volume).toBe(0.7);
+    player.setVolume(3); expect(clips[0]!.volume).toBe(1);
+    player.setVolume(-1); expect(clips[0]!.volume).toBe(0);
+    player.setVolume(NaN); expect(clips[0]!.volume).toBe(0);
+    player.setMuted(true); expect(clips[0]!.pause).toHaveBeenCalled();
+    player.play('click'); expect(clips).toHaveLength(1);
+  });
   it('plays recorded files, mapping tryAgain to try-again, without synthesis', () => {
     const { player, clips, instances } = recordedSound();
     player.play('click'); player.play('tryAgain');

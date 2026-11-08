@@ -5,6 +5,8 @@ import '@fontsource/jetbrains-mono/400.css';
 import './styles/base.css';
 import { createVoice } from './engine/voice';
 import { createSound } from './engine/sound';
+import { createMusic } from './engine/music';
+import { startMusicFollow } from './ui/music-follow';
 import { loadAudioManifest } from './engine/audio-manifest';
 import type { StorageLike } from './engine/progress';
 import { buildRegistry } from './ui/registry';
@@ -18,8 +20,10 @@ function storage(): StorageLike | null {
 }
 const voice = createVoice();
 const sound = createSound();
+const music = createMusic();
 void loadAudioManifest().then((m) => { voice.setManifest(m); sound.setManifest(m); });
-const store = createStore({ registry: buildRegistry(), storage: storage(), voice, sound });
+const store = createStore({ registry: buildRegistry(), storage: storage(), voice, sound, music });
+startMusicFollow(store, music, voice);
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 const root = document.getElementById('app');
 if (root) render(<App store={store} />, root);
