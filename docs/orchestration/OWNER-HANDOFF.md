@@ -7,7 +7,7 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 ## Current state
 
 - Phase 0 (owner): repo scaffold, workflow files, CI with deploy and smoke, placeholder page.
-- Current owner session: hax-fb, rotation id `20261108-030000` (started 3:00 AM Toronto 2026-11-08,
+- Current owner session: hax-44, rotation id `20261108-060001` (started 6:00 AM Toronto 2026-11-08,
   registered in ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
 
 ## Founder context

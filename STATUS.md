@@ -8,7 +8,8 @@
 | Engine | E1 foundation | engine/e1 | integrated, live | 2026-11-07 |
 | Content | C2 Missions 4 to 7, C3 Playground | content/c2, c3 | integrated, live | 2026-11-07 |
 | Engine | E2 widgets plus audio playback | engine/e2 | integrated 6eea4b2, live | 2026-11-08 3:05 AM |
-| Engine | E3 finish the experience | engine/e3 | VERIFY running, candidate 1fc96c2, gate run 2 | 2026-11-08 6:05 AM |
+| Engine | E3 finish the experience | engine/e3 | integrated 569e6df, live | 2026-11-08 6:45 AM |
+| Engine | E4 sign-up narration and speech fixes | engine/e4 | BUILD launching | 2026-11-08 6:50 AM |
 
 ## Provider state
 
