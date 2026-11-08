@@ -1,0 +1,28 @@
+.case-widget { font-size: 24px; max-height: 48vh; overflow: auto; padding: 8px; }
+.case-widget button, .case-clue { min-height: 48px; min-width: 48px; }
+.case-password { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.case-profile, .case-login, .case-email { background: var(--bg); border: 1px solid var(--muted); border-radius: 12px; padding: 12px; min-width: 0; }
+.case-profile > svg { float: right; }
+.case-widget .speech-line { margin: 6px 0; }
+.case-highlight { background: #185039; outline: 2px solid var(--green); border-radius: 6px; }
+.case-log-lines { max-height: 19vh; overflow: auto; background: var(--bg); padding: 8px; font: 24px var(--font-code); }
+.case-log-lines > div { display: flex; gap: 12px; align-items: baseline; }
+.case-log-lines .speech-line { flex: 1; white-space: pre-wrap; }
+.case-line-number { color: var(--muted); min-width: 2ch; text-align: right; }
+.case-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.case-options > div { flex: 1 1 180px; }
+.case-options button { width: calc(100% - 8px); }
+.case-email { max-height: 29vh; overflow: auto; }
+.case-email-line { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+.case-email-line > div { flex: 1; min-width: 0; white-space: pre-wrap; }
+.case-email-line > button { flex: 0 0 auto; font-size: 18px; }
+.case-clue { display: inline-block; vertical-align: baseline; padding: 6px 8px; border: 2px solid var(--green); border-radius: 8px; cursor: pointer; overflow-wrap: anywhere; }
+.case-clue:hover { background: #185039; }
+.case-pretend-link { text-decoration: underline; }
+.case-found { max-height: 15vh; overflow: auto; padding: 6px; }
+.case-found ul { margin: 0; padding-left: 24px; }
+.case-glow { outline: 3px solid var(--green); outline-offset: 2px; animation: case-pulse 1.2s ease-in-out infinite alternate; }
+.case-widget :focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; }
+@keyframes case-pulse { to { box-shadow: 0 0 14px var(--green); } }
+@media (prefers-reduced-motion: reduce) { .case-glow { animation: none; } }
+@media (max-width: 700px) { .case-password { grid-template-columns: 1fr; } }
