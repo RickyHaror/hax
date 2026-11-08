@@ -1,4 +1,4 @@
-import { badgesEarned, rank } from '../../engine/progress';
+import { badgesEarned, rankFor, xpEarned } from '../../engine/progress';
 import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
 import { AVATARS, Avatar } from '../components/Avatar';
@@ -49,7 +49,7 @@ export function IdCard() {
     <div class="idcard-body">
       <div class="idcard-details">
         <SpeechLine line={{ text: hackerName(store.progress, store.registry) }} />
-        <SpeechLine line={{ text: rank(Object.keys(progress.completed).length) }} />
+        <SpeechLine line={{ text: rankFor(xpEarned(progress, store.registry.missions)).name }} />
         <section class="idcard-sidekick" aria-label="Your sidekick">
           <Art artKey={buddy.art} title={buddy.name} size={80} />
           <SpeechLine line={{ text: buddy.name }} sidekick={buddy.id} />

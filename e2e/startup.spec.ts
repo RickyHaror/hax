@@ -98,7 +98,7 @@ test('begin, sign in, word picks and secret key fit the startup shell', async ({
   await expect(key).toHaveAccessibleName('Secret key');
   await fits(page, [key, button(page, 'Check'), button(page, 'Back')]); await focusFits(key);
   await key.fill('tiny'); await button(page, 'Check').click();
-  await expect(page.getByText('Your key needs twelve letters and numbers. Check your notebook.')).toBeVisible();
+  await expect(page.getByText('Your key looks too short or long. Check your notebook.')).toBeVisible();
   await fits(page, [key, button(page, 'Back')]); await button(page, 'Back').click();
   await signIn(page); await pickIdentity(page);
   const progress = JSON.parse((await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY))!) as Progress;

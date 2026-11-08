@@ -1,4 +1,4 @@
-import type { Badge, Mission, MissionId } from './types';
+import type { Badge, Mission, MissionId, RankDef } from './types';
 import { decodeSaveCode, encodeSaveCode, type SaveCodeError } from './savecode';
 
 export const STORAGE_KEY = 'hax.v1';
@@ -19,14 +19,18 @@ export interface Progress {
   sidekick: number | null;
   avatar: number | null;
   completed: Record<MissionId, string>;
+  /** Unknown mission bits below 2^48, JSON safe. Bit operations use bigint. */
   extraBits: number;
   current: ResumePoint | null;
   hints: Record<MissionId, Record<string, HintUse>>;
   settings: Settings;
   pin: { salt: string; hash: string } | null;
 }
-export const RANKS: readonly string[] = Object.freeze([
-  'Recruit', 'Cadet', 'Agent', 'Special Agent', 'Senior Agent', 'Chief Agent',
+export const XP_PER_MISSION = 20;
+export const RANKS: readonly Readonly<RankDef>[] = Object.freeze([
+  { name: 'Rookie', xp: 0 }, { name: 'Agent', xp: 60 },
+  { name: 'Senior Agent', xp: 200 }, { name: 'Specialist', xp: 600 },
+  { name: 'Crew Chief', xp: 1200 },
 ]);
 
 export function createProgress(): Progress {
@@ -126,7 +130,7 @@ export function loadProgress(storage: StorageLike | null | undefined): Progress 
       sidekick: inRange(value.sidekick, 3) ? value.sidekick : null,
       avatar: inRange(value.avatar, 7) ? value.avatar : null,
       completed: completedFrom(value.completed),
-      extraBits: inRange(value.extraBits, 0xffffff) ? value.extraBits : 0,
+      extraBits: inRange(value.extraBits, 2 ** 48 - 1) ? value.extraBits : 0,
       current: currentFrom(value.current), hints: hintsFrom(value.hints),
       settings: settingsFrom(value.settings), pin: pinFrom(value.pin),
     };
@@ -211,12 +215,17 @@ export function isUnlocked(p: Progress, mission: Mission): boolean {
   return mission.requires.every((id) => Object.hasOwn(p.completed, id));
 }
 
-export function rank(completedCount: number): string {
-  const thresholds = [0, 1, 6, 9, 12, 16];
-  for (let index = thresholds.length - 1; index >= 0; index -= 1) {
-    if (completedCount >= thresholds[index]!) return RANKS[index]!;
+export function xpEarned(p: Progress, missions: readonly Mission[]): number {
+  return missions.reduce((xp, mission) => Object.hasOwn(p.completed, mission.id)
+    ? xp + (mission.xp ?? XP_PER_MISSION) : xp, 0);
+}
+
+export function rankFor(xp: number): RankDef & { next: Readonly<RankDef> | null } {
+  let current = 0;
+  for (let index = 1; index < RANKS.length; index += 1) {
+    if (xp >= RANKS[index]!.xp) current = index;
   }
-  return RANKS[0]!;
+  return { ...RANKS[current]!, next: RANKS[current + 1] ?? null };
 }
 
 export function badgesEarned(p: Progress, missions: readonly Mission[]): Badge[] {
@@ -226,10 +235,10 @@ export function badgesEarned(p: Progress, missions: readonly Mission[]): Badge[]
 
 export function toSaveCode(p: Progress, missions: readonly Mission[]): string {
   const missionBits = missions.reduce((bits, mission) =>
-    inRange(mission.bit, 23) && Object.hasOwn(p.completed, mission.id)
-      ? bits | (1 << mission.bit) : bits, p.extraBits);
+    inRange(mission.bit, 47) && Object.hasOwn(p.completed, mission.id)
+      ? bits | (1n << BigInt(mission.bit)) : bits, BigInt(p.extraBits));
   return encodeSaveCode({
-    missionBits, firstWord: p.firstWord ?? 0,
+    missionBits: Number(missionBits), firstWord: p.firstWord ?? 0,
     secondWord: p.secondWord ?? 0, sidekick: p.sidekick ?? 0,
   });
 }
@@ -237,15 +246,15 @@ export function toSaveCode(p: Progress, missions: readonly Mission[]): string {
 export type ApplyResult = { ok: true; progress: Progress } | { ok: false; error: SaveCodeError };
 
 export function reconcileExtraBits(p: Progress, missions: readonly Mission[], now: Date): Progress {
-  let registeredBits = 0;
+  let registeredBits = 0n;
   let progress = { ...p };
   for (const mission of missions) {
-    if (!inRange(mission.bit, 23)) continue;
-    const bit = 1 << mission.bit;
+    if (!inRange(mission.bit, 47)) continue;
+    const bit = 1n << BigInt(mission.bit);
     registeredBits |= bit;
-    if ((p.extraBits & bit) !== 0) progress = completeMission(progress, mission.id, now);
+    if ((BigInt(p.extraBits) & bit) !== 0n) progress = completeMission(progress, mission.id, now);
   }
-  return { ...progress, extraBits: p.extraBits & ~registeredBits };
+  return { ...progress, extraBits: Number(BigInt(p.extraBits) & ~registeredBits) };
 }
 
 export function applySaveCode(
@@ -255,7 +264,7 @@ export function applySaveCode(
   if (!result.ok) return result;
   const { missionBits, firstWord, secondWord, sidekick } = result.data;
   return { ok: true, progress: reconcileExtraBits({
-    ...p, firstWord, secondWord, sidekick, extraBits: missionBits | p.extraBits,
+    ...p, firstWord, secondWord, sidekick, extraBits: Number(BigInt(missionBits) | BigInt(p.extraBits)),
   }, missions, now) };
 }
 

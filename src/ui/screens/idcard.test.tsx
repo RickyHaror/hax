@@ -21,7 +21,7 @@ describe('Agent ID card', () => {
   it('shows a fresh agent, sidekick art, a photo slot, and a kind badge prompt', async () => {
     await openCard();
     expect(root.querySelector('h1')?.textContent).toContain('Agent ID card');
-    for (const text of ['Brave Star', 'Recruit', 'Bit', 'Pick your photo',
+    for (const text of ['Brave Star', 'Rookie', 'Bit', 'Pick your photo',
       'Finish a mission to earn your first badge.']) expect(root.textContent).toContain(text);
     expect(root.querySelector('[aria-label="Your sidekick"] [role="img"]')?.getAttribute('aria-label')).toBe('Bit');
     expect(root.querySelector('[aria-label="Your photo"] [role="img"]')?.textContent).toBe('?');
@@ -31,13 +31,15 @@ describe('Agent ID card', () => {
 
   it('shows the chosen sidekick, earned badge art and names, and current rank', async () => {
     const deps = fakeDeps();
+    deps.registry = { ...deps.registry, missions: deps.registry.missions.map((mission) =>
+      mission.id === client.id ? { ...mission, xp: 200 } : mission) };
     const store = identityStore(deps);
     store.identify(1, 0, 1);
     store.complete(client.id); store.complete(login.id);
     store.go({ name: 'map' });
     root = await mount(store); await click(root, 'Tap to begin, Agent!');
     await click(root, 'My agent card');
-    for (const text of ['Swift Otter', 'Cadet', 'Pixel', 'Door Star', 'Pizza Shield']) {
+    for (const text of ['Swift Otter', 'Senior Agent', 'Pixel', 'Door Star', 'Pizza Shield']) {
       expect(root.textContent).toContain(text);
     }
     expect(root.textContent).not.toContain('Finish a mission');

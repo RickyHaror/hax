@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks';
-import { rank, toSaveCode } from '../../engine/progress';
+import { rankFor, toSaveCode, xpEarned } from '../../engine/progress';
 import type { Mission } from '../../engine/types';
 import { useStore } from '../store';
 import { Art } from '../components/Art';
 import { BigButton } from '../components/BigButton';
 import { SidekickBubble } from '../components/SidekickBubble';
-import { SpeechLine } from '../components/SpeechLine';
+import { ReadAloudButton, SpeechLine } from '../components/SpeechLine';
 import { Toggles } from '../components/Toolbar';
 import { SessionNudge } from './parent/SessionNudge';
 import { TopBar } from '../components/TopBar';
@@ -13,9 +13,11 @@ import { TerminalWindow } from '../terminal/TerminalWindow';
 import './startup.css';
 export function SecretKey() {
   const store = useStore();
+  const code = toSaveCode(store.progress.value, store.registry.missions);
   return <section aria-label="Secret decryption key">
     <SpeechLine line={{ text: 'Your secret decryption key. Copy it into your notebook.' }} />
-    <output class="secret-key">{toSaveCode(store.progress.value, store.registry.missions)}</output>
+    <output class="secret-key" style={{ overflowWrap: 'anywhere' }}>{code}</output>
+    <ReadAloudButton line={{ text: code, say: code.split('').join(' ') }} />
   </section>;
 }
 export function Done({ mission }: { mission: Mission }) {
@@ -28,7 +30,7 @@ export function Done({ mission }: { mission: Mission }) {
     <h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
     {!store.saved.value && <SpeechLine line={{ text: 'Write your secret key in your notebook. This computer could not save.' }} />}
     <SpeechLine line={{ text: mission.badge.name }} />
-    <p>{rank(Object.keys(store.progress.value.completed).length)}</p><SecretKey /></div></div>
+    <p>{rankFor(xpEarned(store.progress.value, store.registry.missions)).name}</p><SecretKey /></div></div>
     <section class="done-cheer" aria-label={`${buddy.name} says`}>
       <Art artKey={buddy.art} title={buddy.name} size={120} />
       <SpeechLine line={{ text: 'You did it! I am so proud of you.' }} sidekick={buddy.id} />
@@ -44,7 +46,7 @@ export function Stop() {
 }
 const errors = {
   checksum: 'One letter looks different. Check your notebook again.',
-  'wrong-length': 'Your key needs twelve letters and numbers. Check your notebook.',
+  'wrong-length': 'Your key looks too short or long. Check your notebook.',
   'bad-character': 'That mark is not in our keys. Check your notebook.',
   'unknown-version': 'This key uses a new code. Ask your grown-up.',
 };

@@ -25,7 +25,7 @@ export function buildRegistry(src: Partial<Registry> = {}): Registry {
   const source = { missions, sidekicks, firstWords, secondWords, art, playground, ...src };
   return {
     playground: source.playground ?? null,
-    missions: (source.missions ?? []).filter((m) => Number.isInteger(m.bit) && m.bit >= 0 && m.bit <= 23)
+    missions: (source.missions ?? []).filter((m) => Number.isInteger(m.bit) && m.bit >= 0 && m.bit <= 47)
       .slice().sort((a, b) => a.order - b.order),
     sidekicks: source.sidekicks?.length ? source.sidekicks : defaults,
     firstWords: source.firstWords?.length ? source.firstWords : fallbackFirst,

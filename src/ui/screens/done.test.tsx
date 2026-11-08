@@ -1,6 +1,6 @@
 import { act } from 'preact/test-utils';
 import { afterEach, expect, it } from 'vitest';
-import { rank, toSaveCode } from '../../engine/progress';
+import { rankFor, toSaveCode, xpEarned } from '../../engine/progress';
 import { client } from '../test/fixtures';
 import { button, click, fakeDeps, identityStore, mount, unmount } from '../test/helpers';
 
@@ -22,8 +22,15 @@ it.each([0, 1, 2])('celebrates with the selected sidekick %s and a working read 
     expect.objectContaining({ sidekick: buddy.id, onEnd: expect.any(Function) }));
   expect(root.querySelector('h1')?.textContent).toBe('Great work, Agent! Mission saved.');
   expect(root.textContent).toContain(client.badge.name);
-  expect(root.textContent).toContain(rank(1));
+  expect(root.textContent).toContain(rankFor(xpEarned(store.progress.value, deps.registry.missions)).name);
   expect(root.querySelector('output')?.textContent).toBe(toSaveCode(store.progress.value, deps.registry.missions));
+  const code = root.querySelector('output')!.textContent!;
+  expect(code).toMatch(/^HAX-([0-9A-Z]{4}-){3}[0-9A-Z]{4}$/);
+  const key = root.querySelector<HTMLElement>('section[aria-label="Secret decryption key"]')!;
+  const readButtons = key.querySelectorAll<HTMLButtonElement>('button[aria-label="Read aloud"]');
+  await act(() => readButtons[readButtons.length - 1]!.click());
+  expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: code, say: code.split('').join(' ') },
+    expect.any(Object));
   expect(button(root, 'Next').disabled).toBe(false);
   await click(root, 'Next');
   expect(store.screen.value.name).toBe('map');

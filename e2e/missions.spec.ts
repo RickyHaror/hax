@@ -73,7 +73,7 @@ async function saveCode(
     await expect(page.getByRole('heading', { name: 'Great work, Agent! Mission saved.', exact: true })).toBeVisible();
   }
   const code = page.getByRole('region', { name: 'Secret decryption key', exact: true }).locator('output');
-  await expect(code).toHaveText(/^HAX-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
+  await expect(code).toHaveText(/^HAX-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
   return (await code.textContent())!.trim();
 }
 

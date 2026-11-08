@@ -8,7 +8,7 @@ import {
 import {
   RANKS, SCHEMA_VERSION, STORAGE_KEY, applySaveCode, badgesEarned, checkPin,
   completeMission, createProgress, hashPin, hasIdentity, isUnlocked, loadProgress,
-  rank, reconcileExtraBits, recordHint, saveProgress, setAvatar, setCurrent, setIdentity, setPin, toSaveCode,
+  rankFor, xpEarned, XP_PER_MISSION, reconcileExtraBits, recordHint, saveProgress, setAvatar, setCurrent, setIdentity, setPin, toSaveCode,
   updateSettings, resetProgress, unlockMission, type Progress, type StorageLike,
 } from './progress';
 
@@ -170,7 +170,7 @@ describe('progress storage', () => {
 
   it('rejects out of range, fractional, and wrongly typed numeric fields', () => {
     for (const [field, maximum] of [
-      ['firstWord', 63], ['secondWord', 63], ['sidekick', 3], ['extraBits', 0xffffff],
+      ['firstWord', 63], ['secondWord', 63], ['sidekick', 3], ['extraBits', 2 ** 48 - 1],
     ] as const) {
       for (const bad of [-1, maximum + 1, 1.5, '1', true, {}, []]) {
         const expected = { ...populated(), [field]: field === 'extraBits' ? 0 : null };
@@ -348,16 +348,68 @@ describe('pure progress updates', () => {
   });
 
   it.each([
-    [-5, 'Recruit'], [0, 'Recruit'], [1, 'Cadet'], [2, 'Cadet'], [5, 'Cadet'],
-    [6, 'Agent'], [8, 'Agent'], [9, 'Special Agent'], [11, 'Special Agent'],
-    [12, 'Senior Agent'], [15, 'Senior Agent'], [16, 'Chief Agent'], [24, 'Chief Agent'],
-  ])('ranks %i completed missions as %s', (count, expected) => {
-    expect(rank(count)).toBe(expected);
-    expect(RANKS).toEqual(['Recruit', 'Cadet', 'Agent', 'Special Agent', 'Senior Agent', 'Chief Agent']);
+    [-5, 'Rookie', 0, 60], [0, 'Rookie', 0, 60], [59, 'Rookie', 0, 60],
+    [60, 'Agent', 60, 200], [199, 'Agent', 60, 200], [200, 'Senior Agent', 200, 600],
+    [599, 'Senior Agent', 200, 600], [600, 'Specialist', 600, 1200],
+    [1199, 'Specialist', 600, 1200], [1200, 'Crew Chief', 1200, null],
+    [9999, 'Crew Chief', 1200, null],
+  ])('ranks %i XP as %s', (xp, name, threshold, nextXP) => {
+    const expectedNext = nextXP === null ? null : RANKS.find((rank) => rank.xp === nextXP);
+    expect(rankFor(xp)).toEqual({ name, xp: threshold, next: expectedNext });
+    expect(RANKS).toEqual([
+      { name: 'Rookie', xp: 0 }, { name: 'Agent', xp: 60 },
+      { name: 'Senior Agent', xp: 200 }, { name: 'Specialist', xp: 600 },
+      { name: 'Crew Chief', xp: 1200 },
+    ]);
+  });
+
+  it('sums default and custom XP, including retired missions and zero XP', () => {
+    const registry = [mission('default', 0), { ...mission('custom', 1), xp: 75 },
+      { ...mission('retired', 2), xp: 35, retired: true },
+      { ...mission('zero', 3), xp: 0 }, { ...mission('pending', 4), xp: 900 },
+      mission('toString', 5)];
+    const p = freeze({ ...createProgress(), completed: {
+      default: earlier, custom: earlier, retired: earlier, zero: earlier, unknown: earlier,
+    } });
+    expect(XP_PER_MISSION).toBe(20);
+    expect(xpEarned(p, registry)).toBe(130);
+    expect(xpEarned(createProgress(), registry)).toBe(0);
+    expect(xpEarned(p, [])).toBe(0);
   });
 });
 
 describe('progress save codes', () => {
+  it.each([23, 24, 31, 32, 47])('preserves bit %i through storage, merge and registration', (bit) => {
+    const high = mission('high', bit);
+    const p = freeze({ ...setIdentity(createProgress(), identity), extraBits: 2 ** bit });
+    const storage = new MemoryStorage();
+    expect(saveProgress(storage, p)).toBe(true);
+    expect(loadProgress(storage)).toEqual(p);
+    const source = completeMission({ ...p, extraBits: 0 }, high.id, now);
+    const code = toSaveCode(source, [high]);
+    expect(decodeSaveCode(code)).toEqual({ ok: true, data: { ...identity, missionBits: 2 ** bit } });
+    const local = freeze({ ...createProgress(), extraBits: 1 + 2 ** bit });
+    const partial = applySaveCode(local, code, [], now);
+    expect(partial).toEqual({ ok: true, progress: { ...local, ...identity } });
+    if (!partial.ok) throw new Error('Expected a valid code');
+    const restored = reconcileExtraBits(loadValue(partial.progress), [high], now);
+    expect(restored).toEqual({ ...source, extraBits: 1 });
+    expect(toSaveCode(restored, [high])).toBe(toSaveCode(partial.progress, []));
+    expect(applySaveCode(local, code, [high], now)).toEqual({ ok: true, progress: restored });
+  });
+
+  it('combines every high bit with known and unknown bits without truncation', () => {
+    const registry = [23, 24, 31, 32, 47].map((bit) => mission(`bit${bit}`, bit));
+    const allBits = registry.reduce((sum, item) => sum + 2 ** item.bit, 1);
+    const code = encodeSaveCode({ ...identity, missionBits: allBits });
+    const result = applySaveCode(createProgress(), code, registry, now);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected a valid code');
+    expect(result.progress.extraBits).toBe(1);
+    expect(Object.keys(result.progress.completed)).toEqual(registry.map((item) => item.id));
+    expect(toSaveCode(result.progress, registry)).toBe(code);
+  });
+
   it('converts newly registered extra bits without changing dates or other progress', () => {
     const p = freeze({ ...populated(), extraBits: (1 << 22) | (1 << 23) | (1 << 5) | 1 });
     const next = reconcileExtraBits(p, missions, now);
@@ -374,7 +426,7 @@ describe('progress save codes', () => {
 
   it('keeps unknown bits and ignores invalid mission bits during reconciliation', () => {
     const p = freeze({ ...createProgress(), extraBits: (1 << 5) | (1 << 23) });
-    const registry = [-1, 24, 32, 0.5, Number.NaN, Infinity].map((bit, i) => mission(`bad${i}`, bit));
+    const registry = [-1, 48, 64, 0.5, Number.NaN, Infinity].map((bit, i) => mission(`bad${i}`, bit));
     expect(reconcileExtraBits(p, registry, now)).toEqual(p);
     expect(reconcileExtraBits(p, [mission('new', 5)], now)).toEqual({
       ...p, extraBits: 1 << 23, completed: { new: now.toISOString() },
@@ -453,7 +505,7 @@ describe('progress save codes', () => {
   });
 
   it('ignores invalid mission bits in both conversion directions', () => {
-    const registry = [-1, 24, 32, 0.5, Number.NaN, Infinity].map((bit, i) => mission(`bad${i}`, bit));
+    const registry = [-1, 48, 64, 0.5, Number.NaN, Infinity].map((bit, i) => mission(`bad${i}`, bit));
     const p = freeze(registry.reduce((state, item) => completeMission(state, item.id, now), createProgress()));
     expect(toSaveCode(p, registry)).toBe(toSaveCode(createProgress(), []));
     const code = encodeSaveCode({ ...identity, missionBits: 0xffffff });

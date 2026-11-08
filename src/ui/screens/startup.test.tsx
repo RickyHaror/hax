@@ -2,6 +2,7 @@ import { act } from 'preact/test-utils';
 import { afterEach, expect, it, vi } from 'vitest';
 import { codenameLines, SIGNUP_PROMPT } from '../../engine/codename';
 import { toSaveCode } from '../../engine/progress';
+import { encodeSaveCode } from '../../engine/savecode';
 import { createStore } from '../store';
 import { button, click, fakeDeps, fill, identityStore, mount, unmount } from '../test/helpers';
 import { BOOT_LINES } from './boot';
@@ -60,10 +61,23 @@ it('restores through the prompt and returns Back to Start after an error', async
   const source = identityStore(); const store = createStore(fakeDeps());
   root = await mount(store); await click(root, 'Tap to begin, Agent!');
   await click(root, 'I have a secret key'); await fill(root, 'Secret key', 'tiny');
-  await click(root, 'Check'); expect(root.textContent).toContain('Your key needs twelve letters');
+  await click(root, 'Check'); expect(root.textContent).toContain('Your key looks too short or long.');
   await click(root, 'Back'); expect(store.screen.value.name).toBe('start');
   await click(root, 'I have a secret key');
   await fill(root, 'Secret key', toSaveCode(source.progress.value, source.registry.missions));
   await click(root, 'Check'); expect(store.screen.value.name).toBe('map');
   expect(store.progress.value.firstWord).toBe(0); expect(store.progress.value.secondWord).toBe(1);
+});
+
+it.each([
+  ['v1', 'HAX-QRVQ-KEBZ-R8Q2', 0],
+  ['v2', encodeSaveCode({ firstWord: 0, secondWord: 1, sidekick: 0,
+    missionBits: 2 ** 47 + 2 ** 32 }), 2 ** 47 + 2 ** 32],
+])('accepts a %s notebook key through the input', async (_version, code, extraBits) => {
+  const store = createStore(fakeDeps());
+  root = await mount(store); await click(root, 'Tap to begin, Agent!');
+  await click(root, 'I have a secret key');
+  await fill(root, 'Secret key', String(code)); await click(root, 'Check');
+  expect(store.screen.value.name).toBe('map');
+  expect(store.progress.value).toMatchObject({ firstWord: 0, secondWord: 1, sidekick: 0, extraBits });
 });

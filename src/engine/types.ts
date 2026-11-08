@@ -395,7 +395,7 @@ export interface Playground {
 
 export interface Mission {
   id: MissionId;
-  /** Save-code bit index 0 to 23. Unique and stable forever. */
+  /** Save-code bit index 0 to 47. Unique and stable forever. */
   bit: number;
   chapter: Chapter;
   /** Order within the whole game. */

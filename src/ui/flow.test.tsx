@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'preact/test-utils';
-import { loadProgress, isUnlocked, rank, toSaveCode } from '../engine/progress';
+import { loadProgress, isUnlocked, rankFor, toSaveCode, xpEarned } from '../engine/progress';
 import { createVoice } from '../engine/voice';
 import { SIGNUP_PROMPT } from '../engine/codename';
 import { sidekicks } from '../missions/sidekicks';
@@ -191,8 +191,9 @@ describe('mission journey', () => {
     await click(root, 'Next'); await click(root, 'Next'); expect(root.textContent).toContain('Lock it down!');
     await click(root, 'Next'); await click(root, 'Next'); expect(root.textContent).toContain('The pizza box is safe!');
     await click(root, 'Next'); expect(root.textContent).toContain('Great work, Agent! Mission saved.');
-    expect(root.textContent).toContain('Pizza Shield'); expect(root.textContent).toContain(rank(1));
-    expect(root.querySelector('output')?.textContent).toMatch(/^HAX-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
+    expect(root.textContent).toContain('Pizza Shield');
+    expect(root.textContent).toContain(rankFor(xpEarned(store.progress.value, store.registry.missions)).name);
+    expect(root.querySelector('output')?.textContent).toMatch(/^HAX-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
     expect(loadProgress(deps.storage).completed.client).toBeTruthy();
     expect(isUnlocked(store.progress.value, dependent)).toBe(true);
     await click(root, 'Next');

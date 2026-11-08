@@ -18,8 +18,10 @@ describe('content registry', () => {
     expect(buildRegistry().sidekicks.length).toBeGreaterThan(0);
   });
   it('sorts valid missions without changing the source', () => {
-    const missions = [dependent, { ...login, bit: -1 }, client, login, { ...login, bit: 24 }, { ...login, bit: 1.5 }];
-    expect(buildRegistry({ missions }).missions).toEqual([login, client, dependent]);
+    const high = [23, 24, 31, 32, 47].map((bit) => ({ ...login, id: `bit${bit}`, bit, order: bit }));
+    const missions = [dependent, { ...login, bit: -1 }, client, login,
+      ...high, { ...login, bit: 48 }, { ...login, bit: 1.5 }];
+    expect(buildRegistry({ missions }).missions).toEqual([login, client, dependent, ...high]);
     expect(missions[0]).toBe(dependent);
   });
 });

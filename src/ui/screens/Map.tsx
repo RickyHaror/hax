@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { isUnlocked, rank } from '../../engine/progress';
+import { isUnlocked, rankFor, xpEarned } from '../../engine/progress';
 import type { Mission } from '../../engine/types';
 import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
@@ -49,7 +49,7 @@ export function Map() {
     <header class="map-header">
       <Art artKey={buddy.art} title={buddy.name} size={56} />
       <div><h1>{hackerName(store.progress, store.registry)}</h1>
-        <p>{buddy.name} · {rank(Object.keys(progress.completed).length)}</p></div>
+        <p>{buddy.name} · {rankFor(xpEarned(progress, store.registry.missions)).name}</p></div>
     </header>
     {store.notice.value && <SpeechLine line={{ text: store.notice.value }} />}
     {!store.registry.missions.length && <SpeechLine line={{ text: 'Missions coming soon' }} />}
