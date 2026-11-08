@@ -6,7 +6,7 @@ import { art } from '../../art';
 import { sidekicks } from '../../missions/sidekicks';
 import { StoreContext } from '../store';
 import { client } from '../test/fixtures';
-import { fakeDeps, identityStore, unmount } from '../test/helpers';
+import { click, fakeDeps, identityStore, unmount } from '../test/helpers';
 import { SidekickBubble, SpeakerLines } from './SidekickBubble';
 
 let root: HTMLElement;
@@ -33,6 +33,27 @@ function groupFor(text: string) {
 }
 
 describe('speaker portraits', () => {
+  it('opts out of automatic speech and cleanup without losing per-line reading', async () => {
+    const deps = fakeDeps(); deps.registry = { ...deps.registry, sidekicks };
+    const store = identityStore(deps);
+    root = document.createElement('div'); document.body.append(root);
+    const show = async (index: number) => act(() => render(<StoreContext.Provider value={store}>
+      <SidekickBubble lines={sidekicks[index]!.greeting} sidekickIndex={index} autoRead={false} />
+    </StoreContext.Provider>, root));
+    vi.mocked(deps.voice.cancel).mockClear();
+    await show(0);
+    await show(1);
+    expect(deps.voice.speakAll).not.toHaveBeenCalled();
+    expect(deps.voice.cancel).not.toHaveBeenCalled();
+    await click(root, 'Read aloud');
+    expect(deps.voice.speak).toHaveBeenLastCalledWith(sidekicks[1]!.greeting[0],
+      expect.objectContaining({ sidekick: sidekicks[1]!.id }));
+    store.voice.speakAll([{ text: 'Keep reading.', speaker: 'narrator' }]);
+    vi.mocked(deps.voice.cancel).mockClear();
+    await unmount(root);
+    expect(deps.voice.cancel).not.toHaveBeenCalled();
+  });
+
   it('groups consecutive speakers, names the chosen art and hides repeated portraits', async () => {
     const lines: Line[] = [
       { text: 'Hello, Agent!' }, { text: 'We can help.', speaker: 'sidekick' },

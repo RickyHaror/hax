@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'preact/test-utils';
 import { loadProgress, isUnlocked, rank, toSaveCode } from '../engine/progress';
 import { createVoice } from '../engine/voice';
+import { SIGNUP_PROMPT } from '../engine/codename';
+import { sidekicks } from '../missions/sidekicks';
 import { createStore } from './store';
 import { buildRegistry } from './registry';
 import { client, dependent, fixtureRegistry, login } from './test/fixtures';
@@ -9,6 +11,45 @@ import { button, click, fakeDeps, fill, identityStore, input, mount, submit, unm
 let root: HTMLElement;
 afterEach(async () => { if (root) await unmount(root); vi.restoreAllMocks(); });
 describe('start and onboarding', () => {
+  it.each([true, false])('reads only the signup prompt on load with auto-read %s', async (autoRead) => {
+    const deps = fakeDeps(); deps.registry = { ...deps.registry, sidekicks };
+    const store = createStore(deps);
+    store.settings({ autoRead }); store.go({ name: 'onboarding' });
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    expect(root.querySelector('h1')?.textContent).toBe('Pick your agent name');
+    expect(root.querySelector('h1 button')).toBeNull();
+    expect(vi.mocked(deps.voice.speakAll).mock.calls).toEqual(autoRead ? [[[SIGNUP_PROMPT]]] : []);
+    expect(deps.voice.speak).not.toHaveBeenCalled();
+    if (autoRead) {
+      expect(vi.mocked(deps.voice.cancel).mock.invocationCallOrder.at(-1))
+        .toBeLessThan(vi.mocked(deps.voice.speakAll).mock.invocationCallOrder[0]!);
+    }
+    for (const index of [0, 1, 1, 2, 0]) {
+      vi.mocked(deps.voice.speakAll).mockClear(); vi.mocked(deps.voice.cancel).mockClear();
+      const buddy = sidekicks[index]!;
+      await click(root, buddy.name);
+      expect(vi.mocked(deps.voice.speakAll).mock.calls).toEqual(autoRead
+        ? [[buddy.greeting, { sidekick: buddy.id }]] : []);
+      expect(deps.voice.cancel).not.toHaveBeenCalled();
+      const bubble = root.querySelector('.bubble')!;
+      expect(bubble.getAttribute('aria-label')).toBe(`${buddy.name} says`);
+      for (const line of buddy.greeting) expect(bubble.textContent).toContain(line.text);
+      expect(bubble.querySelectorAll('button[aria-label="Read aloud"]')).toHaveLength(buddy.greeting.length);
+    }
+  });
+
+  it('keeps the prompt button working when automatic reading is off', async () => {
+    const deps = fakeDeps(); const store = createStore(deps);
+    store.settings({ autoRead: false }); store.go({ name: 'onboarding' });
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    const heading = root.querySelector('h1')!;
+    const read = heading.parentElement!.querySelector<HTMLButtonElement>('[aria-label="Read aloud"]')!;
+    await act(() => read.click());
+    expect(deps.voice.speak).toHaveBeenCalledExactlyOnceWith(SIGNUP_PROMPT,
+      expect.objectContaining({ onEnd: expect.any(Function), onUnavailable: expect.any(Function) }));
+    expect(deps.voice.speakAll).not.toHaveBeenCalled();
+  });
+
   it('reads the displayed name as recorded parts and uses newly picked words', async () => {
     const clips: HTMLAudioElement[] = [], sources: string[] = [];
     const AudioStub = vi.fn(function (src: string) {

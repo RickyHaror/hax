@@ -188,6 +188,7 @@ svg { flex-shrink: 0; max-width: 100%; }
 }
 .panel:has(.onboarding) { padding: 16px; }
 .onboarding { display: grid; gap: 8px; font-size: 18px; }
+.onboarding-heading { display: flex; align-items: center; gap: 8px; }
 .onboarding h1 { font-size: 34px; }
 .onboarding h2 { font-size: 26px; }
 .onboarding h1, .onboarding h2, .onboarding .speech-line, .onboarding .bubble { margin: 0; }

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { lineKey, lineRole } from './audio-manifest';
-import { CODENAME_PREFIX, CODENAME_ROLE, codenameLines, codenameRecordings } from './codename';
+import { CODENAME_PREFIX, CODENAME_ROLE, SIGNUP_PROMPT, codenameLines, codenameRecordings, signupRecordings } from './codename';
 
 describe('codename recordings', () => {
   it('makes three narrator lines with a spoken prefix', () => {
@@ -41,5 +41,34 @@ describe('codename recordings', () => {
       }
     }
     expect(matched).toEqual(new Set(keys));
+  });
+});
+
+describe('signup recordings', () => {
+  it('puts the prompt first and includes every unique codename recording', () => {
+    const spoken = SIGNUP_PROMPT.say!;
+    const first = ['Turbo', ` ${spoken} `, 'Swift', 'Turbo'];
+    const second = ['Falcon', ' Swift ', CODENAME_PREFIX];
+    const recordings = signupRecordings(first, second);
+    const prompt = { role: 'narrator', spoken };
+    expect(recordings).toEqual([prompt, ...codenameRecordings(first, second)
+      .filter((pair) => pair.spoken !== spoken)]);
+    expect(new Set(recordings.map((pair) => `${pair.role}|${pair.spoken}`)).size).toBe(recordings.length);
+    expect(signupRecordings([], [])).toEqual([
+      prompt, { role: CODENAME_ROLE, spoken: CODENAME_PREFIX },
+    ]);
+  });
+
+  it('matches the prompt playback key in every buddy context', () => {
+    expect(SIGNUP_PROMPT).toEqual({
+      text: 'Pick your agent name',
+      say: 'Pick your agent name. Tap one word in each row.',
+      speaker: 'narrator',
+    });
+    const prompt = signupRecordings(['Turbo'], ['Falcon'])[0]!;
+    for (const ctx of [{ sidekick: 'bit' }, { sidekick: 'hoot', missionId: 'pizza' },
+      { sidekick: 'pixel', missionId: null }]) {
+      expect(`${prompt.role}|${prompt.spoken}`).toBe(lineKey(SIGNUP_PROMPT, lineRole(SIGNUP_PROMPT, ctx)));
+    }
   });
 });

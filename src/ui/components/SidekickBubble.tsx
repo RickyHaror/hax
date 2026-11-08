@@ -11,6 +11,7 @@ interface BubbleProps {
   client?: Client;
   compact?: boolean;
   bySpeaker?: boolean;
+  autoRead?: boolean;
 }
 
 function groupLines(lines: readonly Line[]) {
@@ -45,21 +46,22 @@ export function SpeakerLines({ lines, sidekickIndex, client, compact = false }: 
     })}
   </div>;
 }
-export function SidekickBubble({ lines, sidekickIndex, client, compact, bySpeaker = false }: BubbleProps) {
+export function SidekickBubble({ lines, sidekickIndex, client, compact, bySpeaker = false, autoRead = true }: BubbleProps) {
   const store = useStore();
   const sidekick = store.registry.sidekicks[sidekickIndex ?? store.progress.value.sidekick ?? 0]
     ?? store.registry.sidekicks[0]!;
-  const autoRead = store.progress.value.settings.autoRead;
+  const readToMe = store.progress.value.settings.autoRead;
   const voiceSidekick = sidekickIndex === undefined ? undefined : sidekick.id;
   const signature = JSON.stringify(lines);
   useLayoutEffect(() => {
-    if (autoRead) {
+    if (!autoRead) return;
+    if (readToMe) {
       const spoken = JSON.parse(signature) as Line[];
       if (voiceSidekick === undefined) store.voice.speakAll(spoken);
       else store.voice.speakAll(spoken, { sidekick: voiceSidekick });
     }
     return () => store.voice.cancel();
-  }, [store, signature, autoRead, voiceSidekick]);
+  }, [store, signature, autoRead, readToMe, voiceSidekick]);
   if (bySpeaker) return <SpeakerLines lines={lines} sidekickIndex={sidekickIndex} client={client} compact={compact} />;
   return <section class="bubble" aria-label={`${sidekick.name} says`}>
     <Art artKey={sidekick.art} title={sidekick.name} />
