@@ -187,14 +187,13 @@ function unknown(name: string, names: readonly string[]): RunResult {
 
 export class Shell {
   readonly fs: VirtualFs;
-  private readonly allowed: readonly string[];
   private readonly names: readonly string[];
   private readonly history: ShellEvent[] = [];
 
   constructor(fs: VirtualFs, allowed: readonly string[]) {
     this.fs = fs;
-    this.allowed = [...allowed];
-    const names = [...new Set(allowed.filter((entry) => KNOWN_COMMANDS.includes(entry)))];
+    const bareNames = allowed.map((entry) => entry.trim().split(/\s+/u)[0]!);
+    const names = [...new Set(bareNames.filter((name) => KNOWN_COMMANDS.includes(name)))];
     this.names = names.includes('help') ? names : [...names, 'help'];
   }
 
@@ -228,10 +227,10 @@ export class Shell {
 
   private execute(command: ParsedCommand): Outcome {
     const { name, flags } = command;
-    if (!this.names.includes(name) || flags.some((flag) => !this.allowed.includes(`${name} -${flag}`))) {
+    if (!this.names.includes(name)) {
       return error('You will learn that one soon!', 'hint');
     }
-    if (flags.some((flag) => name !== 'ls' || flag !== 'a')) {
+    if (flags.some((flag) => name !== 'ls' || !['a', 'l'].includes(flag))) {
       return error('That flag does not work here. Try help.');
     }
     return handlers[name]!(this.fs, command, this.names);
@@ -245,7 +244,7 @@ function resolveFrom(fs: VirtualFs, path: string, cwd: string): string {
 function runGoal(goal: Extract<TerminalGoal, { type: 'run' }>, state: ShellState): boolean {
   return state.events.some((event) => event.type === 'run' && event.ok
     && event.command.toLowerCase() === goal.command.toLowerCase()
-    && (goal.args ?? []).every((arg) => arg.startsWith('-')
+    && (goal.args ?? []).every((arg) => arg.startsWith('-') && arg.length > 1
       ? [...arg.slice(1)].every((flag) => event.flags.includes(flag))
       : event.args.some((value) => value === arg
         || resolveFrom(state.fs, value, event.cwd) === resolveFrom(state.fs, arg, HOME))));

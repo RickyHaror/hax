@@ -28,7 +28,7 @@ function mission(): FsDir {
   });
 }
 
-function shell(allowed: readonly string[] = [...KNOWN_COMMANDS, 'ls -a']): Shell {
+function shell(allowed: readonly string[] = KNOWN_COMMANDS): Shell {
   return new Shell(new VirtualFs(mission()), allowed);
 }
 
@@ -136,22 +136,14 @@ describe('command permissions', () => {
     expect(sh.fs.cwd()).toBe(HOME);
   });
 
-  it.each([
-    ['ls -a', ['ls']],
-    ['ls -a', ['ls -a']],
-    ['ls -az', ['ls', 'ls -a']],
-    ['ls -A', ['ls', 'ls -a']],
-    ['cat -z note.txt', ['cat']],
-    ['help -a', []],
-  ] as const)('requires each permission for %s', (input, allowed) => {
-    const sh = shell(allowed);
+  it.each(['ls -a', 'ls -q'])('gates %s only when the name is unavailable', (input) => {
+    const sh = shell([]);
     expect(sh.run(input).lines).toEqual([{ kind: 'hint', text: 'You will learn that one soon!' }]);
-    expect(sh.events).toHaveLength(1);
-    expect(sh.events[0]).toMatchObject({ type: 'run', ok: false });
+    expect(sh.events).toEqual([runEvent('ls', [], [input.slice(-1)], false)]);
   });
 
-  it.each(KNOWN_COMMANDS)('rejects an allowed unsupported flag on %s', (name) => {
-    const sh = shell([name, `${name} -z`]);
+  it.each(KNOWN_COMMANDS)('rejects unsupported flags on bare-allowed %s', (name) => {
+    const sh = shell([name]);
     const before = sh.fs.snapshot();
     expect(sh.run(`${name} -z note.txt`)).toEqual({
       lines: [{ kind: 'err', text: 'That flag does not work here. Try help.' }], clear: false,
@@ -160,18 +152,21 @@ describe('command permissions', () => {
     expect(sh.fs.snapshot()).toEqual(before);
   });
 
-  it('checks missing permissions before unsupported allowed flags', () => {
-    const sh = shell(['ls', 'ls -z']);
-    expect(sh.run('ls -za').lines).toEqual([{ kind: 'hint', text: 'You will learn that one soon!' }]);
-    expect(sh.events).toEqual([runEvent('ls', [], ['z', 'a'], false)]);
-  });
-
-  it('rejects a combined flag token when every flag is allowed but one is unsupported', () => {
-    const sh = shell(['ls', 'ls -a', 'ls -z']);
-    expect(sh.run('ls -az').lines).toEqual([
+  it.each([
+    ['ls -q', ['ls'], 'ls', [], ['q']],
+    ['ls -az', ['ls'], 'ls', [], ['a', 'z']],
+    ['ls -A', ['ls'], 'ls', [], ['A']],
+    ['ls -za', ['ls -z'], 'ls', [], ['z', 'a']],
+    ['cat -z note.txt', ['cat -z'], 'cat', ['note.txt'], ['z']],
+    ['help -a', [], 'help', [], ['a']],
+  ] as const)('reports unsupported flags for %s', (input, allowed, name, args, flags) => {
+    const sh = shell(allowed);
+    const before = sh.fs.snapshot();
+    expect(sh.run(input).lines).toEqual([
       { kind: 'err', text: 'That flag does not work here. Try help.' },
     ]);
-    expect(sh.events).toEqual([runEvent('ls', [], ['a', 'z'], false)]);
+    expect(sh.events).toEqual([runEvent(name, [...args], [...flags], false)]);
+    expect(sh.fs.snapshot()).toEqual(before);
   });
 });
 
@@ -188,7 +183,7 @@ describe('typo help', () => {
     expect(shell(['ls', 'cd', 'cat']).run('ct').lines[0]?.text).toBe('Did you mean cd?');
     expect(shell(['cat', 'cd', 'ls']).run('ct').lines[0]?.text).toBe('Did you mean cat?');
     expect(shell(['cd', 'cat']).run('cta').lines[0]?.text).toBe('Did you mean cat?');
-    expect(shell(['cat -a', 'cd', 'cat']).run('ct').lines[0]?.text).toBe('Did you mean cd?');
+    expect(shell(['cat -a', 'cd', 'cat']).run('ct').lines[0]?.text).toBe('Did you mean cat?');
     expect(shell(['help', 'cat']).run('hep').lines[0]?.text).toBe('Did you mean help?');
   });
 
@@ -201,12 +196,26 @@ describe('typo help', () => {
   });
 
   it('does not suggest an unavailable bare command', () => {
-    expect(shell(['ls -a']).run('sl').lines[0]?.text).toBe('Hmm, I do not know that one. Try help.');
+    expect(shell(['ls -a']).run('sl').lines[0]?.text).toBe('Did you mean ls?');
+    expect(shell(['cat']).run('sl').lines[0]?.text).toBe('Hmm, I do not know that one. Try help.');
     expect(shell([]).run('hepl').lines[0]?.text).toBe('Did you mean help?');
   });
 });
 
 describe('listing files', () => {
+  it.each([['ls'], ['ls -a']])('allows bare and flagged listing with %j', (entry) => {
+    const sh = shell([entry]);
+    expect(sh.run('ls').lines.map((line) => line.text)).not.toContain('.secret');
+    for (const input of ['ls -a', 'ls -la', 'ls -al']) {
+      const result = sh.run(input);
+      expect(result.lines.map((line) => line.text)).toEqual([
+        '.cache/', 'docs/', 'empty/', '-', '.secret', 'blank', 'locked.txt [locked]', 'my notes', 'note.txt',
+      ]);
+      expect(result.lines.every((line) => line.kind === 'out')).toBe(true);
+      expect(sh.events.at(-1)).toMatchObject({ type: 'run', command: 'ls', ok: true });
+    }
+  });
+
   it('lists each visible entry, marking directories and locked files', () => {
     const sh = shell();
     expect(sh.run('LS')).toEqual({ clear: false, lines: [
@@ -283,7 +292,8 @@ describe('help', () => {
     [['cat', 'ls', 'ls -a', 'cat'], ['cat', 'ls', 'help']],
     [['pwd', 'help', 'cat', 'help'], ['pwd', 'help', 'cat']],
     [[...KNOWN_COMMANDS, 'ls -a'], KNOWN_COMMANDS],
-    [['ls -a'], ['help']],
+    [['ls -a'], ['ls', 'help']],
+    [['ls -a', 'cat', 'ls', 'cat -z'], ['ls', 'cat', 'help']],
   ])('lists bare commands once, in order', (allowed, names) => {
     const result = shell(allowed).run('help');
     expect(result.lines.map((line) => line.text.split(':')[0])).toEqual(names);
@@ -407,7 +417,7 @@ describe('run goals', () => {
     const goal: TerminalGoal = { type: 'run', command: 'LS' };
     expect(goalMet(goal, sh.state)).toBe(false);
     sh.run('ls missing');
-    sh.run('ls -a');
+    sh.run('ls -q');
     sh.run('cat note.txt');
     sh.run('sl');
     sh.run('ls "');
@@ -415,6 +425,41 @@ describe('run goals', () => {
     sh.run('LS');
     expect(goalMet(goal, sh.state)).toBe(true);
     expect(goalMet({ type: 'run', command: 'pwd' }, sh.state)).toBe(false);
+  });
+
+  it.each(['ls -a', 'ls -la', 'ls -al', 'ls -aa -a'])('meets a flag goal with %s', (input) => {
+    const sh = shell(['ls']);
+    const goal: TerminalGoal = { type: 'run', command: 'ls', args: ['-a'] };
+    sh.run('ls');
+    sh.run('ls -aq');
+    sh.run('ls -a missing');
+    expect(goalMet(goal, sh.state)).toBe(false);
+    sh.run(input);
+    expect(goalMet(goal, sh.state)).toBe(true);
+    expect(goalMet({ type: 'run', command: 'ls' }, sh.state)).toBe(true);
+  });
+
+  it('matches a goal without args after a successful flagged run', () => {
+    const sh = shell(['ls']);
+    sh.run('ls -a');
+    expect(goalMet({ type: 'run', command: 'ls' }, sh.state)).toBe(true);
+  });
+
+  it.each(['ls -a ~', 'ls ~ -a'])('matches two goal args in either order for %s', (input) => {
+    const sh = shell(['ls']);
+    sh.run(input);
+    for (const args of [['-a', '/home/agent'], ['/home/agent', '-a']]) {
+      expect(goalMet({ type: 'run', command: 'ls', args }, sh.state)).toBe(true);
+    }
+    expect(goalMet({ type: 'run', command: 'ls', args: ['-a', '/tmp'] }, sh.state)).toBe(false);
+  });
+
+  it('treats a lone dash as a positional goal arg', () => {
+    const sh = shell(['cat']);
+    sh.run('cat note.txt');
+    expect(goalMet({ type: 'run', command: 'cat', args: ['-'] }, sh.state)).toBe(false);
+    sh.run('cat -');
+    expect(goalMet({ type: 'run', command: 'cat', args: ['-'] }, sh.state)).toBe(true);
   });
 
   it('requires all args and flag letters together in one successful event', () => {
@@ -448,6 +493,23 @@ describe('run goals', () => {
 });
 
 describe('file and composite goals', () => {
+  it('meets an absolute hidden-file read goal from home', () => {
+    const root = mission();
+    const home = root.children.home as FsDir;
+    const agent = home.children.agent as FsDir;
+    agent.children['.secret_sauce'] = { type: 'file', content: 'Hidden sauce' };
+    const sh = new Shell(new VirtualFs(root), ['cat', 'cd']);
+    const goal: TerminalGoal = { type: 'read', path: '/home/agent/.secret_sauce' };
+    expect(goalMet(goal, sh.state)).toBe(false);
+    expect(sh.run('cat .secret_sauce').lines).toEqual([{ kind: 'out', text: 'Hidden sauce' }]);
+    expect(sh.events).toEqual([
+      runEvent('cat', ['.secret_sauce']), { type: 'read', path: '/home/agent/.secret_sauce' },
+    ]);
+    sh.run('cd /tmp');
+    expect(goalMet(goal, sh.state)).toBe(true);
+    expect(goalMet({ type: 'read', path: '~/.secret_sauce' }, sh.state)).toBe(true);
+  });
+
   it('resolves relative file goals against the current folder without changing it', () => {
     const sh = shell();
     sh.run('cd docs');
