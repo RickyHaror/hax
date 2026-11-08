@@ -51,7 +51,7 @@ badge and one new command added to his profile.
 
 ## Build order
 
-1. Founder brings the Claude Design mockups for the terminal direction.
+1. Founder brings the design mockups for the terminal direction.
 2. Engine E5: full screen terminal layout and design system from the mockups, boot and login sequence,
    new commands (`whoami`, `pwd`, `ls -a`, `grep`, `tail`, `scan`, `connect`, `mail`, `report`, `decode`,
    `passwd`, `chmod`), agent profile with learned commands.
