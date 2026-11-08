@@ -221,6 +221,8 @@ export interface Step {
   success: Line[];
   /** True for the "lock it down" fix step at the end of a client mission. */
   lockdown?: boolean;
+  /** Optional picture shown with the step (key into the art registry), for example the login screen. */
+  art?: string;
   config: StepConfig;
 }
 
