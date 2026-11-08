@@ -16,7 +16,7 @@ export function Start() {
     <h1 class="glow">AGENT HQ</h1>
     {success && step ? <><SidekickBubble lines={step.success} /><BigButton onClick={enter}>Next</BigButton></>
       : mission && step && step.config.kind === 'answer' ? <>
-        <Art artKey={mission.badge.art || Object.keys(store.registry.art)[0] || ''} title={mission.title} size={140} />
+        <Art artKey={step.art ?? (mission.badge.art || Object.keys(store.registry.art)[0] || '')} title={mission.title} size={140} />
         <h2>{step.title}</h2><SidekickBubble lines={[...mission.intro, ...step.lines]} />
         <label>Username<input value="agent" readOnly /></label>
         <Answer step={step} config={step.config} password

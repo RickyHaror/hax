@@ -21,6 +21,7 @@ function ActiveStep({ mission, step, index }: { mission: Mission; step: Step; in
   return <section><h2>{step.title}</h2>
     {step.lockdown && <SpeechLine line={{ text: 'Lock it down!' }} />}
     <SidekickBubble lines={step.lines} />
+    {step.art && <Art artKey={step.art} title={step.title} />}
     <StepWidget step={step} config={step.config}
       showMe={(store.progress.value.hints[mission.id]?.[step.id]?.rung ?? 0) >= 3}
       onComplete={() => store.phase(mission.id, { phase: 'success', index })} />

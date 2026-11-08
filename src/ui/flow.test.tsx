@@ -3,7 +3,7 @@ import { act } from 'preact/test-utils';
 import { loadProgress, isUnlocked, rank, toSaveCode } from '../engine/progress';
 import { createStore } from './store';
 import { buildRegistry } from './registry';
-import { client, dependent, fixtureRegistry } from './test/fixtures';
+import { client, dependent, fixtureRegistry, login } from './test/fixtures';
 import { button, click, fakeDeps, fill, identityStore, input, mount, submit, unmount } from './test/helpers';
 let root: HTMLElement;
 afterEach(async () => { if (root) await unmount(root); vi.restoreAllMocks(); });
@@ -129,6 +129,25 @@ describe('keys and controls', () => {
 });
 
 describe('answer submission', () => {
+  it.each(['login', 'player'])('rejects blank input and blank accepted answers in %s', async (screen) => {
+    const source = screen === 'login' ? login : client;
+    const step = { ...login.steps[0]!, config: {
+      kind: 'answer' as const, question: { text: 'Read the note.' }, answer: '', accept: ['  '],
+    } };
+    const mission = { ...source, steps: [step] };
+    const deps = fakeDeps(); deps.registry = fixtureRegistry([mission]);
+    const store = screen === 'login' ? createStore(deps) : identityStore(deps);
+    if (screen === 'player') {
+      store.openMission(mission.id); store.phase(mission.id, { phase: 'step', index: 0 });
+    }
+    root = await mount(store);
+    await submit(root);
+    await fill(root, screen === 'login' ? 'Password' : 'Answer', '  '); await submit(root);
+    expect(root.textContent).toContain('Good try.');
+    expect(store.progress.value.completed).toEqual({});
+    if (screen === 'player') expect(store.position.value.phase).toBe('step');
+    expect(deps.sound.play).toHaveBeenCalledWith('tryAgain');
+  });
   it('keeps progress on a wrong answer and accepts normalized inner spaces', async () => {
     const deps = fakeDeps(); const store = identityStore(deps);
     store.openMission(client.id); store.phase(client.id, { phase: 'step', index: 1 });

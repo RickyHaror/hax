@@ -3,9 +3,9 @@ import type { TargetedInputEvent } from 'preact';
 import type { AnswerConfig } from '../../engine/types';
 import type { WidgetProps } from './index';
 import { useStore } from '../store';
+import { answersMatch } from '../answers';
 import { BigButton } from '../components/BigButton';
 import { SpeechLine } from '../components/SpeechLine';
-const normalize = (text: string) => text.trim().replace(/\s+/g, ' ').toLowerCase();
 export function Answer({ config, showMe, onComplete, password = false }: WidgetProps<AnswerConfig> & { password?: boolean }) {
   const store = useStore();
   const [value, setValue] = useState('');
@@ -15,7 +15,7 @@ export function Answer({ config, showMe, onComplete, password = false }: WidgetP
   function check(event: Event) {
     event.preventDefault();
     if (completed.current) return;
-    if ([config.answer, ...config.accept ?? []].some((answer) => normalize(answer) === normalize(value))) {
+    if (answersMatch(value, config.answer, config.accept)) {
       completed.current = true; store.sound.play('success'); onComplete();
     } else { setWrong(true); store.sound.play('tryAgain'); }
   }
