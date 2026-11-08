@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FsDir, FsNode, Line, Playground } from '../engine/types';
 import { fleschKincaidGrade, lineProblems, MAX_GRADE, words } from '../../scripts/checks/readability';
 import { playground } from './playground';
+import { firstWords, secondWords } from './names';
 
 function getPlayground(): Playground {
   expect(playground, 'playground data').not.toBeNull();
@@ -166,6 +167,21 @@ describe('Agent Playground data', () => {
   it('keeps every file and command output line within forty columns', () => {
     for (const { label, text } of contentLines(getPlayground())) {
       expect(text.length, label).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it('keeps command output within forty columns with the longest hacker name', () => {
+    const longestWord = (list: string[]) => list.reduce((longest, word) => (
+      word.length > longest.length ? word : longest
+    ), '');
+    const name = `${longestWord(firstWords)} ${longestWord(secondWords)}`;
+    for (const command of getPlayground().commands) {
+      for (const line of command.output.flatMap((output) => output.split(/\r?\n/))) {
+        if (line.includes('{name}')) {
+          expect(line.replaceAll('{name}', name).length, `command ${command.name}`)
+            .toBeLessThanOrEqual(40);
+        }
+      }
     }
   });
 

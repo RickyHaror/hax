@@ -33,7 +33,7 @@ const maps: FsDir = {
   children: {
     treasure: {
       type: 'file',
-      content: 'A chest waits on a pond island.\nRead this hidden file:\n/home/agent/garden/pond/island/.chest',
+      content: 'A chest waits on a pond island.\nUse cd to reach the island folder.\nThen type ls -a to find the chest.\nType cat .chest to peek inside!',
     },
     sky: { type: 'file', content: 'Find clouds, then fluff, then den.\nA soft seat waits up there.' },
   },
@@ -141,7 +141,7 @@ export const playground: Playground | null = {
       name: 'whoami',
       help: 'See your agent name.',
       // The engine replaces {name} with the hacker name.
-      output: ['You are agent {name}. Glad you are here!'],
+      output: ['You are agent {name}.', 'Glad you are here!'],
     },
     {
       name: 'joke',
