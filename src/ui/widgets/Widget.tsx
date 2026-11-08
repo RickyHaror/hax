@@ -7,6 +7,7 @@ import { Answer } from './Answer';
 import { bootcampWidgets } from './bootcamp';
 import { explorerWidgets } from './explorer';
 import { terminalWidgets } from './terminal';
+import { hackWidgets } from './hack';
 import { toolWidgets } from './tools';
 import { caseWidgets } from './cases';
 export interface WidgetProps<C extends StepConfig = StepConfig> {
@@ -19,7 +20,7 @@ function Story({ onComplete }: WidgetProps<Extract<StepConfig, { kind: 'story' }
 }
 export const widgets: WidgetMap = {
   story: Story, answer: Answer,
-  ...bootcampWidgets, ...explorerWidgets, ...terminalWidgets, ...toolWidgets, ...caseWidgets,
+  ...bootcampWidgets, ...explorerWidgets, ...terminalWidgets, ...hackWidgets, ...toolWidgets, ...caseWidgets,
 };
 export function StepWidget(props: WidgetProps) {
   const completed = useRef(false);

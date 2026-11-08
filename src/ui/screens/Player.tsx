@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import type { Mission, Step } from '../../engine/types';
 import { useStore } from '../store';
 import { Art } from '../components/Art';
@@ -7,6 +7,7 @@ import { SpeechLine } from '../components/SpeechLine';
 import { SidekickBubble } from '../components/SidekickBubble';
 import { HintLadder } from '../components/HintLadder';
 import { StepWidget } from '../widgets';
+import { createHackRun, HackContext, type HackRun } from '../widgets/hack/Hack';
 import { TopBar } from '../components/TopBar';
 import { Toolbar } from '../components/Toolbar';
 import './player.css';
@@ -70,6 +71,11 @@ export function Player({ mission }: { mission: Mission }) {
   const store = useStore();
   const { phase, index } = store.position.value;
   const step = phase === 'step' ? mission.steps[index] : undefined;
+  const hack = useRef<HackRun | null>(null);
+  if (hack.current?.mission !== mission || phase === 'intro' || phase === 'permission' || phase === 'outro') {
+    hack.current = null;
+  }
+  if (step?.config.kind === 'hack' && !hack.current) hack.current = createHackRun(mission);
   const [helpStep, setHelpStep] = useState<string | null>(null);
   const helpOpen = Boolean(step && helpStep === step.id);
   const closeHelp = () => {
@@ -83,7 +89,9 @@ export function Player({ mission }: { mission: Mission }) {
   } : undefined;
   return <div class="player"><TopBar title={mission.title}
     step={step ? `Step ${index + 1} of ${mission.steps.length}` : undefined} onHelp={help} helpOpen={helpOpen} />
-    <PlayerPhase mission={mission} helpOpen={helpOpen} closeHelp={closeHelp} />
+    <HackContext.Provider value={hack.current}>
+      <PlayerPhase mission={mission} helpOpen={helpOpen} closeHelp={closeHelp} />
+    </HackContext.Provider>
     <div class="player-navigation">
     {store.position.value.phase !== 'outro' && <BigButton onClick={() => store.go({ name: 'map' })}>Back</BigButton>}
     <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>

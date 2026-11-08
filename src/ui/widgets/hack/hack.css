@@ -1,0 +1,12 @@
+.hack-widget .hack-output { flex: 1; min-width: 0; }
+.hack-widget .terminal-echo { color: var(--prompt-color); }
+.hack-widget .terminal-solution { flex: none; }
+.hack-alarm { flex: none; padding: 4px 12px; color: var(--careful); font: 14px var(--font-mono); }
+.hack-widget .prompt-full { display: inline; }
+.hack-widget .prompt-short { display: none; }
+@media (max-width: 599px) {
+  .hack-widget .command-row { flex-wrap: wrap; }
+  .hack-widget .command-row > .terminal-prompt { width: 100%; max-width: none; font-size: 13px; }
+  .hack-widget .terminal-solution { padding: 4px 12px; }
+  .hack-widget .terminal-solution .speech-line { font-size: 13px; }
+}
