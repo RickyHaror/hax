@@ -241,6 +241,38 @@ export interface Sidekick {
   goodbye: Line[];
 }
 
+/* ---------- Agent Playground (free-play terminal, unlocked after Terminal Training) ---------- */
+
+/** A secret the player can discover in the playground. Each one found earns a small badge. */
+export interface PlaygroundEgg {
+  id: string;
+  name: string;
+  /** Found by reading a file, by running a secret command, or by visiting a folder. */
+  trigger: { type: 'read'; path: string } | { type: 'command'; command: string } | { type: 'cwd'; path: string };
+  /** What the sidekick says when it is found. */
+  found: Line[];
+}
+
+/** A secret command that only exists in the playground. Output is plain lines, or a named effect. */
+export interface PlaygroundCommand {
+  name: string;
+  /** One short line shown by `help` once the command has been discovered. */
+  help: string;
+  output: string[];
+  /** Optional visual effect key the engine plays, for example "matrix". */
+  effect?: string;
+}
+
+export interface Playground {
+  fs: FsDir;
+  cwd: string;
+  /** Mission id that unlocks the playground. */
+  unlockedBy: MissionId;
+  intro: Line[];
+  commands: PlaygroundCommand[];
+  eggs: PlaygroundEgg[];
+}
+
 export interface Mission {
   id: MissionId;
   /** Save-code bit index 0 to 23. Unique and stable forever. */
