@@ -5,14 +5,14 @@ import { trackForeignRequests } from './support/guards';
 test('the game loads and talks to no other website', async ({ page, baseURL }) => {
   const foreign = trackForeignRequests(page, baseURL!);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'HAX' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AGENT HQ' })).toBeVisible();
   await page.waitForLoadState('networkidle');
   expect(foreign).toEqual([]);
 });
 
 test('has no accessibility violations', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'HAX' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AGENT HQ' })).toBeVisible();
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
   expect(results.violations).toEqual([]);
 });
@@ -27,7 +27,7 @@ test('works offline after the first load', async ({ page, context }) => {
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'HAX' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AGENT HQ' })).toBeVisible();
   await context.setOffline(false);
 });
 
