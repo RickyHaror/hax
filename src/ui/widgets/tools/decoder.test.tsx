@@ -5,6 +5,7 @@ import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { caesarDecode } from '../../../engine/cipher';
 import { m3Zoo } from '../../../missions/m3-zoo';
+import { m7Graduation } from '../../../missions/m7-graduation';
 import { button, click, fill, input, submit } from '../../test/helpers';
 import { fixtureRegistry } from '../../test/fixtures';
 import { Toolbar } from '../../components/Toolbar';
@@ -21,9 +22,24 @@ function letterCenter(letter: HTMLElement, diameter: number) {
   const angle = parseFloat(letter.parentElement!.style.transform.slice(7)) * Math.PI / 180 || 0;
   return { x: x * Math.cos(angle) - y * Math.sin(angle), y: x * Math.sin(angle) + y * Math.cos(angle) };
 }
+function expectRingPositions(letters: HTMLElement[], diameter: number, turn: number) {
+  for (const [ringIndex, ring] of [letters.slice(0, 26), letters.slice(26)].entries()) {
+    const radius = (ringIndex === 0 ? 149 : 119) * diameter / 340;
+    const points = ring.map((letter) => letterCenter(letter, diameter));
+    expect(getComputedStyle(ring[0]!.parentElement!).transform).not.toContain('rotate');
+    for (const [index, point] of points.entries()) {
+      const angle = ((index + (ringIndex === 0 ? 0 : turn)) / 26 * 2 - .5) * Math.PI;
+      expect(point.x).toBeCloseTo(radius * Math.cos(angle));
+      expect(point.y).toBeCloseTo(radius * Math.sin(angle));
+      const next = points[(index + 1) % 26]!;
+      expect(Math.hypot(point.x - next.x, point.y - next.y)).toBeCloseTo(2 * radius * Math.sin(Math.PI / 26));
+      if (turn === 3) expect(getComputedStyle(ring[index]!).transform).toBe('translate(-50%, -50%)');
+    }
+  }
+}
 function viewportStyles(width: number, height: number) {
   const source = document.createElement('style');
-  source.textContent = ['src/styles/base.css', 'src/ui/widgets/tools/tools.css']
+  source.textContent = ['src/styles/base.css', 'src/ui/components/sidekick.css', 'src/ui/widgets/tools/tools.css']
     .map((path) => readFileSync(path, 'utf8')).join('\n');
   document.head.append(source);
   function active(rules: CSSRuleList): string {
@@ -43,54 +59,56 @@ function viewportStyles(width: number, height: number) {
   return source;
 }
 describe('decoder mission', () => {
-  it.each([[1366, 768], [1920, 1080]])('aligns Help me under the answer at %sx%s', async (width, height) => {
-    const styles = viewportStyles(width, height);
-    try {
-      const { root, deps } = await mountTool(decoderConfig);
-      const store = createStore({ ...deps, registry: fixtureRegistry([m3Zoo]) });
-      store.go({ name: 'player', missionId: m3Zoo.id });
-      store.phase(m3Zoo.id, { phase: 'step', index: 0 });
-      await act(() => render(<StoreContext.Provider value={store}><Player mission={m3Zoo} /></StoreContext.Provider>, root));
-      const hints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
-      for (let rung = 0; rung <= 3; rung++) {
-        const style = getComputedStyle(hints);
-        expect(style.display).toBe('flex');
-        expect(style.justifyContent).toBe('flex-start');
-        expect(style.marginInlineStart).toBe('calc(50% + 4px)');
-        if (rung < 3) await click(root, 'Help me');
-      }
-      expect(root.querySelector('.step-work')?.textContent).toContain(m3Zoo.steps[0]!.hints[2]!.text);
-      await act(() => store.phase(m3Zoo.id, { phase: 'step', index: 1 }));
-      const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
-      expect(getComputedStyle(otherHints).marginInlineStart).not.toBe('calc(50% + 4px)');
-    } finally { styles.remove(); }
-  });
+  it.each([m3Zoo, m7Graduation].flatMap((mission) => [[1366, 768], [1920, 1080]]
+    .map(([width, height]) => ({ mission, width: width!, height: height! }))))(
+    'stacks hints in the answer column for $mission.id at $width x $height', async ({ mission, width, height }) => {
+      const styles = viewportStyles(width, height);
+      try {
+        const { root, deps } = await mountTool(decoderConfig);
+        const store = createStore({ ...deps, registry: fixtureRegistry([mission]) });
+        const index = mission.steps.findIndex((step) => step.config.kind === 'decoder');
+        store.go({ name: 'player', missionId: mission.id });
+        store.phase(mission.id, { phase: 'step', index });
+        await act(() => render(<StoreContext.Provider value={store}><Player mission={mission} /></StoreContext.Provider>, root));
+        const hints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
+        for (let rung = 0; rung <= 3; rung++) {
+          const style = getComputedStyle(hints);
+          expect(style.display).toBe('flex');
+          expect(style.flexDirection).toBe('column');
+          expect(style.alignItems).toBe('stretch');
+          expect(style.marginInlineStart).toBe('calc(50% + 4px)');
+          if (rung < 3) await click(root, 'Help me');
+        }
+        expect(root.querySelector('.step-work')?.textContent).toContain(mission.steps[index]!.hints[2]!.text);
+        const otherIndex = mission.steps.findIndex((step) => step.config.kind !== 'decoder');
+        await act(() => store.phase(mission.id, { phase: 'step', index: otherIndex }));
+        const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
+        expect(getComputedStyle(otherHints).marginInlineStart).not.toBe('calc(50% + 4px)');
+      } finally { styles.remove(); }
+    });
   it.each([{ diameter: 340, font: 24 }, { diameter: 510, font: 36 }])(
     'spaces both alphabets apart at $diameter pixels through every shift', async ({ diameter, font }) => {
-      const { root } = await mountTool(decoderConfig);
-      const letters = [...root.querySelectorAll<HTMLElement>('.wheel-letter')];
-      expect(letters).toHaveLength(52);
-      for (const ring of [letters.slice(0, 26), letters.slice(26)]) {
-        expect(ring.map((letter) => letter.textContent).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-        const points = ring.map((letter) => letterCenter(letter, diameter));
-        const radius = Math.hypot(points[0]!.x, points[0]!.y);
-        for (const [index, point] of points.entries()) {
-          expect(Math.hypot(point.x, point.y)).toBeCloseTo(radius);
-          const next = points[(index + 1) % 26]!;
-          expect(Math.hypot(point.x - next.x, point.y - next.y)).toBeCloseTo(2 * radius * Math.sin(Math.PI / 26));
+      const styles = viewportStyles(diameter === 340 ? 1366 : 1920, diameter === 340 ? 768 : 1080);
+      try {
+        const { root } = await mountTool(decoderConfig);
+        const letters = [...root.querySelectorAll<HTMLElement>('.wheel-letter')];
+        expect(letters).toHaveLength(52);
+        for (const ring of [letters.slice(0, 26), letters.slice(26)]) {
+          expect(ring.map((letter) => letter.textContent).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
         }
-      }
-      // A circle around each monospace letter also covers its rotated corners.
-      const letterDiagonal = Math.hypot(font * .61, font);
-      for (let turn = 0; turn < 26; turn++) {
-        const points = letters.map((letter) => letterCenter(letter, diameter));
-        let gap = Infinity;
-        for (let a = 0; a < points.length; a++) for (let b = a + 1; b < points.length; b++) {
-          gap = Math.min(gap, Math.hypot(points[a]!.x - points[b]!.x, points[a]!.y - points[b]!.y));
+        // A circle around each letter covers its full width and height.
+        const letterDiagonal = Math.hypot(font * .61, font);
+        for (let turn = 0; turn < 26; turn++) {
+          expectRingPositions(letters, diameter, turn);
+          const points = letters.map((letter) => letterCenter(letter, diameter));
+          let gap = Infinity;
+          for (let a = 0; a < points.length; a++) for (let b = a + 1; b < points.length; b++) {
+            gap = Math.min(gap, Math.hypot(points[a]!.x - points[b]!.x, points[a]!.y - points[b]!.y));
+          }
+          expect(gap).toBeGreaterThan(letterDiagonal);
+          await click(root, 'Turn right');
         }
-        expect(gap).toBeGreaterThan(letterDiagonal);
-        await click(root, 'Turn right');
-      }
+      } finally { styles.remove(); }
     });
   it('keeps the toolbar dialog preview, turns and close control working', async () => {
     const { root, deps } = await mountTool(decoderConfig);

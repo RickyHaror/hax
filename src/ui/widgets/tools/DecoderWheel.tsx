@@ -10,9 +10,9 @@ export interface DecoderWheelProps {
   message?: string; shift: number; onShift: (shift: number) => void;
   children?: ComponentChildren; secretMessage?: ComponentChildren; footer?: ComponentChildren;
 }
-function Ring({ radius }: { radius: number }) {
+function Ring({ radius, shift = 0 }: { radius: number; shift?: number }) {
   return <>{[...ALPHABET].map((letter, index) => {
-    const angle = (index * 2 * Math.PI / 26) - Math.PI / 2;
+    const angle = ((index + shift) * 2 * Math.PI / 26) - Math.PI / 2;
     return <span class="wheel-letter" key={letter} style={{
       left: `${(170 + radius * Math.cos(angle)) / 3.4}%`,
       top: `${(170 + radius * Math.sin(angle)) / 3.4}%`,
@@ -29,8 +29,8 @@ function WheelFace({ current }: { current: number }) {
       <path d="M170 66 L164 80 L176 80 Z" class="wheel-pointer" />
     </svg>
     <div class="wheel-letters" aria-hidden="true"><Ring radius={149} />
-      <div class="wheel-inner" style={{ transform: `rotate(${current * 360 / 26}deg)` }}>
-        <Ring radius={119} />
+      <div class="wheel-inner-letters">
+        <Ring radius={119} shift={current} />
       </div>
     </div>
   </>;
@@ -79,11 +79,11 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage,
   }
   return <section class="decoder-wheel">
     <div class="wheel-layout">
-      <div class="wheel-control" role="slider" tabIndex={0} aria-label="Decoder wheel"
+      <div class="wheel-space"><div class="wheel-control" role="slider" tabIndex={0} aria-label="Decoder wheel"
         aria-valuemin={0} aria-valuemax={25} aria-valuenow={current} aria-valuetext={`Shift: ${current}`}
         onKeyDown={keyDown} {...drag}>
         <WheelFace current={current} />
-      </div>
+      </div></div>
       <div class="wheel-actions">
         <ReadingBox>
           <div class="decoder-messages">

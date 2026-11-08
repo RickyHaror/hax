@@ -4,11 +4,11 @@ import type { Mission } from '../src/engine/types';
 import { missions } from '../src/missions';
 import { begin } from './support/play';
 
-async function resumeLayout(page: Page, mission: Mission, phase: 'step' | 'outro' = 'step') {
+async function resumeLayout(page: Page, mission: Mission, phase: 'step' | 'outro' = 'step', index = 0) {
   const progress = { ...createProgress(), firstWord: 0, secondWord: 0, sidekick: 0,
     completed: Object.fromEntries(missions.filter((entry) => entry.id !== mission.id)
       .map((entry) => [entry.id, '2026-11-08T12:00:00.000Z'])),
-    current: { missionId: mission.id, stepId: JSON.stringify([phase, 0]) },
+    current: { missionId: mission.id, stepId: JSON.stringify([phase, index]) },
   };
   await page.addInitScript(({ key, progress }) => {
     localStorage.clear(); localStorage.setItem(key, JSON.stringify(progress));
@@ -75,22 +75,51 @@ test('decoder letters are readable and its controls fit the laptop', async ({ pa
     parseFloat(getComputedStyle(letter).fontSize))).toBeGreaterThan(fonts[0]!);
 });
 
-test('decoder Help me aligns with the answer column at both desktop sizes', async ({ page }) => {
+async function expectDecoderHintsFit(page: Page) {
+  const form = await page.locator('.decoder-tool .answer-form').boundingBox();
+  const label = await page.locator('.decoder-tool .answer-form > label').boundingBox();
+  const hints = page.getByRole('region', { name: 'Hints', exact: true });
+  const box = await hints.boundingBox();
+  const help = await page.getByRole('button', { name: 'Help me', exact: true }).boundingBox();
+  expect(form).not.toBeNull(); expect(label).not.toBeNull(); expect(box).not.toBeNull(); expect(help).not.toBeNull();
+  expect(Math.abs(help!.x - label!.x)).toBeLessThanOrEqual(4);
+  expect(help!.y).toBeGreaterThanOrEqual(form!.y + form!.height);
+  expect(Math.abs(box!.width - form!.width)).toBeLessThanOrEqual(4);
+  for (const control of [page.getByRole('textbox', { name: 'Answer', exact: true }),
+    page.getByRole('button', { name: 'Check', exact: true })]) {
+    const bounds = await control.boundingBox(); expect(bounds).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(bounds!.y + bounds!.height);
+    await expect(control).toBeInViewport({ ratio: 1 });
+  }
+  const words = hints.locator('.speaker-lines');
+  if (await words.count()) {
+    const bounds = await words.boundingBox(); expect(bounds).not.toBeNull();
+    expect(bounds!.y).toBeGreaterThanOrEqual(help!.y + help!.height);
+    expect(Math.abs(bounds!.width - form!.width)).toBeLessThanOrEqual(4);
+    await expect(words).toBeInViewport({ ratio: 1 });
+  }
+  const tool = await page.locator('.decoder-tool').evaluate((element) => ({
+    height: element.clientHeight, content: element.scrollHeight,
+    bottom: element.getBoundingClientRect().bottom,
+    controlsBottom: element.querySelector('.wheel-actions')!.getBoundingClientRect().bottom,
+  }));
+  expect(tool.height).toBeGreaterThan(0);
+  expect(tool.content).toBeLessThanOrEqual(tool.height);
+  expect(tool.controlsBottom).toBeLessThanOrEqual(tool.bottom - 6);
+  await expect(hints).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+}
+
+for (const id of ['m3-zoo', 'm7-graduation']) test(`${id} decoder hints fit below the answer at both desktop sizes`, async ({ page }) => {
+  const mission = missions.find((mission) => mission.id === id)!;
   for (const viewport of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
-    await resumeLayout(page, missions.find((mission) => mission.id === 'm3-zoo')!);
-    const hints = page.getByRole('region', { name: 'Hints', exact: true });
+    await resumeLayout(page, mission, 'step', mission.steps.findIndex((step) => step.config.kind === 'decoder'));
     const help = page.getByRole('button', { name: 'Help me', exact: true });
     for (let rung = 0; rung <= 3; rung++) {
-      const answer = await page.locator('.decoder-tool .answer-form').boundingBox();
       const wheel = await page.getByRole('slider', { name: 'Decoder wheel', exact: true }).boundingBox();
       expect(wheel!.width).toBeGreaterThanOrEqual(330);
-      const box = await help.boundingBox();
-      expect(Math.abs(box!.x - answer!.x)).toBeLessThanOrEqual(4);
-      expect(box!.y).toBeGreaterThanOrEqual(answer!.y + answer!.height);
-      expect(await hints.evaluate((element) => getComputedStyle(element).justifyContent)).toBe('flex-start');
-      await expect(help).toBeInViewport({ ratio: 1 });
-      await expectScreenFit(page);
+      await expectDecoderHintsFit(page);
       if (rung < 3) await help.click();
     }
   }

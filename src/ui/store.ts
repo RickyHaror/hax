@@ -167,7 +167,7 @@ export function createStore(deps: StoreDeps) {
     },
     parentReset() {
       const next = resetProgress(progress.value);
-      store.saved.value = clearPlayground(deps.storage) && saveProgress(deps.storage, next);
+      store.saved.value = saveProgress(deps.storage, next) && clearPlayground(deps.storage);
       if (!store.saved.value) return false;
       progress.value = next;
       save(next, false);
