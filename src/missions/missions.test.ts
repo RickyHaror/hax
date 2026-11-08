@@ -15,6 +15,10 @@ const missionTable = [
   ['m1-pizza', 'missions'],
   ['m2-toys', 'missions'],
   ['m3-zoo', 'missions'],
+  ['m4-cupcake', 'missions'],
+  ['m5-moon', 'missions'],
+  ['m6-socks', 'missions'],
+  ['m7-graduation', 'missions'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
@@ -142,11 +146,36 @@ function checkSolvable(config: StepConfig): void {
       expect(config.correct.length).toBeGreaterThan(0);
       for (const id of config.correct) expect(config.options.map((option) => option.id)).toContain(id);
       break;
+    case 'log-read': {
+      expect(config.lines.length).toBeGreaterThan(0);
+      for (const line of config.lines) expect(line.trim()).not.toBe('');
+      const ids = config.options.map((option) => option.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(ids).toContain(config.correct);
+      break;
+    }
+    case 'phish-spot': {
+      const ids = config.clues.map((clue) => clue.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      const fields = [config.email.from, config.email.subject, ...config.email.body, config.email.link ?? ''];
+      for (const clue of config.clues) {
+        expect(clue.match.trim()).not.toBe('');
+        expect(fields.some((field) => field.includes(clue.match)), clue.match).toBe(true);
+      }
+      expect(config.needed).toBeGreaterThanOrEqual(1);
+      expect(config.needed).toBeLessThanOrEqual(config.clues.length);
+      break;
+    }
     case 'drag-drop':
       for (const item of config.items) expect(config.zones.map((zone) => zone.id)).toContain(item.goesTo);
       break;
     case 'passphrase':
       expect(config.words.length).toBeGreaterThanOrEqual(config.count);
+      break;
+    case 'password-guess':
+      expect(config.username.trim()).not.toBe('');
+      expect(config.password.trim()).not.toBe('');
+      for (const entry of config.accept ?? []) expect(entry.trim()).not.toBe('');
       break;
     case 'decoder':
       expect(config.answer).toBe(decodeCaesar(config.message, config.shift));
