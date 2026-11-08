@@ -211,25 +211,3 @@ svg { flex-shrink: 0; max-width: 100%; }
   .name-pickers { grid-template-columns: 1fr; }
 }
 
-/* map */
-.panel:has(> .mission-map) { display: flex; flex-direction: column; padding: 16px; }
-.mission-map { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
-.map-header { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
-.map-header > div { min-width: 0; }
-.map-header h1 { font-size: 32px; margin: 0; }
-.map-header p { margin: 0; }
-.map-chapters { flex: 1; min-height: 0; overflow: auto; padding: 4px; }
-.map-chapters > section { margin-bottom: 16px; }
-.map-chapters h2 { margin: 0 0 8px; }
-.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-.map-card { position: relative; min-width: 0; border: 2px solid var(--muted); border-radius: 12px; background: var(--bg); }
-.map-card-next { border-color: var(--green); box-shadow: 0 0 12px #39ff9f70; }
-.map-card > .map-mission { display: flex; flex-direction: column; gap: 4px; width: 100%; margin: 0; padding: 12px; border: 0; text-align: left; }
-.map-card > .map-mission:disabled { color: var(--text); opacity: 1; }
-.map-title { min-height: 48px; padding-right: 56px; font-weight: bold; }
-.map-card > .read-aloud { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; margin: 0; padding: 0; }
-.map-next, .map-locked { margin: 0; padding: 0 12px 12px; }
-.map-next { color: var(--green); font-weight: bold; }
-.map-card > .speech-unavailable { display: block; padding: 0 12px 12px; }
-.map-actions { display: flex; flex-wrap: wrap; gap: 12px; flex: 0 0 auto; }
-.map-actions > button { margin: 0; }

@@ -160,3 +160,33 @@ test('onboarding fits with Next visible and no sideways scroll', async ({ page }
   expect(read!.x - (words!.x + words!.width)).toBeLessThanOrEqual(16);
   expect(read!.height).toBeGreaterThanOrEqual(48);
 });
+
+test('HQ mission wall fits the laptop while chapters scroll inside it', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const training = missions.filter((mission) => mission.chapter !== 'missions');
+  const progress = { ...createProgress(), firstWord: 0, secondWord: 0, sidekick: 0,
+    completed: Object.fromEntries(training.map((mission) => [mission.id, '2026-11-08T12:00:00.000Z'])),
+  };
+  await page.addInitScript(({ key, progress }) => {
+    localStorage.clear(); localStorage.setItem(key, JSON.stringify(progress));
+  }, { key: STORAGE_KEY, progress });
+  await page.goto('/'); await begin(page);
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole('button', { name: 'Agent Playground', exact: true })).toBeVisible();
+  await expect(page.getByText('Next mission', { exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'My agent card', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Settings', exact: true }).last()).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Stop for today', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+  const chapters = page.locator('.map-chapters');
+  expect(await chapters.evaluate((element) => getComputedStyle(element).overflowY)).toBe('auto');
+  const targets = await page.locator('.mission-map button').evaluateAll((buttons) => buttons
+    .filter((button) => button.getBoundingClientRect().height > 0)
+    .map((button) => ({ width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height })));
+  for (const target of targets) {
+    expect(target.width).toBeGreaterThanOrEqual(48);
+    expect(target.height).toBeGreaterThanOrEqual(48);
+  }
+  expect(await page.locator('.map-card-next').evaluate((element) => getComputedStyle(element).animationName)).toBe('none');
+});

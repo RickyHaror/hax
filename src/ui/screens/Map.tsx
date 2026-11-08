@@ -5,6 +5,7 @@ import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
 import { BigButton } from '../components/BigButton';
 import { ReadAloudButton, SpeechLine } from '../components/SpeechLine';
+import './map.css';
 function MissionCard({ mission, next }: { mission: Mission; next: boolean }) {
   const store = useStore();
   const card = useRef<HTMLElement>(null);
@@ -18,14 +19,18 @@ function MissionCard({ mission, next }: { mission: Mission; next: boolean }) {
   useEffect(() => {
     if (!next) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    card.current?.closest('.map-chapters > section')?.scrollIntoView?.({
-      block: 'start', behavior: reduced ? 'instant' : 'smooth',
+    card.current?.scrollIntoView?.({
+      block: 'nearest', behavior: reduced ? 'instant' : 'smooth',
     });
   }, [next]);
-  return <section ref={card} class={`map-card${next ? ' map-card-next' : ''}`}>
+  const state = done ? ' map-card-done' : !unlocked ? ' map-card-locked' : '';
+  return <section ref={card} class={`map-card${state}${next ? ' map-card-next' : ''}`}>
     <BigButton class="map-mission" disabled={!unlocked} onClick={() => store.openMission(mission.id)}>
-      <span class="map-title">{done ? '✓ ' : !unlocked ? '🔒 ' : ''}{mission.title}</span>
-      <span>{mission.blurb}</span><span>{duration}</span>
+      <span class="map-title"><span class="map-stamp">{done ? '✓ ' : !unlocked ? '🔒 ' : ''}</span>{mission.title}</span>
+      <span class="map-art" aria-hidden="true">
+        <Art artKey={mission.client?.art ?? mission.badge.art} title="" size={88} />
+      </span>
+      <span class="map-blurb">{mission.blurb}</span><span class="map-duration">{duration}</span>
     </BigButton>
     {next && <p class="map-next">Next mission</p>}
     {lockedText && <p class="map-locked">{lockedText}</p>}
@@ -64,6 +69,7 @@ export function Map() {
       </section> : null;
     })}</div>
     <footer class="map-actions">
+      <BigButton onClick={() => store.visit({ name: 'idcard' })}>My agent card</BigButton>
       <BigButton onClick={() => store.visit({ name: 'settings' })}>Settings</BigButton>
       <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>
     </footer>

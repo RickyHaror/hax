@@ -1,6 +1,6 @@
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Mission } from '../engine/types';
+import type { ArtComponent, Mission } from '../engine/types';
 import { client, dependent, fixtureRegistry, login } from './test/fixtures';
 import { click, fakeDeps, identityStore, mount, unmount } from './test/helpers';
 
@@ -13,8 +13,12 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-async function showMap(missions: readonly Mission[] = [dependent, client, login], completed: string[] = []) {
+async function showMap(
+  missions: readonly Mission[] = [dependent, client, login], completed: string[] = [],
+  art: Record<string, ArtComponent> = {},
+) {
   const deps = fakeDeps(); deps.registry = fixtureRegistry(missions);
+  Object.assign(deps.registry.art, art);
   const store = identityStore(deps);
   store.progress.value = { ...store.progress.value,
     completed: Object.fromEntries(completed.map((id) => [id, deps.now().toISOString()])) };
@@ -30,6 +34,47 @@ function missionButton(title: string): HTMLButtonElement {
 }
 
 describe('mission map', () => {
+  it.each([true, false])('uses client art when present, otherwise badge art: client %s', async (hasClient) => {
+    const clientArt = vi.fn<ArtComponent>(({ size, title }) => <svg width={size} height={size} role="img" aria-label={title} />);
+    const badgeArt = vi.fn<ArtComponent>(({ size, title }) => <svg width={size} height={size} role="img" aria-label={title} />);
+    const mission: Mission = { ...client, client: hasClient ? { ...client.client!, art: 'client-logo' } : undefined,
+      badge: { ...client.badge, art: 'training-badge' } };
+    await showMap([mission], [], { 'client-logo': clientArt, 'training-badge': badgeArt });
+    const chosen = hasClient ? clientArt : badgeArt;
+    const unused = hasClient ? badgeArt : clientArt;
+    expect(chosen).toHaveBeenCalled();
+    expect(chosen.mock.calls[0]?.[0]).toEqual({ size: 88, title: '' });
+    expect(unused).not.toHaveBeenCalled();
+    const button = missionButton(mission.title);
+    expect(button.textContent).toBe(mission.title + mission.blurb + '3 minutes');
+    expect(button.querySelector('svg')?.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('keeps fallback art decorative and keeps done, next and locked text', async () => {
+    await showMap(undefined, [login.id]);
+    const done = missionButton(`✓ ${login.title}`);
+    const next = missionButton(client.title);
+    const locked = missionButton(`🔒 ${dependent.title}`);
+    for (const button of [done, next, locked]) {
+      expect(button.querySelector('svg[role="img"]')).not.toBeNull();
+      expect(button.querySelector('svg')?.closest('[aria-hidden="true"]')).not.toBeNull();
+    }
+    expect(done.textContent).toBe(`✓ ${login.title}${login.blurb}1 minute`);
+    expect(next.parentElement?.textContent).toContain('Next mission');
+    expect(locked.parentElement?.textContent).toContain(`Finish ${client.title} first`);
+    expect(locked.disabled).toBe(true);
+  });
+
+  it('opens the agent card and returns to the map with Back', async () => {
+    const { store } = await showMap();
+    await click(root, 'My agent card');
+    expect(store.screen.value).toEqual({ name: 'idcard' });
+    expect(root.querySelector('h1')?.textContent).toContain('Agent ID card');
+    await click(root, 'Back');
+    expect(store.screen.value).toEqual({ name: 'map' });
+    expect(root.textContent).toContain('My agent card');
+  });
+
   it.each([
     { available: false, complete: true, visible: false },
     { available: true, complete: false, visible: false },
@@ -100,14 +145,24 @@ describe('mission map', () => {
       { text: expect.stringContaining(`Finish ${client.title} first`) }, expect.any(Object));
   });
 
-  it.each([false, true])('scrolls the next chapter to its heading on mount, reduced motion: %s', async (reduced) => {
+  it.each([
+    { reduced: false, later: false }, { reduced: true, later: false },
+    { reduced: false, later: true }, { reduced: true, later: true },
+  ])('scrolls the whole next card into view, reduced: $reduced, later row: $later', async ({ reduced, later }) => {
     const scroll = vi.fn();
     Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scroll });
     const matchMedia = vi.fn(() => ({ matches: reduced }));
     vi.stubGlobal('matchMedia', matchMedia);
-    await showMap(undefined, [login.id]);
+    const missions = Array.from({ length: 6 }, (_, index) => ({
+      ...client, id: `patrol-${index}`, bit: index + 1, order: index + 1, title: `Patrol ${index + 1}`,
+    }));
+    const target = missions[later ? missions.length - 1 : 0]!;
+    await showMap([login, ...missions], [login.id, ...missions.slice(0, later ? -1 : 0).map((mission) => mission.id)]);
     expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
-    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
-    expect(scroll.mock.contexts[0]).toBe(missionButton(client.title).closest('section[aria-label="Missions"]'));
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
+    const card = missionButton(target.title).parentElement!;
+    expect(scroll.mock.contexts[0]).toBe(card);
+    expect(card.textContent).toContain('Next mission');
+    expect(card.querySelector('button[aria-label="Read aloud"]')).not.toBeNull();
   });
 });
