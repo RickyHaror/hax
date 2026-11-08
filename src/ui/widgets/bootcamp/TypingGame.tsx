@@ -7,6 +7,7 @@ import { isEditingOrInDialog } from '../../components/keyboard';
 import { useStore } from '../../store';
 import { useCompletion, useKeyboard, useReducedMotion } from './hooks';
 import { fall, keyName, sameKey, typingSpeed } from './helpers';
+import { TrainingPanel } from './TrainingPanel';
 function usePackets({ config, showMe, onComplete }: WidgetProps<TypingGameConfig>) {
   const store = useStore(), finish = useCompletion(onComplete), reduced = useReducedMotion();
   const model = useRef({ caught: 0, letters: 0, position: 0, speed: 4 });
@@ -45,7 +46,7 @@ function usePackets({ config, showMe, onComplete }: WidgetProps<TypingGameConfig
 export function TypingGame(props: WidgetProps<TypingGameConfig>) {
   const { state, word, nudge, catchWord } = usePackets(props);
   const done = state.caught >= props.config.goal;
-  return <section class="bootcamp" aria-label="Packet catcher">
+  return <TrainingPanel label="Packet catcher">
     <div class="bc-score">
     <div aria-live="polite"><SpeechLine line={{ text: `Caught ${state.caught} of ${props.config.goal}` }} /></div>
     {props.showMe && !done && <div class="bc-next-letter"><SpeechLine line={{ text: `Type ${keyName(word[state.letters] ?? '')}` }} /></div>}
@@ -56,5 +57,5 @@ export function TypingGame(props: WidgetProps<TypingGameConfig>) {
       {[...word].map((letter, index) => <span key={index} class={index < state.letters ? 'bc-typed' : index === state.letters ? 'bc-next' : ''}>{letter}</span>)}
     </BigButton>}</div>
     {nudge && <SpeechLine line={{ text: nudge }} />}
-  </section>;
+  </TrainingPanel>;
 }

@@ -8,6 +8,7 @@ import { useStore } from '../../store';
 import { useCompletion, useKeyboard } from './hooks';
 import { keyLayout, keyName, keyPrompt, sameKey } from './helpers';
 import { ReadingBox } from '../tools/ReadingBox';
+import { TrainingPanel } from './TrainingPanel';
 function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>) {
   const store = useStore(), finish = useCompletion(onComplete);
   const index = useRef(0), timer = useRef<number | undefined>(undefined);
@@ -39,7 +40,7 @@ function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>)
 }
 export function KeyFind(props: WidgetProps<KeyFindConfig>) {
   const { target, flash, nudge, press } = useKeyQuest(props);
-  return <section class="bootcamp" aria-label="Key practice">
+  return <TrainingPanel label="Key practice">
     <SpeechLine line={{ text: target === undefined ? 'You found every key!' : keyPrompt(target) }} />
     <ReadingBox><div class={`bc-keyboard ${props.showMe ? 'bc-key-help' : ''}`} aria-label="Practice keyboard">{keyLayout().map((row, index) => <div class="bc-key-row" key={index}>
       {row.map((cap, position) => <BigButton key={position} aria-label={keyName(cap.key)} tabIndex={props.showMe ? 0 : -1}
@@ -52,5 +53,5 @@ export function KeyFind(props: WidgetProps<KeyFindConfig>) {
       </BigButton>)}
     </div>)}</div></ReadingBox>
     {nudge && <SpeechLine line={{ text: nudge }} />}
-  </section>;
+  </TrainingPanel>;
 }

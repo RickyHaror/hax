@@ -5,6 +5,7 @@ import { PinPad } from './parent/PinPad';
 import { ProgressLists } from './parent/ProgressLists';
 import { PanelSettings } from './parent/PanelSettings';
 import { ProgressActions } from './parent/ProgressActions';
+import { TerminalWindow } from '../terminal/TerminalWindow';
 import './parent.css';
 
 export function Parent() {
@@ -13,11 +14,13 @@ export function Parent() {
   const [changing, setChanging] = useState(false);
   return <div class="parent-screen"><header><h1>Grown-up settings</h1>
     <BigButton onClick={store.back}>Back</BigButton></header>
+    <TerminalWindow title="hq · grown-up settings" status={!open || changing ? 'PIN' : 'OPEN'}>
     {!open || changing ? <PinPad changing={changing} onOpen={() => { setOpen(true); setChanging(false); }} />
       : <div class="parent-reading" role="region" aria-label="Grown-up settings sections" tabIndex={0}>
           <ProgressLists /><PanelSettings /><ProgressActions />
           <section aria-label="Change PIN"><h2>Change PIN</h2>
             <BigButton onClick={() => setChanging(true)}>Change PIN</BigButton></section>
         </div>}
+    </TerminalWindow>
   </div>;
 }

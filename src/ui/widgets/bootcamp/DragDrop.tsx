@@ -7,6 +7,7 @@ import { Art } from '../../components/Art';
 import { useStore } from '../../store';
 import { useCompletion, useReducedMotion } from './hooks';
 import { useDrag } from './drag';
+import { TrainingPanel } from './TrainingPanel';
 function usePlacements({ config, showMe, onComplete }: WidgetProps<DragDropConfig>) {
   const store = useStore(), finish = useCompletion(onComplete), reduced = useReducedMotion();
   const revealCount = store.revealCount.value;
@@ -47,12 +48,12 @@ export function DragDrop(props: WidgetProps<DragDropConfig>) {
       <Art artKey={item.art} title={item.label} size={56} /><span>{item.label}</span>
     </BigButton>;
   }
-  return <section class="bootcamp" aria-label="Sticker practice">
+  return <TrainingPanel label="Sticker practice">
     <div class="bc-items">{config.items.filter((item) => !ids.includes(item.id)).map(itemButton)}</div>
     <div class="bc-zones">{config.zones.map((zone) => <section key={zone.id} role="region" aria-label={zone.label} data-bc-zone={zone.id}>
       <BigButton aria-label={`Put in ${zone.label}`} onClick={() => { if (selected) drop(selected, zone.id); }}>{zone.label}</BigButton>
       <div class="bc-items">{config.items.filter((item) => ids.includes(item.id) && item.goesTo === zone.id).map(itemButton)}</div>
     </section>)}</div>
     {nudge && <SpeechLine line={{ text: nudge }} />}
-  </section>;
+  </TrainingPanel>;
 }

@@ -6,6 +6,7 @@ import { SpeechLine } from '../../components/SpeechLine';
 import { Art } from '../../components/Art';
 import { useStore } from '../../store';
 import { useCompletion } from './hooks';
+import { TrainingPanel } from './TrainingPanel';
 export function ClickTargets({ config, showMe, onComplete }: WidgetProps<ClickTargetsConfig>) {
   const store = useStore();
   const finish = useCompletion(onComplete);
@@ -22,7 +23,7 @@ export function ClickTargets({ config, showMe, onComplete }: WidgetProps<ClickTa
     if (config.action === 'click' || showMe) strike(id);
     else { setPulse(id); store.sound.play('tryAgain'); }
   }
-  return <section class="bootcamp" aria-label="Click practice">
+  return <TrainingPanel label="Click practice">
     <div class="bc-targets">{config.targets.map((target) => <BigButton key={target.id}
       aria-label={target.label} aria-pressed={hit.includes(target.id)}
       class={!hit.includes(target.id) && (showMe || pulse === target.id) ? 'bc-pulse' : ''}
@@ -34,5 +35,5 @@ export function ClickTargets({ config, showMe, onComplete }: WidgetProps<ClickTa
       <span>{target.label} {hit.includes(target.id) && <span aria-hidden="true">✓</span>}</span>
     </BigButton>)}</div>
     {pulse && <SpeechLine line={{ text: 'Click two times, fast!' }} />}
-  </section>;
+  </TrainingPanel>;
 }

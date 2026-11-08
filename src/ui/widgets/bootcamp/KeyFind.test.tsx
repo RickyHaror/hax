@@ -42,9 +42,15 @@ describe('key quest', () => {
   });
   it('keeps Read aloud reachable with Space while blocking page scroll', async () => {
     const { root, complete, deps } = await mountWidget({ kind: 'key-find', keys: ['c'] }, true);
-    await activate(root, 'Read aloud', ' ');
+    await activate(root.querySelector<HTMLElement>('.bc-body')!, 'Read aloud', ' ');
     expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Find the letter C.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
     expect(complete).not.toHaveBeenCalled(); expect(deps.sound.play).not.toHaveBeenCalled();
+  });
+  it('reads the agent training heading without advancing the key practice', async () => {
+    const { root, complete, deps } = await mountWidget({ kind: 'key-find', keys: ['c'] });
+    await activate(root.querySelector<HTMLElement>('.bc-titlebar')!, 'Read aloud', ' ');
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Agent training' }, expect.objectContaining({ onEnd: expect.any(Function) }));
+    expect(complete).not.toHaveBeenCalled();
   });
   it('clears key flashes and listeners when removed', async () => {
     vi.useFakeTimers();

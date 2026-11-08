@@ -1,32 +1,132 @@
-.bootcamp { max-height: 380px; overflow: auto; padding: 8px; }
-@media (min-width: 1000px) {
-  .bc-score { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bootcamp {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border: 1px solid var(--line-2); border-radius: var(--r-card);
+  background: var(--term); color: var(--text); overflow: hidden;
+  font: 16px/1.4 var(--font-sans);
 }
-.bc-targets, .bc-items, .bc-zones { display: flex; flex-wrap: wrap; gap: 12px; }
-.bc-targets > button { display: grid; justify-items: center; min-width: calc(140px * var(--player-scale)); min-height: calc(150px * var(--player-scale)); }
+.player .step-work > .bootcamp { overflow: hidden; gap: 0; }
+.bc-titlebar {
+  display: flex; flex: none; align-items: center; padding: var(--sp-1) var(--sp-3);
+  border-bottom: 1px solid var(--line); background: var(--raised); color: var(--go);
+}
+.player .bootcamp .bc-titlebar .speech-line { font: 700 16px/1.4 var(--font-mono); }
+.bootcamp > .bc-body {
+  display: flex; flex: 1; flex-direction: column; gap: var(--sp-2);
+  min-height: 0; min-width: 0; padding: var(--sp-3); overflow: auto;
+}
+.bc-body > * { flex: none; min-width: 0; }
+.player .bootcamp .bc-body > .reading-frame { flex: 1; min-height: 96px; max-height: none; }
+.player .bootcamp .speech-line { margin: 0; font: 16px/1.4 var(--font-sans); }
+.player .bootcamp button {
+  min-width: var(--target); min-height: var(--target); margin: 0;
+  padding: var(--sp-2) var(--sp-3); border: 1px solid var(--line-2);
+  border-radius: var(--r-chip); background: var(--raised); color: var(--text);
+  font: 700 16px/1.35 var(--font-mono); box-shadow: none; overflow-wrap: anywhere;
+}
+.player .bootcamp button:hover { border-color: var(--info); background: var(--panel); }
+.player .bootcamp button[aria-pressed='true'] { border-color: var(--go); color: var(--go); }
+.player .bootcamp button:disabled { color: var(--text-2); border-color: var(--line); }
+.player .bootcamp .read-aloud {
+  width: var(--target); height: var(--target); min-width: var(--target); padding: 0;
+  color: var(--info); flex: none;
+}
+.player .bootcamp :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: none; }
+.bc-targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+.player .bc-targets > button { display: grid; justify-items: center; align-content: center; gap: var(--sp-2); min-height: 140px; }
+.bc-targets svg { width: 80px; height: 80px; }
 .bc-pulse { animation: bc-pulse 1.8s ease-in-out infinite; }
-.bc-item { display: flex; align-items: center; gap: 8px; touch-action: none; transition: transform .4s ease-out; }
-.bc-item[aria-pressed='true'] { transform: translateY(-8px); box-shadow: 0 8px 12px #0008; }
+.bc-items, .bc-zones { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.bc-item { display: flex; align-items: center; gap: var(--sp-2); touch-action: none; transition: transform .4s ease-out; }
+.bc-item[aria-pressed='true'] { transform: translateY(-4px); }
 .bc-dragging { position: relative; z-index: 2; transition: none; pointer-events: none; }
 .bc-zones .bc-item { animation: bc-place .25s ease-out; }
-.bc-zones { margin-top: 16px; }
-.bc-zones > section { flex: 1; min-width: 200px; min-height: 110px; padding: 10px; border: 2px dashed var(--green); border-radius: 14px; }
-.bc-keyboard { max-width: 960px; min-width: 680px; margin: auto; }
-.bc-key-row { display: flex; gap: 4px; justify-content: center; margin: 4px 0; }
-.bc-key-row:nth-child(2) { padding: 0 44px 0 20px; }
-.bc-key-row:nth-child(3) { padding-left: 32px; }
-.bc-key-row > button { flex-basis: 0; margin: 0; min-height: calc(48px * var(--player-scale)); padding: 2px 4px; font-size: calc(24px * var(--player-scale)); }
+.bc-zones > section {
+  flex: 1; min-width: 0; min-height: 110px; padding: var(--sp-3);
+  border: 1px dashed var(--info); border-radius: var(--r-card); background: var(--panel);
+}
+.bc-zones > section > button { margin-bottom: var(--sp-2); }
+.bc-keyboard { width: 100%; max-width: 960px; min-width: 0; margin: auto; }
+.bc-key-row { display: flex; gap: var(--sp-1); justify-content: center; margin: var(--sp-1) 0; }
+.bc-key-row:nth-child(2) { padding: 0 var(--sp-7) 0 var(--sp-4); }
+.bc-key-row:nth-child(3) { padding-left: var(--sp-6); }
+.player .bootcamp .bc-key-row > button {
+  flex-basis: 0; min-width: var(--target); min-height: var(--target);
+  padding: var(--sp-1); font-size: 16px; border-bottom-width: 3px;
+}
 .bc-key-row:last-child > button { flex: 0 1 52% !important; }
-.bc-key-target { background: #185039; box-shadow: inset 0 0 0 3px var(--green), 0 0 12px var(--green); }
-.bc-key-help .bc-key-target { box-shadow: inset 0 0 0 4px var(--green), 0 0 18px var(--green); font-weight: bold; }
-.bc-key-flash { outline: 4px solid #fff3a1; outline-offset: -6px; }
-.bc-play-area { position: relative; height: calc(230px * var(--player-scale)); overflow: hidden; border: 2px solid var(--muted); border-radius: 14px; }
-.bc-packet { position: absolute; top: 8px; left: 50%; font: calc(36px * var(--player-scale)) var(--font-code); letter-spacing: .15em; }
-.bc-typed { color: var(--green); text-decoration: underline; }
-.bc-next { background: #185039; border-bottom: 3px solid #fff3a1; }
-.bc-next-letter .speech-line > span { font-size: calc(44px * var(--player-scale)); font-weight: bold; }
-@keyframes bc-pulse { 50% { box-shadow: 0 0 0 6px var(--green); } }
+.player .bootcamp .bc-key-target { background: var(--go); color: var(--ink-go); border-color: var(--go); }
+.bc-key-help .bc-key-target { font-weight: 800; }
+.bc-key-flash { outline: 3px solid var(--focus); outline-offset: -5px; }
+.bc-score { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.bc-play-area {
+  position: relative; height: 230px; min-height: 230px; overflow: hidden;
+  border: 1px solid var(--line-2); border-radius: var(--r-chip); background: var(--term-input);
+}
+.player .bootcamp .bc-packet {
+  position: absolute; top: var(--sp-2); left: 50%; min-height: 64px;
+  font: 700 32px/1.3 var(--font-mono); letter-spacing: .15em; white-space: nowrap;
+}
+.bc-typed { color: var(--go); text-decoration: underline; }
+.bc-next { color: var(--info); border-bottom: 3px solid var(--focus); }
+.player .bc-next-letter .speech-line { font-weight: 700; }
+
+/* Files, choices and word tiles are also Boot Camp training tools. */
+.player .step-work > .explorer-widget {
+  padding: var(--sp-3); border: 1px solid var(--line-2); border-radius: var(--r-card);
+  background: var(--term); color: var(--text); gap: var(--sp-2); font: 16px/1.4 var(--font-sans);
+}
+.player .explorer-widget .speech-line { margin: 0; font: 16px/1.4 var(--font-sans); }
+.player .explorer-widget button {
+  min-height: var(--target); min-width: var(--target); margin: 0;
+  padding: var(--sp-2) var(--sp-3); border: 1px solid var(--line-2);
+  border-radius: var(--r-chip); background: var(--raised); color: var(--text);
+  font: 700 16px/1.4 var(--font-mono); box-shadow: none;
+}
+.player .explorer-widget button:hover { border-color: var(--info); background: var(--panel); }
+.player .explorer-widget button[aria-pressed='true'] { border-color: var(--go); color: var(--go); }
+.player .explorer-widget button:disabled { color: var(--text-2); }
+.player .explorer-widget :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: none; }
+.player .explorer-widget .read-aloud { width: var(--target); height: var(--target); padding: 0; color: var(--info); flex: none; }
+.player .file-window .file-title {
+  margin: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3)) 0;
+  padding: var(--sp-1) var(--sp-3); border-bottom: 1px solid var(--line);
+  border-radius: 0; background: var(--raised); color: var(--go); font-family: var(--font-mono);
+}
+.player .file-title .speech-line { font-family: var(--font-mono); }
+.player .file-crumbs { gap: var(--sp-2); }
+.player .file-entry { flex-basis: 160px; min-width: 0; }
+.player .file-icon { width: 100%; min-height: 104px; }
+.player .file-icon svg { fill: var(--panel); stroke: var(--info); }
+.player .choice-options { gap: var(--sp-2); }
+.player .choice-options > div { padding: 0; }
+.player .choice-options > div > button { width: 100%; }
+.player .word-tiles { gap: var(--sp-2); }
+.player .passphrase-preview .speech-line > span { font: 20px/1.4 var(--font-mono); }
+.player .passphrase-widget > button { align-self: start; background: var(--go); color: var(--ink-go); border-color: var(--go); }
+.player .passphrase-widget > button:disabled { background: var(--raised); color: var(--text-2); border-color: var(--line-2); }
+@keyframes bc-pulse { 50% { outline: 3px solid var(--go); outline-offset: -4px; } }
 @keyframes bc-place { from { transform: translateY(-12px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
+@media (max-width: 599px) {
+  .bootcamp > .bc-body { padding: var(--sp-2); }
+  .player .bootcamp .bc-body > .reading-frame { min-height: 0; }
+  .bc-targets { gap: var(--sp-2); }
+  .player .bc-targets > button { min-height: 120px; padding: var(--sp-2); }
+  .bc-targets svg { width: 56px; height: 56px; }
+  .player .bc-items > .bc-item { flex-direction: column; flex: 1 1 80px; padding: var(--sp-2); }
+  .bc-item svg { width: 40px; height: 40px; }
+  .bc-zones > section { padding: var(--sp-2); }
+  .player .bootcamp .bc-keyboard { display: grid; grid-template-columns: repeat(5, minmax(var(--target), 1fr)); gap: var(--sp-1); padding: var(--sp-1); }
+  .player .bootcamp .bc-key-row { display: contents; }
+  .player .bootcamp .bc-key-row > button { min-width: var(--target); font-size: 14px; padding: var(--sp-1); }
+  .player .bootcamp .bc-key-row > button[aria-label='Backspace'],
+  .player .bootcamp .bc-key-row > button[aria-label='Enter'],
+  .player .bootcamp .bc-key-row > button[aria-label='Shift'] { grid-column: span 2; }
+  .player .bootcamp .bc-key-row > button[aria-label='Space'] { grid-column: 1 / -1; }
+  .player .bootcamp .speech-line, .player .explorer-widget .speech-line { font-size: 14px; }
+  .player .explorer-widget button { font-size: 14px; }
+  .player .file-entry { flex-basis: calc(50% - var(--sp-2)); }
+  .player .file-items { gap: var(--sp-2); padding: var(--sp-1); }
+}
 @media (prefers-reduced-motion: reduce) {
   .bootcamp *, .bootcamp *::before, .bootcamp *::after { animation: none !important; transition: none !important; }
 }
