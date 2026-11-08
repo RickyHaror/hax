@@ -1,42 +1,61 @@
+import { useEffect, useRef } from 'preact/hooks';
 import { isUnlocked, rank } from '../../engine/progress';
 import type { Mission } from '../../engine/types';
 import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
 import { BigButton } from '../components/BigButton';
 import { ReadAloudButton, SpeechLine } from '../components/SpeechLine';
-function MissionCard({ mission }: { mission: Mission }) {
+function MissionCard({ mission, next }: { mission: Mission; next: boolean }) {
   const store = useStore();
+  const card = useRef<HTMLElement>(null);
   const progress = store.progress.value;
   const unlocked = isUnlocked(progress, mission);
+  const done = Object.hasOwn(progress.completed, mission.id);
   const missing = mission.requires.find((id) => !Object.hasOwn(progress.completed, id));
   const title = store.registry.missions.find((m) => m.id === missing)?.title ?? 'the first mission';
-  return <section class="card">
-    <BigButton disabled={!unlocked} onClick={() => store.openMission(mission.id)}>
-      <span>{Object.hasOwn(progress.completed, mission.id) ? '✓ ' : !unlocked ? '🔒 ' : ''}{mission.title}</span>
-      <span>{mission.blurb}</span><span>{mission.minutes} minutes</span>
+  const lockedText = unlocked ? '' : `Finish ${title} first`;
+  const duration = `${mission.minutes} ${mission.minutes === 1 ? 'minute' : 'minutes'}`;
+  useEffect(() => {
+    if (!next) return;
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    card.current?.scrollIntoView?.({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
+  }, [next]);
+  return <section ref={card} class={`map-card${next ? ' map-card-next' : ''}`}>
+    <BigButton class="map-mission" disabled={!unlocked} onClick={() => store.openMission(mission.id)}>
+      <span class="map-title">{done ? '✓ ' : !unlocked ? '🔒 ' : ''}{mission.title}</span>
+      <span>{mission.blurb}</span><span>{duration}</span>
     </BigButton>
-    <ReadAloudButton line={{ text: mission.blurb }} />
-    {!unlocked && <SpeechLine line={{ text: `Finish ${title} first` }} />}
+    {next && <p class="map-next">Next mission</p>}
+    {lockedText && <p class="map-locked">{lockedText}</p>}
+    <ReadAloudButton line={{ text: [mission.title, mission.blurb, duration, lockedText,
+      next ? 'Next mission' : ''].filter(Boolean).join('. ') }} />
   </section>;
 }
 export function Map() {
   const store = useStore();
   const progress = store.progress.value;
   const buddy = store.registry.sidekicks[progress.sidekick ?? 0] ?? store.registry.sidekicks[0]!;
+  const next = store.registry.missions.find((mission) =>
+    isUnlocked(progress, mission) && !Object.hasOwn(progress.completed, mission.id));
   const chapters = [['login', 'Login'], ['bootcamp', 'Boot Camp'], ['terminal', 'Terminal Training'], ['missions', 'Missions']] as const;
-  return <>
-    <h1>{hackerName(store.progress, store.registry)}</h1>
-    <Art artKey={buddy.art} title={buddy.name} /><p>{buddy.name} · {rank(Object.keys(progress.completed).length)}</p>
+  return <div class="mission-map">
+    <header class="map-header">
+      <Art artKey={buddy.art} title={buddy.name} size={56} />
+      <div><h1>{hackerName(store.progress, store.registry)}</h1>
+        <p>{buddy.name} · {rank(Object.keys(progress.completed).length)}</p></div>
+    </header>
     {store.notice.value && <SpeechLine line={{ text: store.notice.value }} />}
     {!store.registry.missions.length && <SpeechLine line={{ text: 'Missions coming soon' }} />}
-    {chapters.map(([chapter, title]) => {
+    <div class="map-chapters">{chapters.map(([chapter, title]) => {
       const missions = store.registry.missions.filter((mission) => mission.chapter === chapter);
       return missions.length ? <section key={chapter} aria-label={title}>
-        <h2>{title}</h2><div class="choices">{missions
-          .map((mission) => <MissionCard key={mission.id} mission={mission} />)}</div>
+        <h2>{title}</h2><div class="map-grid">{missions
+          .map((mission) => <MissionCard key={mission.id} mission={mission} next={mission.id === next?.id} />)}</div>
       </section> : null;
-    })}
-    <BigButton onClick={() => store.visit({ name: 'settings' })}>Settings</BigButton>
-    <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>
-  </>;
+    })}</div>
+    <footer class="map-actions">
+      <BigButton onClick={() => store.visit({ name: 'settings' })}>Settings</BigButton>
+      <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>
+    </footer>
+  </div>;
 }
