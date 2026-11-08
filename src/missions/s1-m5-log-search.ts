@@ -100,6 +100,7 @@ export const s1m5LogSearch: Mission = {
       lines: [
         { text: 'Use grep to find lines with one word.' },
         { text: 'Try the word oops. It marks a small bump.' },
+        { text: 'Put the word after grep, then the file path.' },
       ],
       hints: [
         { text: 'You can search without reading the whole log.' },
@@ -145,7 +146,7 @@ export const s1m5LogSearch: Mission = {
       hints: [
         { text: 'You found the one line you need.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add grep, hyphen, finds, hyphen, the, hyphen, needle. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Job done! Mr Pages rings his book cart bell.' }],
       config: {

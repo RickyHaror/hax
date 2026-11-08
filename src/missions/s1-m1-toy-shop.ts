@@ -12,7 +12,7 @@ export const s1m1ToyShop: Mission = {
     goal: { text: 'Please find the flag on my computer.' },
     allowed: ['shop-pc'], flag: 'CLUE{default-passwords-are-easy}',
   },
-  alarm: { limit: 5 },
+  alarm: { limit: 8 },
   teaches: ['login', 'whoami', 'ls'],
   machines: [{
     host: 'shop-pc', owner: 'Corner Shop', user: 'admin', color: 'shop',
@@ -36,41 +36,24 @@ export const s1m1ToyShop: Mission = {
   ],
   steps: [
     {
-      id: 'connect', title: 'Visit the shop',
+      id: 'connect', title: 'Try the old password',
       lines: [
         { text: 'Connect takes you to a pretend computer.' },
         { text: 'The shop computer is called shop-pc.' },
-        { text: 'If it asks, use admin for both name and password.' },
-      ],
-      hints: [
-        { text: 'Sam gave us one computer to check.' },
-        { text: 'Use connect with the shop computer name.' },
         { text: 'Type connect shop-pc and press Enter.' },
-      ],
-      success: [{ text: 'You found the toy shop computer!' }],
-      config: {
-        kind: 'hack', start: 'hq', commands: ['connect', 'help', 'clear'],
-        chips: [{ command: 'connect shop-pc', hint: 'Visit Sam' }],
-        showMe: 'connect shop-pc', goal: { type: 'connected', host: 'shop-pc' },
-      },
-    },
-    {
-      id: 'login', title: 'Try the old password',
-      lines: [
-        { text: 'Some computers start with a password from the box.' },
-        { text: 'Sam left both the name and password as admin.' },
-        { text: 'Use login admin. When asked, type admin again.' },
+        { text: 'It asks for a name, then a password.' },
+        { text: 'Try a guess. The hints can help if you need.' },
       ],
       hints: [
-        { text: 'Sam has not changed the first password.' },
-        { text: 'The name and password are both admin.' },
-        { text: 'Type login admin. Then type admin for the password.' },
+        { text: 'A computer can come from the box with an easy password. That factory password stays until someone changes it.' },
+        { text: 'Try admin for both the name and password.' },
+        { text: 'Show me types connect shop-pc for you. Press Enter. Then type admin two times when asked.' },
       ],
       success: [{ text: 'You are in! That password was easy to guess.' }],
       config: {
-        kind: 'hack', commands: ['login', 'help', 'clear'],
-        chips: [{ command: 'login admin', hint: 'Sign in' }],
-        showMe: 'login admin', goal: { type: 'logged-in', host: 'shop-pc' },
+        kind: 'hack', start: 'hq', commands: ['connect', 'help', 'clear'],
+        chips: [{ command: 'connect shop-pc', hint: 'Visit Sam' }],
+        showMe: 'connect shop-pc', goal: { type: 'logged-in', host: 'shop-pc' },
       },
     },
     {
@@ -113,7 +96,7 @@ export const s1m1ToyShop: Mission = {
       hints: [
         { text: 'Your case book needs the whole flag.' },
         { text: 'Use submit with the flag you found.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add default, hyphen, passwords, hyphen, are, hyphen, easy. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Case closed! Sam can now fix the password.' }],
       config: {

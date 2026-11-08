@@ -69,18 +69,37 @@ function checkGoal(mission: Mission, config: HackConfig, goal: HackGoal, host: s
     expect(goal.path.startsWith('/'), goal.path).toBe(true);
     expect(config.commands).toContain(goal.type === 'read' ? 'cat' : 'cd');
     if (goal.type === 'cwd') expect(fs.isDir(goal.path), goal.path).toBe(true);
-    else expect(fs.read(goal.path).ok, goal.path).toBe(true);
+    else {
+      expect(fs.exists(goal.path), goal.path).toBe(true);
+      expect(fs.isDir(goal.path), goal.path).toBe(false);
+    }
   }
 }
 
-/** Turn a spelled-out command back into its exact typed form. */
+/** Turn a spelled-out host or page command back into its typed form. */
 function dictatedCommand(text: string): string {
   return text.replace(/^Type /, '')
     .replace(', a space, then ', ' ')
-    .replace(' and an open brace. Add ', '{')
     .replaceAll(', hyphen, ', '-')
-    .replace('. End with a close brace. Press Enter.', '}')
     .replace('. Press Enter.', '');
+}
+
+function checkSubmitHint(mission: Mission, hint: Line, showMe: string): void {
+  for (const text of [hint.text, hint.say ?? '']) {
+    checkHintFlag(mission, text);
+    expect(text).not.toMatch(/hyphen|brace|CLUE\s*\{/i);
+  }
+  expect(hint.text).toMatch(/Show me.*types.*flag/i);
+  expect(hint.text).toMatch(/press Enter/i);
+  expect(showMe).toBe(`submit ${mission.contract!.flag}`);
+}
+
+function checkHintFlag(mission: Mission, text: string): void {
+  expect(text).not.toContain(mission.contract!.flag);
+  expect(text).not.toMatch(/(?:open|close) brace|CLUE\s*\{/i);
+  const words = text.toLowerCase().replace(/\b(?:hyphen|dash)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+  expect(words).not.toContain(mission.contract!.flag.slice(5, -1).replaceAll('-', ' '));
 }
 
 function checkSteps(mission: Mission): void {
@@ -104,7 +123,8 @@ function checkSteps(mission: Mission): void {
     }
     expect(config.commands, config.showMe).toContain(command);
     const hint = step.hints[2].text;
-    expect(hint.includes(config.showMe) || dictatedCommand(hint) === config.showMe, step.id).toBe(true);
+    if (config.goal.type === 'flag') checkSubmitHint(mission, step.hints[2], config.showMe);
+    else expect(hint.includes(config.showMe) || dictatedCommand(hint) === config.showMe, step.id).toBe(true);
     checkGoal(mission, config, config.goal, host);
   }
   const final = mission.steps.at(-1)!.config as HackConfig;
@@ -121,6 +141,30 @@ interface Route {
   read?: { host: string; path: string; content: string };
 }
 
+function fileAt(root: FsNode, path: string): FsNode {
+  let node = root;
+  for (const name of path.split('/').filter(Boolean)) {
+    if (node.type !== 'dir') throw new Error(`Not a folder: ${path}`);
+    const child: FsNode | undefined = node.children[name];
+    if (!child) throw new Error(`Missing file: ${path}`);
+    node = child;
+  }
+  return node;
+}
+
+/** Model the packet's password answer; the hack terminal is in the engine lane. */
+function followUnlock(route: Route, args: string[]): void {
+  expect(args).toHaveLength(1);
+  expect(route.machine?.login?.password ?? route.machine?.sudo?.password).toBeTruthy();
+  const fs = route.fs!;
+  expect(fs.isLocked(args[0]!), args[0]).toBe(true);
+  const root = fs.snapshot();
+  const file = fileAt(root, fs.resolve(args[0]!));
+  if (file.type !== 'file') throw new Error('Unlock needs a file');
+  file.locked = false;
+  route.fs = new VirtualFs(root, fs.cwd());
+}
+
 /** Follow the authored commands using the real file system, with transport assumed by the spec. */
 function followCommand(mission: Mission, route: Route, input: string): void {
   const [command, ...args] = input.split(/\s+/);
@@ -133,7 +177,10 @@ function followCommand(mission: Mission, route: Route, input: string): void {
     route.fs = new VirtualFs(route.machine.fs, route.machine.home);
     expect(route.fs.cwd()).toBe(route.machine.home);
   } else if (command === 'login') {
-    expect(route.machine?.login?.user).toBe(args[0]);
+    expect(args).toEqual([]);
+    expect(route.machine?.login).toBeDefined();
+  } else if (command === 'unlock') {
+    followUnlock(route, args);
   } else if (command === 'cd') {
     expect(route.fs!.cd(args[0]).ok, input).toBe(true);
   } else if (command === 'cat' || command === 'grep') {
@@ -274,7 +321,7 @@ describe('Corner Town season data', () => {
   it('supplies the specified working login data and alarms', () => {
     const [toy, note, hidden] = season1Missions as [Mission, Mission, Mission];
     expect(machineAt(toy, 'shop-pc').login).toEqual({ user: 'admin', password: 'admin' });
-    expect(toy.alarm).toEqual({ limit: 5 });
+    expect(toy.alarm).toEqual({ limit: 8 });
     expect(machineAt(note, 'shop-pc').login).toBeUndefined();
     const till = machineAt(note, 'shop-till');
     expect(till.login).toEqual({ user: 'cashier', password: 'sunflower7' });
@@ -299,9 +346,106 @@ describe('Corner Town season data', () => {
     expect(all.ok).toBe(true);
     if (all.ok) expect(all.value.some((entry) => entry.name === '.secret' && entry.type === 'dir')).toBe(true);
   });
+
+  it('uses prompt-based sign-ins and never separates a login connection', () => {
+    for (const mission of season1Missions) {
+      for (const step of mission.steps) {
+        const config = step.config as HackConfig;
+        const inputs = [config.showMe, ...(config.chips ?? []).map((chip) => chip.command),
+          ...step.hints.flatMap((hint) => [hint.text, hint.say ?? ''])];
+        for (const input of inputs) expect(input).not.toMatch(/\blogin\s+\S+/i);
+        walk(config.goal, (value) => {
+          if (!value || typeof value !== 'object' || !('type' in value)) return;
+          const goal = value as HackGoal;
+          if (goal.type === 'connected') expect(machineAt(mission, goal.host).login).toBeUndefined();
+        });
+        for (const machine of mission.machines!.filter((entry) => entry.login)) {
+          if (config.showMe === `connect ${machine.host}`) {
+            expect(config.goal).toEqual({ type: 'logged-in', host: machine.host });
+          }
+        }
+      }
+    }
+  });
+
+  it('lets the toy shop player guess before the password hint', () => {
+    const toy = season1Missions[0]!;
+    const first = toy.steps[0]!;
+    const password = machineAt(toy, 'shop-pc').login!.password;
+    const earlyLines = [...toy.intro, ...first.lines, first.hints[0]];
+    for (const line of earlyLines) {
+      expect(line.text.toLowerCase()).not.toContain(password);
+      expect(line.say?.toLowerCase() ?? '').not.toContain(password);
+    }
+    expect(first.hints[0].text).toMatch(/box.*easy password/);
+    expect(first.hints[0].text).toMatch(/factory password.*changes/);
+    expect(first.hints[1].text).toContain('admin for both the name and password');
+    expect(first.hints[2].text).toMatch(/Show me types connect shop-pc.*Enter.*admin two times/);
+    expect(first.config).toMatchObject({ showMe: 'connect shop-pc', goal: { type: 'logged-in', host: 'shop-pc' } });
+    expect(toy.steps.map((step) => step.id)).toEqual(['connect', 'whoami', 'read-flag', 'submit']);
+  });
+
+  it('unlocks a named locked file with a machine password', () => {
+    const door = machineAt(season1Missions[5]!, 'door-lock');
+    expect(fileAt(door.fs, '/home/sam/flag.txt')).toMatchObject({ type: 'file', locked: true });
+    expect(season1Missions[5]!.steps.find((step) => step.id === 'unlock-door')!.config)
+      .toMatchObject({ showMe: 'unlock flag.txt', goal: {
+        type: 'on', host: 'door-lock', goal: { type: 'run', command: 'unlock', args: ['flag.txt'] },
+      } });
+    for (const mission of season1Missions) {
+      const route: Route = { command: '', args: [] };
+      for (const step of mission.steps) followCommand(mission, route, (step.config as HackConfig).showMe);
+    }
+  });
+
+  it('keeps every hint free of literal or dictated flag text', () => {
+    for (const mission of season1Missions) {
+      for (const step of mission.steps) {
+        for (const hint of step.hints) {
+          for (const text of [hint.text, hint.say ?? '']) {
+            checkHintFlag(mission, text);
+          }
+        }
+      }
+    }
+  });
 });
 
 describe('season data validation guards', () => {
+  it('rejects literal and dictated flags in hints and an incorrect submit command', () => {
+    const mission = season1Missions[0]!;
+    const showMe = `submit ${mission.contract!.flag}`;
+    for (const text of [
+      `Show me types ${mission.contract!.flag} for you. Press Enter.`,
+      'Type default, hyphen, passwords, hyphen, are, hyphen, easy.',
+      'Type default passwords are easy.',
+      'Show me types the flag with an open brace. Press Enter.',
+    ]) {
+      expect(() => checkSubmitHint(mission, { text }, showMe)).toThrow();
+    }
+    const hint = { text: 'Show me types the flag for you. Press Enter.' };
+    expect(() => checkSubmitHint(mission, hint, 'submit wrong')).toThrow();
+    expect(() => checkHintFlag(mission, 'Tip'), 'short harmless hint').not.toThrow();
+  });
+
+  it('rejects missing, extra or invalid unlock targets and missing machine passwords', () => {
+    const mission = season1Missions[5]!;
+    for (const command of ['unlock', 'unlock flag.txt other.txt', 'unlock missing.txt']) {
+      const route: Route = { command: '', args: [] };
+      followCommand(mission, route, 'connect door-lock');
+      expect(() => followCommand(mission, route, command)).toThrow();
+    }
+    const route: Route = { command: '', args: [] };
+    followCommand(mission, route, 'connect shop-pc');
+    expect(() => followCommand(mission, route, 'unlock fan-page.txt')).toThrow();
+    const noPassword = structuredClone(mission);
+    delete machineAt(noPassword, 'door-lock').login;
+    expect(() => checkFlagRoute(noPassword)).toThrow();
+    const noUnlock = structuredClone(mission);
+    noUnlock.steps = noUnlock.steps.filter((step) => step.id !== 'unlock-door');
+    expect(() => checkFlagRoute(noUnlock)).toThrow();
+  });
+
   it('rejects invalid Lines, copy, commands and goal paths', () => {
     expect(() => checkLine({ text: ' ' })).toThrow();
     expect(() => checkLine({ text: 'Read flag.txt.' })).toThrow();
@@ -309,7 +453,7 @@ describe('season data validation guards', () => {
     expect(() => checkLine({ text: 'Hello!', extra: true } as Line)).toThrow();
     expect(() => checkLine({ text: 'We need authentication.' })).toThrow();
     const mission = season1Missions[0]!;
-    const config = mission.steps[3]!.config as HackConfig;
+    const config = mission.steps.find((step) => step.id === 'read-flag')!.config as HackConfig;
     for (const goal of [
       { type: 'read', path: '/missing' },
       { type: 'read', path: '/home/admin' },

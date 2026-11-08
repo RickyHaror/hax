@@ -65,6 +65,9 @@ export const s1m4PageSource: Mission = {
       id: 'read-source', title: 'Peek at the page',
       lines: [
         { text: 'Use view-source to peek behind the page.' },
+        { text: 'Put the page address after view-source.' },
+        { text: 'Bea’s page is sunny, hyphen, bakery.example.',
+          say: 'Bea’s page is sunny bakery dot example.' },
         { text: 'Look for a note with a password.' },
       ],
       hints: [
@@ -124,7 +127,7 @@ export const s1m4PageSource: Mission = {
       hints: [
         { text: 'Your flag proves you found the hole.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add page, hyphen, source, hyphen, is, hyphen, public. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Job done! Bea gives you a bun cheer!' }],
       config: {

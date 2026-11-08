@@ -99,7 +99,14 @@ describe('Season 1 missions 4 to 6', () => {
       goal: { type: 'logged-in', host: 'door-lock' },
     });
     expect(s1m6WeakPassword.steps[3]!.config).toMatchObject({
-      goal: { type: 'on', host: 'door-lock', goal: { type: 'run', command: 'unlock' } },
+      showMe: 'unlock flag.txt',
+      chips: [{ command: 'unlock flag.txt', hint: 'Open the file' }],
+      goal: { type: 'on', host: 'door-lock', goal: { type: 'run', command: 'unlock', args: ['flag.txt'] } },
     });
+    const fs = new VirtualFs(door.fs, door.home);
+    expect(fs.isLocked('flag.txt')).toBe(true);
+    expect(fs.read('flag.txt')).toEqual({ ok: false, error: { kind: 'locked', path: '/home/sam/flag.txt' } });
+    const unlock = s1m6WeakPassword.steps[3]!;
+    expect(unlock.lines.map((line) => line.text).join(' ')).toContain('Sam’s door-lock password again');
   });
 });

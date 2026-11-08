@@ -49,7 +49,7 @@ export const s1m6WeakPassword: Mission = {
         type: 'dir', children: {
           home: { type: 'dir', children: {
             sam: { type: 'dir', children: {
-              'flag.txt': { type: 'file', content: flag },
+              'flag.txt': { type: 'file', content: flag, locked: true },
             } },
           } },
         },
@@ -118,18 +118,24 @@ export const s1m6WeakPassword: Mission = {
       },
     },
     {
-      id: 'unlock-door', title: 'Open the pretend lock',
-      lines: [{ text: 'Use unlock to open Sam’s pretend back door.' }],
-      hints: [
-        { text: 'You have Sam’s permission to test this lock.' },
-        { text: 'The new command is unlock.' },
-        { text: 'Type unlock and press Enter.' },
+      id: 'unlock-door', title: 'Unlock the flag file',
+      lines: [
+        { text: 'Use unlock flag.txt to open the locked file.',
+          say: 'Use unlock, space, flag dot text. Open the locked file.' },
+        { text: 'It asks for Sam’s door-lock password again.' },
+        { text: 'Use the same password you just found.' },
       ],
-      success: [{ text: 'Click! The pretend lock is open.' }],
+      hints: [
+        { text: 'The flag file needs Sam’s password again.' },
+        { text: 'Use unlock with the file name. The password is biscuit512.' },
+        { text: 'Type unlock flag.txt and press Enter. Then type biscuit512.',
+          say: 'Type unlock, space, flag dot text and press Enter. Then type biscuit five one two.' },
+      ],
+      success: [{ text: 'Click! The flag file is open.' }],
       config: {
         kind: 'hack', commands: ['unlock', 'help', 'clear'],
-        chips: [{ command: 'unlock', hint: 'Open the lock' }], showMe: 'unlock',
-        goal: { type: 'on', host: 'door-lock', goal: { type: 'run', command: 'unlock' } },
+        chips: [{ command: 'unlock flag.txt', hint: 'Open the file' }], showMe: 'unlock flag.txt',
+        goal: { type: 'on', host: 'door-lock', goal: { type: 'run', command: 'unlock', args: ['flag.txt'] } },
       },
     },
     {
@@ -154,7 +160,7 @@ export const s1m6WeakPassword: Mission = {
       hints: [
         { text: 'You showed Sam how his lock could open.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add pets, hyphen, make, hyphen, weak, hyphen, passwords. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Job done! Sam gives you a toy train cheer.' }],
       config: {

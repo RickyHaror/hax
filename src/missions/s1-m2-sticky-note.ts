@@ -108,8 +108,8 @@ export const s1m2StickyNote: Mission = {
       ],
       success: [{ text: 'The note opened the till. We found the hole!' }],
       config: {
-        kind: 'hack', commands: ['connect', 'login', 'help', 'clear'],
-        chips: [{ command: 'connect shop-till', hint: 'Visit the till' }, { command: 'login cashier', hint: 'Sign in' }],
+        kind: 'hack', commands: ['connect', 'help', 'clear'],
+        chips: [{ command: 'connect shop-till', hint: 'Visit the till' }],
         showMe: 'connect shop-till', goal: { type: 'logged-in', host: 'shop-till' },
       },
     },
@@ -134,7 +134,7 @@ export const s1m2StickyNote: Mission = {
       hints: [
         { text: 'Your case book needs this flag too.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add never, hyphen, leave, hyphen, passwords, hyphen, on, hyphen, notes. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Case closed! The note helped us spot the hole.' }],
       config: {

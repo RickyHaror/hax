@@ -140,7 +140,7 @@ export const s1m3HiddenFolder: Mission = {
       hints: [
         { text: 'You have the flag. Time to finish!' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit, a space, then CLUE and an open brace. Add hidden, hyphen, is, hyphen, not, hyphen, safe. End with a close brace. Press Enter.' },
+        { text: 'Show me types the flag for you. Just press Enter!' },
       ],
       success: [{ text: 'Case closed! Mo knows a dot is not a lock.' }],
       config: {
