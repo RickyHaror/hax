@@ -39,7 +39,8 @@ function Shell() {
     if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
     panel.current?.scrollTo?.(0, 0);
   }, [screen, position]);
-  return <div class="app-shell">{screen.name !== 'settings' && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
+  return <div class={`app-shell${screen.name === 'player' ? ' player-shell' : ''}`}>
+    {screen.name !== 'settings' && screen.name !== 'player' && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
     <div role="status" aria-live="polite">{store.updatePending.value &&
       <SpeechLine line={{ text: 'New missions arrived!' }} />}</div>
     <ScreenView key={screen.name} />

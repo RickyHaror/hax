@@ -26,7 +26,7 @@ body::after {
   content: ''; position: fixed; inset: 0; pointer-events: none;
   background: repeating-linear-gradient(transparent 0 3px, #00000012 3px 4px);
 }
-.app-shell { height: 100%; display: flex; flex-direction: column; padding: 16px; gap: 12px; max-width: 1600px; margin: auto; }
+.app-shell { height: 100dvh; display: flex; flex-direction: column; padding: 16px; gap: 12px; max-width: 1600px; margin: auto; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 12px; flex: 0 0 auto; }
 .toolbar button { font-size: 20px; }
 .panel { position: relative; flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 24px; border: 2px solid var(--green); border-radius: 16px; background: var(--panel); overflow-wrap: anywhere; }
@@ -207,4 +207,21 @@ svg { flex-shrink: 0; max-width: 100%; }
 }
 @media (max-width: 700px) {
   .name-pickers { grid-template-columns: 1fr; }
+}
+/* Keep the existing login content inside the shell at small window sizes. */
+@media (max-width: 999px) {
+  .panel:has(> .login-screen) { display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
+  .login-screen { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 6px; }
+  .login-screen > h1, .login-screen > h2, .login-screen p { margin: 0; }
+  .login-story { display: flex; flex: 1; min-height: 0; gap: 8px; overflow: auto; }
+  .login-story > .bubble { flex: 1; min-width: 0; margin: 0; }
+  .login-story > .bubble > svg { width: 44px; height: 44px; }
+  .login-story .speech-line { font-size: clamp(16px, 2.4dvh, 22px); flex-wrap: nowrap; }
+  .login-art { display: flex; align-items: center; flex: 0 1 100px; min-width: 0; }
+  .login-art > svg { width: 100%; height: auto; max-height: 100%; }
+  .login-task { flex: none; min-width: 0; }
+  .login-task .answer-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: end; }
+  .login-task .answer-form > .speech-line { grid-column: 1 / -1; }
+  .login-task .answer-form input { width: 100%; margin: 0; }
+  .login-screen > button { flex: none; margin: 0; align-self: flex-start; }
 }

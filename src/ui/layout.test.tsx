@@ -9,7 +9,8 @@ let root: HTMLElement;
 let styles: HTMLStyleElement;
 beforeEach(() => {
   styles = document.createElement('style');
-  styles.textContent = readFileSync('src/styles/base.css', 'utf8');
+  styles.textContent = ['src/styles/base.css', 'src/ui/screens/player.css']
+    .map((path) => readFileSync(path, 'utf8')).join('\n');
   document.head.append(styles);
 });
 afterEach(async () => { if (root) await unmount(root); styles.remove(); });

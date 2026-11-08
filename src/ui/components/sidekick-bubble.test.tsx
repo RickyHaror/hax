@@ -33,6 +33,25 @@ function groupFor(text: string) {
 }
 
 describe('speaker portraits', () => {
+  it('limits rail bubbles to three, highlights the newest and keeps every line and picked voice', async () => {
+    const { store, deps, buddyArt } = await show([]);
+    const lines = [1, 2, 3, 4, 5].map((n) => ({ text: `Clue ${n}.` }));
+    buddyArt.mockClear();
+    await act(() => render(<StoreContext.Provider value={store}>
+      <SidekickBubble lines={lines} rail />
+    </StoreContext.Provider>, root));
+    expect(buddyArt).not.toHaveBeenCalled();
+    expect(root.querySelector('[aria-label="Pixel, crew tech, on comms"]')).toBeTruthy();
+    expect(root.querySelectorAll('.comms-bubble')).toHaveLength(3);
+    expect(root.querySelectorAll('.comms-newest')).toHaveLength(1);
+    expect(root.querySelector('.comms-newest')?.textContent).toContain('Clue 5.');
+    const readers = [...root.querySelectorAll<HTMLButtonElement>('[aria-label="Read aloud"]')];
+    expect(readers).toHaveLength(lines.length);
+    for (const [i, reader] of readers.entries()) {
+      await act(() => reader.click());
+      expect(deps.voice.speak).toHaveBeenLastCalledWith(lines[i], expect.objectContaining({ sidekick: 'pixel' }));
+    }
+  });
   it('opts out of automatic speech and cleanup without losing per-line reading', async () => {
     const deps = fakeDeps(); deps.registry = { ...deps.registry, sidekicks };
     const store = identityStore(deps);

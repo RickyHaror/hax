@@ -6,6 +6,7 @@ import { SpeechLine } from './SpeechLine';
 import { SpeakerIcon } from './SpeakerIcon';
 import { AudioControls, AudioPanel } from './AudioControls';
 import { Logo } from './Logo';
+import { FullscreenButton } from './FullscreenButton';
 export function Toggles() {
   const store = useStore();
   const { autoRead, muted } = store.progress.value.settings;
@@ -73,7 +74,7 @@ function DecoderPanel({ close, opener }: { close: () => void; opener: { current:
     </div>
   </div>;
 }
-export function Toolbar() {
+export function Toolbar({ compact = false }: { compact?: boolean }) {
   const store = useStore();
   const [open, setOpen] = useState(false);
   const opener = useRef<HTMLButtonElement>(null);
@@ -83,12 +84,13 @@ export function Toolbar() {
   const closeAudio = useCallback(() => setAudioOpen(false), []);
   const unlocked = store.registry.missions.some((mission) => Object.hasOwn(store.progress.value.completed, mission.id)
     && mission.steps.some((step) => step.config.kind === 'decoder'));
-  return <nav class="toolbar" aria-label="Game tools">
-    <Logo />
+  return <nav class={`toolbar${compact ? ' toolbar-compact' : ''}`} aria-label="Game tools">
+    {!compact && <Logo />}
     <BigButton aria-label="Sound controls" aria-expanded={audioOpen}
-      onClick={(event) => { audioOpener.current = event.currentTarget; setAudioOpen(!audioOpen); }}><SpeakerIcon />Sound controls</BigButton>
+      onClick={(event) => { audioOpener.current = event.currentTarget; setAudioOpen(!audioOpen); }}><SpeakerIcon /><span>Sound controls</span></BigButton>
     <AudioPanel open={audioOpen} close={closeAudio} opener={audioOpener}><Toggles /></AudioPanel>
     {unlocked && <BigButton onClick={(event) => { opener.current = event.currentTarget; setOpen(true); store.sound.play('click'); }}>Open decoder wheel</BigButton>}
     {unlocked && open && <DecoderPanel close={close} opener={opener} />}
+    {!compact && <FullscreenButton />}
   </nav>;
 }

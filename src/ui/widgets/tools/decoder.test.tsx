@@ -61,7 +61,7 @@ function viewportStyles(width: number, height: number) {
 describe('decoder mission', () => {
   it.each([m3Zoo, m7Graduation].flatMap((mission) => [[1366, 768], [1920, 1080]]
     .map(([width, height]) => ({ mission, width: width!, height: height! }))))(
-    'stacks hints in the answer column for $mission.id at $width x $height', async ({ mission, width, height }) => {
+    'opens readable hints in the sidekick rail for $mission.id at $width x $height', async ({ mission, width, height }) => {
       const styles = viewportStyles(width, height);
       try {
         const { root, deps } = await mountTool(decoderConfig);
@@ -72,18 +72,19 @@ describe('decoder mission', () => {
         await act(() => render(<StoreContext.Provider value={store}><Player mission={mission} /></StoreContext.Provider>, root));
         const hints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
         for (let rung = 0; rung <= 3; rung++) {
-          const style = getComputedStyle(hints);
-          expect(style.display).toBe('flex');
-          expect(style.flexDirection).toBe('column');
-          expect(style.alignItems).toBe('stretch');
-          expect(style.marginInlineStart).toBe('calc(50% + 4px)');
+          expect(hints.closest('[aria-label="Sidekick rail"]')).toBeTruthy();
+          expect(hints.querySelectorAll('.rung-opened')).toHaveLength(rung);
+          expect(hints.querySelectorAll('[aria-label="Read aloud"]')).toHaveLength(rung);
+          if (rung) expect(button(hints, 'Close hints')).toBeTruthy();
           if (rung < 3) await click(root, 'Help me');
         }
-        expect(root.querySelector('.step-work')?.textContent).toContain(mission.steps[index]!.hints[2]!.text);
+        expect(hints.textContent).toContain(mission.steps[index]!.hints[2]!.text);
+        expect(input(root, 'Answer').value).toBe((mission.steps[index]!.config as typeof decoderConfig).answer);
         const otherIndex = mission.steps.findIndex((step) => step.config.kind !== 'decoder');
         await act(() => store.phase(mission.id, { phase: 'step', index: otherIndex }));
         const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
-        expect(getComputedStyle(otherHints).marginInlineStart).not.toBe('calc(50% + 4px)');
+        expect(otherHints.closest('[aria-label="Sidekick rail"]')).toBeTruthy();
+        expect(otherHints.querySelector('.hint-panel')).toBeNull();
       } finally { styles.remove(); }
     });
   it.each([{ diameter: 340, font: 24 }, { diameter: 510, font: 36 }])(

@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import type { Mission, Step } from '../../engine/types';
 import { useStore } from '../store';
 import { Art } from '../components/Art';
@@ -6,7 +7,9 @@ import { SpeechLine } from '../components/SpeechLine';
 import { SidekickBubble } from '../components/SidekickBubble';
 import { HintLadder } from '../components/HintLadder';
 import { StepWidget } from '../widgets';
-import { ReadingBox } from '../widgets/tools/ReadingBox';
+import { TopBar } from '../components/TopBar';
+import { Toolbar } from '../components/Toolbar';
+import './player.css';
 export const ethics = { text: 'Only hack what you own or have permission to hack.' };
 function withEthics(lines: Step['lines']) {
   return lines.some((line) => line.text === ethics.text) ? lines : [...lines, ethics];
@@ -24,18 +27,21 @@ function Permission({ mission, accept }: { mission: Mission; accept: () => void 
     </div><BigButton onClick={accept}>I accept</BigButton>
   </section>;
 }
-function ActiveStep({ mission, step, index }: { mission: Mission; step: Step; index: number }) {
+function ActiveStep({ mission, step, index, helpOpen, closeHelp }: {
+  mission: Mission; step: Step; index: number; helpOpen: boolean; closeHelp: () => void;
+}) {
   const store = useStore();
-  return <section class="active-step"><div class="step-story"><h2>{step.title}</h2>
-    <ReadingBox label="Step instructions"><SidekickBubble
-      lines={step.lockdown ? [{ text: 'Lock it down!' }, ...step.lines] : step.lines}
-      client={mission.client} bySpeaker compact /></ReadingBox>
+  const lines = step.lockdown ? [{ text: 'Lock it down!' }, ...step.lines] : step.lines;
+  return <section class="active-step"><div class="step-work">
+    <h2>{step.title}</h2>
     {step.art && <Art artKey={step.art} title={step.title} size={240} />}
-    </div><div class="step-work">
     <StepWidget step={step} config={step.config}
       showMe={(store.progress.value.hints[mission.id]?.[step.id]?.rung ?? 0) >= 3}
-      onComplete={() => store.phase(mission.id, { phase: 'success', index })} />
-    <HintLadder missionId={mission.id} step={step} /></div>
+      onComplete={() => store.phase(mission.id, { phase: 'success', index })} /></div>
+    <aside class="step-story" aria-label="Sidekick rail">
+      <SidekickBubble lines={lines} client={mission.client} rail />
+      <HintLadder missionId={mission.id} step={step} open={helpOpen} onClose={closeHelp} />
+    </aside>
   </section>;
 }
 function MessagePhase({ lines, label, next, mission }: {
@@ -44,7 +50,7 @@ function MessagePhase({ lines, label, next, mission }: {
   return <section class="player-phase"><div class="phase-story"><SidekickBubble lines={lines} client={mission.client} bySpeaker /></div>
     <BigButton onClick={next}>{label}</BigButton></section>;
 }
-function PlayerPhase({ mission }: { mission: Mission }) {
+function PlayerPhase({ mission, helpOpen, closeHelp }: { mission: Mission; helpOpen: boolean; closeHelp: () => void }) {
   const store = useStore();
   const { phase, index } = store.position.value;
   const move = (next: 'step' | 'outro', nextIndex = 0) =>
@@ -57,13 +63,30 @@ function PlayerPhase({ mission }: { mission: Mission }) {
   const step = mission.steps[index];
   if (!step) return <BigButton onClick={() => move('outro')}>Next</BigButton>;
   if (phase === 'success') return <MessagePhase mission={mission} lines={step.success} label="Next" next={() => move('step', index + 1)} />;
-  return <ActiveStep key={`${mission.id}:${step.id}`} mission={mission} step={step} index={index} />;
+  return <ActiveStep key={`${mission.id}:${step.id}`} mission={mission} step={step} index={index}
+    helpOpen={helpOpen} closeHelp={closeHelp} />;
 }
 export function Player({ mission }: { mission: Mission }) {
   const store = useStore();
-  return <div class="player"><h1>{mission.title}</h1><PlayerPhase mission={mission} />
+  const { phase, index } = store.position.value;
+  const step = phase === 'step' ? mission.steps[index] : undefined;
+  const [helpStep, setHelpStep] = useState<string | null>(null);
+  const helpOpen = Boolean(step && helpStep === step.id);
+  const closeHelp = () => {
+    setHelpStep(null);
+    document.querySelector<HTMLButtonElement>('.top-bar .help-button')?.focus();
+  };
+  const help = step ? () => {
+    const rung = store.progress.value.hints[mission.id]?.[step.id]?.rung ?? 0;
+    store.hint(mission.id, step.id, Math.min(3, rung + 1));
+    setHelpStep(step.id);
+  } : undefined;
+  return <div class="player"><TopBar title={mission.title}
+    step={step ? `Step ${index + 1} of ${mission.steps.length}` : undefined} onHelp={help} helpOpen={helpOpen} />
+    <PlayerPhase mission={mission} helpOpen={helpOpen} closeHelp={closeHelp} />
     <div class="player-navigation">
     {store.position.value.phase !== 'outro' && <BigButton onClick={() => store.go({ name: 'map' })}>Back</BigButton>}
     <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>
+    <Toolbar compact />
     </div></div>;
 }

@@ -30,6 +30,59 @@ async function expectScreenFit(page: Page) {
   expect(layout.panelHeight).toBeLessThanOrEqual(layout.visibleHeight);
 }
 
+test('mission work and sidekick rail follow the current viewport', async ({ page }) => {
+  await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'terminal')!);
+  const top = await page.locator('.top-bar').boundingBox();
+  const rail = await page.getByRole('complementary', { name: 'Sidekick rail', exact: true }).boundingBox();
+  const work = await page.locator('.step-work').boundingBox();
+  expect(top).not.toBeNull(); expect(rail).not.toBeNull(); expect(work).not.toBeNull();
+  expect(top!.height).toBe(56);
+  if (page.viewportSize()!.width < 600) {
+    expect(rail!.height).toBe(64);
+    expect(rail!.y + rail!.height).toBeLessThanOrEqual(work!.y);
+  } else {
+    expect(rail!.width).toBe(320);
+    expect(work!.x + work!.width).toBeLessThanOrEqual(rail!.x);
+  }
+  await expect(page.getByRole('button', { name: 'Help me', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('textbox', { name: 'Command', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+});
+
+test('phone hints keep Close fixed while rungs scroll without moving work', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'terminal')!);
+  const work = page.locator('.step-work');
+  const panel = page.locator('.rail-hints > .hint-panel');
+  const close = page.getByRole('button', { name: 'Close hints', exact: true });
+  const help = page.getByRole('button', { name: 'Help me', exact: true });
+  for (const height of [844, 600]) {
+    await page.setViewportSize({ width: 390, height });
+    const before = await work.boundingBox();
+    expect(before).not.toBeNull();
+    for (let rung = 0; rung < 3; rung++) await help.click();
+    await expect(panel).toBeInViewport({ ratio: 1 });
+    await expect(close).toBeInViewport({ ratio: 1 });
+    expect(await work.boundingBox()).toEqual(before);
+    const header = await close.boundingBox();
+    const scrolling = await panel.locator('ol').evaluate((list) => {
+      list.scrollTop = list.scrollHeight;
+      return { overflow: getComputedStyle(list).overflowY, scrolled: list.scrollTop };
+    });
+    expect(scrolling.overflow).toBe('auto');
+    if (height === 600) expect(scrolling.scrolled).toBeGreaterThan(0);
+    await expect(panel.getByRole('button', { name: 'Read aloud', exact: true }).last()).toBeInViewport({ ratio: 1 });
+    await expect(close).toBeInViewport({ ratio: 1 });
+    expect(await close.boundingBox()).toEqual(header);
+    expect(await work.boundingBox()).toEqual(before);
+    await close.click();
+    await expect(panel).toHaveCount(0);
+    expect(await work.boundingBox()).toEqual(before);
+    await expectScreenFit(page);
+  }
+});
+
 test('terminal output fills the desktop work column', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'terminal')!);
@@ -76,27 +129,24 @@ test('decoder letters are readable and its controls fit the laptop', async ({ pa
 });
 
 async function expectDecoderHintsFit(page: Page) {
-  const form = await page.locator('.decoder-tool .answer-form').boundingBox();
-  const label = await page.locator('.decoder-tool .answer-form > label').boundingBox();
+  const work = await page.locator('.step-work').boundingBox();
+  const rail = await page.getByRole('complementary', { name: 'Sidekick rail', exact: true }).boundingBox();
   const hints = page.getByRole('region', { name: 'Hints', exact: true });
-  const box = await hints.boundingBox();
   const help = await page.getByRole('button', { name: 'Help me', exact: true }).boundingBox();
-  expect(form).not.toBeNull(); expect(label).not.toBeNull(); expect(box).not.toBeNull(); expect(help).not.toBeNull();
-  expect(Math.abs(help!.x - label!.x)).toBeLessThanOrEqual(4);
-  expect(help!.y).toBeGreaterThanOrEqual(form!.y + form!.height);
-  expect(Math.abs(box!.width - form!.width)).toBeLessThanOrEqual(4);
+  expect(work).not.toBeNull(); expect(rail).not.toBeNull(); expect(help).not.toBeNull();
+  expect(rail!.x).toBeGreaterThanOrEqual(work!.x + work!.width);
+  expect(Math.abs(rail!.width - 320)).toBeLessThanOrEqual(1);
+  expect(help!.y + help!.height).toBeLessThanOrEqual(work!.y);
   for (const control of [page.getByRole('textbox', { name: 'Answer', exact: true }),
     page.getByRole('button', { name: 'Check', exact: true })]) {
-    const bounds = await control.boundingBox(); expect(bounds).not.toBeNull();
-    expect(box!.y).toBeGreaterThanOrEqual(bounds!.y + bounds!.height);
     await expect(control).toBeInViewport({ ratio: 1 });
   }
-  const words = hints.locator('.speaker-lines');
-  if (await words.count()) {
-    const bounds = await words.boundingBox(); expect(bounds).not.toBeNull();
-    expect(bounds!.y).toBeGreaterThanOrEqual(help!.y + help!.height);
-    expect(Math.abs(bounds!.width - form!.width)).toBeLessThanOrEqual(4);
-    await expect(words).toBeInViewport({ ratio: 1 });
+  const panel = hints.locator('.hint-panel');
+  if (await panel.count()) {
+    await expect(hints.getByRole('button', { name: 'Close hints', exact: true })).toBeInViewport({ ratio: 1 });
+    for (const line of await hints.locator('.speech-line').all()) {
+      await expect(line.getByRole('button', { name: 'Read aloud', exact: true })).toHaveCount(1);
+    }
   }
   const tool = await page.locator('.decoder-tool').evaluate((element) => ({
     height: element.clientHeight, content: element.scrollHeight,
@@ -106,11 +156,10 @@ async function expectDecoderHintsFit(page: Page) {
   expect(tool.height).toBeGreaterThan(0);
   expect(tool.content).toBeLessThanOrEqual(tool.height);
   expect(tool.controlsBottom).toBeLessThanOrEqual(tool.bottom - 6);
-  await expect(hints).toBeInViewport({ ratio: 1 });
   await expectScreenFit(page);
 }
 
-for (const id of ['m3-zoo', 'm7-graduation']) test(`${id} decoder hints fit below the answer at both desktop sizes`, async ({ page }) => {
+for (const id of ['m3-zoo', 'm7-graduation']) test(`${id} decoder hints fit in the rail at both desktop sizes`, async ({ page }) => {
   const mission = missions.find((mission) => mission.id === id)!;
   for (const viewport of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
@@ -144,7 +193,7 @@ test('start login keeps the note and Check in view', async ({ page }) => {
 test('mission login keeps the note and Check in view', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await resumeLayout(page, missions.find((mission) => mission.chapter === 'login')!);
-  await expect(page.locator('.step-story > svg')).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.step-work > svg')).toBeInViewport({ ratio: 1 });
   await expect(page.locator('.answer-form .speech-line').first()).toBeInViewport({ ratio: 1 });
   await expect(page.getByRole('textbox', { name: 'Answer', exact: true })).toBeInViewport({ ratio: 1 });
   await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeInViewport({ ratio: 1 });
@@ -166,6 +215,7 @@ test('celebration fits the laptop with still sparkles under reduced motion', asy
 });
 
 test('onboarding fits with Next visible and no sideways scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await page.addInitScript(() => localStorage.clear());
   await page.goto('/');
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();

@@ -12,6 +12,7 @@ interface BubbleProps {
   compact?: boolean;
   bySpeaker?: boolean;
   autoRead?: boolean;
+  rail?: boolean;
 }
 
 function groupLines(lines: readonly Line[]) {
@@ -46,7 +47,32 @@ export function SpeakerLines({ lines, sidekickIndex, client, compact = false }: 
     })}
   </div>;
 }
-export function SidekickBubble({ lines, sidekickIndex, client, compact, bySpeaker = false, autoRead = true }: BubbleProps) {
+export function CommsLine({ line, sidekick, client }: { line: Line; sidekick?: string; client?: Client }) {
+  const store = useStore();
+  const buddy = store.registry.sidekicks.find((entry) => entry.id === sidekick)
+    ?? store.registry.sidekicks[store.progress.value.sidekick ?? 0]!;
+  const speaker = line.speaker === 'client' ? client?.company ?? 'Client'
+    : line.speaker === 'narrator' ? 'Narrator' : line.speaker === 'player' ? 'Agent' : buddy.name;
+  return <div role="group" aria-label={`${speaker} says`}><SpeechLine line={line} sidekick={buddy.id} /></div>;
+}
+
+function Comms({ lines, name, voice, client }: { lines: readonly Line[]; name: string; voice: string; client?: Client }) {
+  const groups = lines.length > 3 ? [lines.slice(0, -2), lines.slice(-2, -1), lines.slice(-1)]
+    : lines.map((line) => [line]);
+  return <section class="sidekick-comms" aria-label={`${name}, crew tech, on comms`}>
+    <header class="comms-header"><span class="signal-avatar" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" /></svg>
+    </span><span class="comms-identity"><b>{name}</b><small>Crew tech, on comms</small></span></header>
+    <div class="comms-history" tabIndex={0} aria-label="Sidekick messages">
+      {groups.map((group, i) => <div key={i} class={`comms-bubble${i === groups.length - 1 ? ' comms-newest' : ''}`}>
+        {group.map((line, j) => <CommsLine key={j} line={line} sidekick={voice} client={client} />)}
+      </div>)}
+    </div>
+  </section>;
+}
+
+export function SidekickBubble({ lines, sidekickIndex, client, compact, bySpeaker = false, autoRead = true, rail = false }: BubbleProps) {
   const store = useStore();
   const sidekick = store.registry.sidekicks[sidekickIndex ?? store.progress.value.sidekick ?? 0]
     ?? store.registry.sidekicks[0]!;
@@ -62,6 +88,7 @@ export function SidekickBubble({ lines, sidekickIndex, client, compact, bySpeake
     }
     return () => store.voice.cancel();
   }, [store, signature, autoRead, readToMe, voiceSidekick]);
+  if (rail) return <Comms lines={lines} name={sidekick.name} voice={sidekick.id} client={client} />;
   if (bySpeaker) return <SpeakerLines lines={lines} sidekickIndex={sidekickIndex} client={client} compact={compact} />;
   return <section class="bubble" aria-label={`${sidekick.name} says`}>
     <Art artKey={sidekick.art} title={sidekick.name} />

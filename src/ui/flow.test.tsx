@@ -326,7 +326,7 @@ it('treats inherited names as missing art and unknown widgets', async () => {
   await click(root, 'Next'); expect(store.position.value.phase).toBe('success');
 });
 
-it('shows the chosen buddy beside intro, step, hints, success and outro lines', async () => {
+it('keeps the chosen buddy and voice across intro, rail, hints, success and outro', async () => {
   const mission = { ...client, steps: [client.steps[0]!] };
   const deps = fakeDeps(); deps.registry = fixtureRegistry([mission]);
   const store = identityStore(deps); store.identify(0, 1, 2); store.openMission(mission.id);
@@ -335,19 +335,21 @@ it('shows the chosen buddy beside intro, step, hints, success and outro lines', 
     const line = [...root.querySelectorAll('.speech-line')].find((element) =>
       element.querySelector('span')?.textContent === text)!;
     expect(line).toBeTruthy();
-    expect(line.closest('section')?.querySelector('svg[aria-label="Hoot"]')).toBeTruthy();
+    const comms = line.closest('[role="group"]');
+    if (comms) expect(comms.getAttribute('aria-label')).toBe('Hoot says');
+    else expect(line.closest('section')?.querySelector('svg[aria-label="Hoot"]')).toBeTruthy();
     expect(line.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
   };
   expectBuddy(mission.intro[0]!.text);
   await click(root, 'Start mission'); await click(root, 'I accept');
   expectBuddy(mission.steps[0]!.lines[0]!.text);
-  const instructions = root.querySelector('[role="region"][aria-label="Step instructions"]')!;
-  expect(instructions.classList.contains('reading-box')).toBe(true);
+  const instructions = root.querySelector('[aria-label="Sidekick rail"]')!;
+  expect(instructions.querySelector('[aria-label="Hoot, crew tech, on comms"]')).toBeTruthy();
   expect(instructions.textContent).toContain(mission.steps[0]!.lines[0]!.text);
   for (const hint of mission.steps[0]!.hints) {
     await click(root, 'Help me'); expectBuddy(hint.text);
     const hints = root.querySelector('section[aria-label="Hints"]')!;
-    const read = hints.querySelector<HTMLButtonElement>('button[aria-label="Read aloud"]')!;
+    const read = [...hints.querySelectorAll<HTMLButtonElement>('button[aria-label="Read aloud"]')].at(-1)!;
     await act(() => read.click());
     expect(deps.voice.speak).toHaveBeenLastCalledWith(hint, expect.objectContaining({ sidekick: 'Hoot' }));
   }
@@ -371,8 +373,11 @@ it('honors client, narrator and player speakers across mission phases and hints'
     for (const line of lines) {
       const spoken = [...container.querySelectorAll('.speech-line')].find((element) =>
         element.querySelector('span')?.textContent === line.text)!;
+      const comms = spoken.closest('[role="group"]');
       const group = spoken.closest('section')!;
-      if (line.speaker === 'client') expect(group.querySelector('svg[aria-label="Pizza Pals"]')).toBeTruthy();
+      if (comms) expect(comms.getAttribute('aria-label')).toBe(`${line.speaker === 'client' ? 'Pizza Pals'
+        : line.speaker === 'narrator' ? 'Narrator' : 'Agent'} says`);
+      else if (line.speaker === 'client') expect(group.querySelector('svg[aria-label="Pizza Pals"]')).toBeTruthy();
       else expect(group.querySelector('[role="img"]')).toBeNull();
       expect(spoken.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
     }
@@ -384,10 +389,13 @@ it('honors client, narrator and player speakers across mission phases and hints'
     await click(root, 'Help me');
     const hints = root.querySelector('section[aria-label="Hints"]')!;
     expect(hints.textContent).toContain(hint.text);
-    const portrait = hints.querySelector('svg[role="img"]');
-    if (hint.speaker === 'client') expect(portrait?.getAttribute('aria-label')).toBe('Pizza Pals');
-    else expect(portrait).toBeNull();
-    expect(hints.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
+    const spoken = [...hints.querySelectorAll('.speech-line')].find((element) =>
+      element.querySelector('span')?.textContent === hint.text)!;
+    expect(spoken.closest('[role="group"]')?.getAttribute('aria-label')).toBe(`${hint.speaker === 'client' ? 'Pizza Pals'
+      : hint.speaker === 'narrator' ? 'Narrator' : 'Agent'} says`);
+    const read = spoken.querySelector<HTMLButtonElement>('button[aria-label="Read aloud"]')!;
+    await act(() => read.click());
+    expect(deps.voice.speak).toHaveBeenLastCalledWith(hint, expect.objectContaining({ sidekick: 'Bit' }));
   }
   await click(root, 'Next'); expectSpeakers(root.querySelector('.phase-story')!);
   await click(root, 'Next'); expectSpeakers(root.querySelector('.phase-story')!);
