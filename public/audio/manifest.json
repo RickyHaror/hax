@@ -1211,5 +1211,9 @@
   "fanfare": "fanfare.mp3",
   "badge": "badge.mp3",
   "typing": "typing.mp3"
+ },
+ "music": {
+  "hq": "hq.mp3",
+  "graduation": "graduation.mp3"
  }
 }
