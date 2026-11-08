@@ -32,4 +32,6 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 1. Phase 0 is pushed; CI deploy and live smoke passed on `https://hax-d7j.pages.dev`.
 2. Founder standing authorization (2026-11-07): ship accepted batches without asking until launch
    work is done (docs/DECISIONS.md). Engine BUILD E1 and content BUILD C1 are running (launched about 7:45 PM Toronto, 2026-11-07).
-   When each reports, launch its VERIFY run. Engine E2 follows E1 integration.
+   9:20 PM: C1 integrated and live (d1bed87); Phase 1 voice lines committed (5e7752d). E1 VERIFY running;
+   content C2 BUILD (M4 to M7) running. After E1 VERIFY reports, accept and integrate, then launch
+   engine E2 (widgets plus E2-6 audio playback). After C2 integrates, rerun scripts/audio/generate.mjs.
