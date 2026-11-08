@@ -1,13 +1,10 @@
+@import './tokens.css';
 @import '../ui/screens/done.css';
 
 :root {
-  --bg: #071410;
-  --panel: #0d2a20;
-  --green: #39ff9f;
-  --text: #e8fff4;
-  --muted: #a9d9c3;
-  --font-story: 'Atkinson Hyperlegible', system-ui, sans-serif;
-  --font-code: 'JetBrains Mono', Consolas, monospace;
+  --green: var(--go);
+  --font-story: var(--font-sans);
+  --font-code: var(--font-mono);
   --player-scale: 1;
   color-scheme: dark;
 }
@@ -46,7 +43,7 @@ button:disabled { cursor: default; border-color: var(--muted); color: var(--mute
 button[type='submit'], .begin-button, .login-screen > button, .login-task .answer-form > button:last-of-type, .done > button {
   box-shadow: 0 0 14px #39ff9f38, inset 0 0 12px #39ff9f14;
 }
-:focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; box-shadow: 0 0 20px #fff3a170; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; box-shadow: 0 0 20px #fff3a170; }
 input { display: block; background: var(--bg); color: var(--text); padding: 8px; width: min(100%, 520px); margin: 8px 0 16px; }
 label { display: block; }
 /* Browsers without text security show the letters. */
@@ -105,7 +102,7 @@ svg { flex-shrink: 0; max-width: 100%; }
 .step-work > section[aria-label='Hints'] { flex: 0 0 auto; }
 .reading-frame { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 4.5em; max-height: 50vh; }
 .reading-box { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; scrollbar-gutter: stable; padding: 4px; }
-.reading-box:focus-visible { outline-offset: -4px; }
+.reading-box:focus-visible { outline-offset: 3px; }
 .reading-content { min-width: 0; }
 .reading-cue-line { position: static; display: flex; flex: 0 0 auto; justify-content: flex-end; min-height: 26px; margin: 0 4px; }
 .reading-cue { position: static; padding: 0 8px; border: 1px solid var(--muted); border-radius: 6px; background: var(--bg); color: var(--green); font: 16px/1.5 var(--font-story); pointer-events: none; }
@@ -211,4 +208,3 @@ svg { flex-shrink: 0; max-width: 100%; }
 @media (max-width: 700px) {
   .name-pickers { grid-template-columns: 1fr; }
 }
-

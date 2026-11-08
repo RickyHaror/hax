@@ -1,0 +1,65 @@
+:root {
+  --bg: #06090B;
+  --bar: #080D10;
+  --term: #0A0F12;
+  --term-input: #0C1317;
+  --panel: #0E161A;
+  --raised: #101A1F;
+  --line: #1E2C32;
+  --line-2: #2D434B;
+
+  --text: #E6EDF0;
+  --text-2: #B7C6CC;
+  --muted: #8DA1A8;
+  --ghost: #7A8F96;
+  --go: #39F28A;
+  --info: #3CDCF5;
+  --careful: #FFC24A;
+  --stop: #FF7A7A;
+  --pc-hq: #39F28A;
+  --pc-shop: #3CDCF5;
+  --pc-bakery: #FF9E5E;
+  --pc-library: #B49CFF;
+  --ink-go: #04140B;
+  --ink-careful: #1A1000;
+  --focus: #F5F9FA;
+
+  --font-mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  --font-sans: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --t-hero: 72px;
+  --t-term: 19px;
+  --t-input: 20px;
+  --t-title: 22px;
+  --t-say: 16px;
+  --t-chip: 17px;
+  --t-label: 12px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 48px;
+  --r-tag: 4px;
+  --r-chip: 8px;
+  --r-card: 10px;
+  --r-bubble: 12px;
+  --r-pill: 999px;
+  --target: 44px;
+  --target-primary: 52px;
+  --topbar: 56px;
+  --rail: 320px;
+  --gutter: 20px;
+  --side-pad: 24px;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --t-hero: 52px;
+    --t-term: 15.5px;
+    --t-input: 16px;
+    --t-chip: 16px;
+  }
+}
