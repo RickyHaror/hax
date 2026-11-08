@@ -1,0 +1,29 @@
+.bootcamp { max-height: 380px; overflow: auto; padding: 8px; }
+.bc-targets, .bc-items, .bc-zones { display: flex; flex-wrap: wrap; gap: 12px; }
+.bc-targets > button { display: grid; justify-items: center; min-width: 140px; min-height: 150px; }
+.bc-pulse { animation: bc-pulse 1.8s ease-in-out infinite; }
+.bc-item { display: flex; align-items: center; gap: 8px; touch-action: none; transition: transform .4s ease-out; }
+.bc-item[aria-pressed='true'] { transform: translateY(-8px); box-shadow: 0 8px 12px #0008; }
+.bc-dragging { position: relative; z-index: 2; transition: none; pointer-events: none; }
+.bc-zones .bc-item { animation: bc-place .25s ease-out; }
+.bc-zones { margin-top: 16px; }
+.bc-zones > section { flex: 1; min-width: 200px; min-height: 110px; padding: 10px; border: 2px dashed var(--green); border-radius: 14px; }
+.bc-keyboard { max-width: 960px; min-width: 680px; margin: auto; }
+.bc-key-row { display: flex; gap: 4px; justify-content: center; margin: 4px 0; }
+.bc-key-row:nth-child(2) { padding: 0 44px 0 20px; }
+.bc-key-row:nth-child(3) { padding-left: 32px; }
+.bc-key-row > button { flex-basis: 0; margin: 0; min-height: 48px; padding: 2px 4px; font-size: 24px; }
+.bc-key-row:last-child > button { flex: 0 1 52% !important; }
+.bc-key-target { background: #185039; box-shadow: inset 0 0 0 3px var(--green), 0 0 12px var(--green); }
+.bc-key-help .bc-key-target { box-shadow: inset 0 0 0 4px var(--green), 0 0 18px var(--green); font-weight: bold; }
+.bc-key-flash { outline: 4px solid #fff3a1; outline-offset: -6px; }
+.bc-play-area { position: relative; height: 230px; overflow: hidden; border: 2px solid var(--muted); border-radius: 14px; }
+.bc-packet { position: absolute; top: 8px; left: 50%; font: 36px var(--font-code); letter-spacing: .15em; }
+.bc-typed { color: var(--green); text-decoration: underline; }
+.bc-next { background: #185039; border-bottom: 3px solid #fff3a1; }
+.bc-next-letter .speech-line > span { font-size: 44px; font-weight: bold; }
+@keyframes bc-pulse { 50% { box-shadow: 0 0 0 6px var(--green); } }
+@keyframes bc-place { from { transform: translateY(-12px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .bootcamp *, .bootcamp *::before, .bootcamp *::after { animation: none !important; transition: none !important; }
+}
