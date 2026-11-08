@@ -46,3 +46,14 @@
 - Support phones as well as the Windows laptop in Edge.
 - Make it a long, ongoing game: seasons, ranks, daily contracts, a sandbox.
 - Visual redesign waits for the founder's design mockups.
+
+## 2026-11-08, owner: design mockup follow ups
+
+- Mockups v1 in `docs/design/terminal-v1` are the reference for the rebuild.
+- Keep the designer's content: client Sam at Corner Shop, Season 1 "Corner Town" with 12 missions,
+  ranks Rookie up to Crew Chief, passphrase example milk-rocket-tuba-cloud. Mission order is set by content.
+- Every email address and web address in mission content uses `.example` domains.
+- The Help me ladder from the components board applies to every step screen.
+- The grown-up PIN panel stays and is restyled to the new look.
+- Fit rule: a 1366x768 laptop in Edge leaves about 650px of height. The layout scales to fit any window
+  height, offers a full screen button, and e2e covers a 1366x650 viewport as well as 1920x1080 and 390x844.

@@ -32,7 +32,7 @@ Boot Camp stays as agent training for mouse, keyboard and touch, restyled to mat
 Decoder wheel, drag and drop and matching steps, cartoon mission themes (pizza, zoo, cupcakes, socks).
 Old progress stays saved, but the old missions leave the map.
 
-## Season 1: Rookie contracts
+## Season 1: Corner Town
 
 | # | Target | The hack | Commands |
 |---|---|---|---|
@@ -56,7 +56,7 @@ alarm meter. Each mission ends with a captured flag, a rank up and a new command
 
 - Seasons: Season 1 above; later seasons add new skills (Wi Fi, passwords and hashes, web forms, malware
   cleanup, defending a network live) and a story arc with a rival crew.
-- Ranks and a skill tree: Rookie, Agent, Specialist, Elite. Commands he has learned stay in his toolkit.
+- Ranks and a skill tree: Rookie up to Crew Chief (from the mockups). Commands he has learned stay in his toolkit.
 - Daily contracts: short generated break ins built from parts he already knows, so there is always
   something new to hack between seasons.
 - Playground: a free sandbox machine to explore with every command he owns.
