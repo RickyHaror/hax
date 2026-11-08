@@ -1,0 +1,144 @@
+# Backlog
+
+The owner declares batches from this file. Coordinators grep their own items. Each item becomes
+one packet. Schema contract: `src/engine/types.ts`. Approved plan summary: `docs/DECISIONS.md`.
+
+## Shared conventions (both lanes)
+
+- **Player:** 8 years old, early reader, new to mouse, keyboard, files and browsers. Plays alone.
+- **Screen:** Edge or Chrome, 1366x768 and up, landscape. No page scroll at 1366x768 on any game screen;
+  long content scrolls inside a panel. Minimum click target 48x48 px. Story text at least 24 px.
+- **Look:** dark green-black background, glowing green accents, a subtle scanline overlay (CSS only,
+  `prefers-reduced-motion` turns animation off). Friendly, never creepy. Story text in Atkinson
+  Hyperlegible, terminal text in JetBrains Mono, both bundled. Text contrast at least 7:1 for story text.
+- **Accessible names used by tests** (engine lane renders these exact names):
+  `Next`, `Back`, `Help me` (hint ladder; repeated presses climb nudge, bigger hint, show me),
+  `Read aloud` (per line), `Read everything to me` (auto-read toggle), `Sound on`/`Sound off`,
+  `I accept` (permission slip), `Start mission`, `Stop for today`, `Check` (answer forms),
+  `Run` (terminal), `Copy my key` is not used (no clipboard); `Open decoder wheel`.
+- **No browser dialogs** (`alert`, `confirm`, `prompt`) ever. No right-click menu (replace with nothing).
+- **Ethics line** in every client mission intro and on every permission slip.
+
+## Phase 1, engine lane
+
+### Batch E1: foundation (engine, branch `engine/e1`)
+
+- **E1-1 Simulated file system** `src/engine/fs.ts`. A `VirtualFs` class built from an `FsDir` (deep
+  cloned, so mission data is never mutated). Absolute and relative paths, `.` and `..`, `~` meaning
+  `/home/agent`. Methods: `cwd`, `cd(path)`, `list(path, {all})` (dot files hidden unless `all`; dirs
+  first, then alphabetical), `read(path)` (refuses dirs and locked files with typed errors), `lock(path)`,
+  `remove(path)`, `exists`, `isDir`, `tree()` (for the sidebar, marks the cwd path). All errors are a
+  typed union, never thrown strings. Exhaustive Vitest tests including hidden files and bad paths.
+- **E1-2 Command parser and shell** `src/engine/shell.ts`. Tokenizer (spaces, single and double quotes,
+  flags like `-a`, combined flags), a command registry for `ls`, `ls -a`, `cd`, `cat`, `help`, `clear`,
+  `pwd`, `lock`, `rm`, plus per-step allow-list: a known but not-yet-allowed command answers kindly
+  ("You will learn that one soon!"), an unknown one suggests the closest allowed command (edit
+  distance 2 or less) or says "Hmm, I do not know that one. Try help.". Typo help: `sl` suggests `ls`.
+  Case insensitive command names. Output is structured lines (`{kind: 'out'|'err'|'hint', text}`), plus
+  an event log. `goalMet(goal, state)` evaluates every `TerminalGoal` variant. Tests for every command,
+  flag, error, goal variant and the parser edge cases (empty input, extra spaces, unclosed quote).
+- **E1-3 Ciphers** `src/engine/cipher.ts`. Caesar encode and decode for A to Z, any shift (negative and
+  over 26 wrap), case kept, non-letters untouched. A `wheel(shift)` model returning the 26 letter pairs
+  for the decoder wheel UI. Tests including round trips for every shift.
+- **E1-4 Save codes** `src/engine/savecode.ts`. Format `HAX-XXXX-XXXX-XXXX`: 12 Crockford base32
+  characters, 60 bits: version (3), mission bitmap (24), sidekick (2), hacker name first-word index (6),
+  second-word index (6), spare (3, zero), CRC-16/CCITT-FALSE over the first 44 bits (16). The 44 payload
+  bits are XOR-scrambled with a fixed constant before the checksum so codes look random. Decode
+  normalizes input: case, spaces, missing or extra dashes, `O` as `0`, `I` and `L` as `1`, `U` as `V`.
+  Decode returns a typed result: `ok`, `wrong-length`, `bad-character`, `checksum` (most likely a typo),
+  `unknown-version`. Tests: round trip of random states (property style over 1000 seeds), every
+  single-character substitution of a valid code fails, every adjacent transposition fails, normalization
+  cases, version handling.
+- **E1-5 Progress store** `src/engine/progress.ts`. localStorage key `hax.v1`. Shape: hacker name word
+  indices, sidekick index, completed missions (id to ISO date), current mission and step (resume point),
+  hint usage (mission id to step id to highest rung used, plus counts), settings (`autoRead` default true,
+  `muted` default false, `sessionMinutes` 0 for off), parent PIN as a salted SHA-256 hash, schema version.
+  Defensive load: corrupted or missing storage gives a fresh state, never a crash. `applySaveCode`,
+  `toSaveCode`, `isUnlocked(mission)` from `requires`, `rank(completedCount)` with Recruit, Cadet, Agent,
+  Special Agent, Senior Agent, Chief Agent, and badges earned. Storage is injected so tests use a fake.
+  Tests for all of it, including storage that throws (private mode).
+- **E1-6 Voice and sound** `src/engine/voice.ts`, `src/engine/sound.ts`. `speak(line)` uses Web Speech,
+  prefers local English voices (`localService`) so it works offline, uses `line.say` when present, cancels
+  the previous utterance, rate about 0.9. Safe no-op when unsupported. Auto-read queue for a list of lines.
+  Sound effects synthesized with WebAudio (click, success, hint, key press, mission complete fanfare,
+  gentle "try again" boop). Global mute. Tests with mocked speechSynthesis and AudioContext.
+- **E1-7 App shell** `src/ui/**`, `src/styles/**`, `src/main.tsx`. One app store (Preact signals).
+  Screens: start (the login puzzle chapter, see C1-1), onboarding (pick hacker name from two word lists
+  with big buttons and a Shuffle button, pick sidekick from three cards), mission map (chapters as rows,
+  locked missions shown with a padlock and a kind "finish X first"), mission player, stop-for-today,
+  enter-a-save-code, settings. Mission player flow: intro lines, permission slip for client missions
+  (signature art, allowed and not allowed lists, `I accept`), steps in order (step widget registry by
+  `config.kind`; an unknown kind shows a friendly placeholder with `Next`), lockdown steps get a
+  "Lock it down!" banner, outro, then the "Great work, Agent! Mission saved." screen showing the badge,
+  rank and the save code framed as a secret decryption key to copy into a notebook. Shared components:
+  `SpeechLine` (text plus `Read aloud` button, auto-read when enabled), `SidekickBubble` (sidekick art
+  plus lines), `HintLadder` (`Help me`, climbs three rungs, records rung in progress), `BigButton`.
+  Resume where he left off after reload. Theme and scanlines. Keyboard: Tab order sensible, visible focus,
+  Enter activates. Context menu disabled. Tests for the store and the player flow with a fake mission.
+
+### Batch E2: widgets (engine, branch `engine/e2`, after E1 integrates)
+
+One widget per step kind in `src/ui/widgets/`, each calling `onComplete()` when its goal is met and
+exposing a `showMe()` path used by the third hint rung (it performs or reveals the answer so he is never stuck).
+
+- **E2-1 Boot Camp widgets:** `click-targets` (big friendly targets; double-click teaches with a slow
+  pulse), `drag-drop` (pointer events, works with mouse and touchpad, items snap back gently on a miss),
+  `key-find` (on-screen keyboard that lights the key to find, listens to the real keyboard), `typing-game`
+  (packets fall slowly, type the letter to catch, speed adapts down on misses, never a game over),
+  `file-explorer` (Windows-like folder view with big icons, double-click opens, breadcrumbs, drag a file
+  into a folder), `choice`, `passphrase` (pick word tiles, shows the joined passphrase and a strength meter).
+- **E2-2 Terminal widget:** terminal panel plus a folder tree sidebar always visible, current folder
+  highlighted, hidden files appear in the tree only after `ls -a`. Command chips (`chips`) insert and run a
+  command when clicked. Prompt shows `agent@hax:~$`. Up arrow history. Big readable font. Uses E1-1, E1-2.
+- **E2-3 Mission tools:** `web-source` (fake browser frame with a pretend address bar that cannot be typed
+  in, the page, and a `View Code` toggle showing the source with syntax colours), `decoder` (decoder wheel:
+  two rings, rotate with buttons or drag, live decoded preview, `Open decoder wheel` also available from
+  the toolbar in any mission once unlocked), `answer`, `story`.
+- **E2-4 Agent ID card:** hacker name, rank, badges, sidekick, photo slot with a silly avatar picker.
+  Viewable from the mission map.
+- **E2-5 Generic playthrough driver** `e2e/support/play.ts`: given a `Mission`, plays it start to finish in
+  Playwright using the data (answers, goals, keys) through the real UI, optionally pressing `Help me` up to
+  `Show me` on chosen steps. `e2e/missions.spec.ts` plays every registered mission, once normally and once
+  using the full hint ladder on every step, checks the save screen and code, then checks progress survives
+  a reload and that a fresh browser restores everything from the code. Screenshot capture of every screen
+  at both sizes into `screenshots/`. Axe scan on every screen.
+
+## Phase 1, content lane
+
+### Batch C1: first missions (content, branch `content/c1`, can start with E1)
+
+Mission files in `src/missions/<id>.ts`, each exporting one `Mission` and registered in
+`src/missions/index.ts`. Art as small inline SVG components in `src/art/` registered by key in
+`src/art/index.ts` (the engine renders art by key). The content tests in `scripts/checks/` must pass.
+
+- **C1-1 Sidekicks and names** `src/missions/sidekicks.ts`: three sidekicks (Bit the robot, Pixel the fox,
+  Hoot the owl), each with name, art key, a one-line personality, a greeting and a goodbye.
+  `src/missions/names.ts`: two lists of exactly 64 kid-safe words each (first: adjectives like Turbo,
+  Sneaky, Cosmic; second: nouns like Falcon, Pickle, Comet). Order is permanent because save codes store
+  indices. Art for the three sidekicks.
+- **C1-2 The Front Door** (`login`, bit 0, chapter `login`): the start screen is a fake computer login
+  for "AGENT HQ". The password is on a sticky note stuck to the monitor in the picture (single `answer`
+  step). Sidekick explains that leaving a password on a sticky note is a security hole, and that this
+  is a practice computer made for him. Finished in 30 seconds.
+- **C1-3 Boot Camp** (bits 1 to 5, chapter `bootcamp`): B1 Mouse Moves (click then double-click then drag
+  stickers onto the agent card), B2 Key Quest (letters, Space, Enter, Backspace, Shift), B3 Packet Catcher
+  (typing game with home row letters, then short words), B4 Files and Folders (what a file and folder are,
+  open a folder, sort three files into the right folders), B5 Password Power (what a password is, pick the
+  strongest of three, build a three-word passphrase, never share passwords except with a grown-up you trust).
+- **C1-4 Terminal Training** (bits 6 to 8, chapter `terminal`): T1 Hello Terminal (`ls`, `cat`), T2 On the
+  Move (`cd`, `cd ..`, `pwd`), T3 Agent Tools (`help`, `clear`, `ls -a` to reveal one hidden file). Each
+  teaches one command at a time with chips first and typing encouraged after.
+- **C1-5 Missions 1 to 3** (chapter `missions`, each with client, permission slip, steps, a lockdown step):
+  M1 Pepperoni Pete's Pizza (bit 9, hidden file `.secret_sauce` found with `ls -a`; fix: `lock` it),
+  M2 Wobbly Toy Factory (bit 10, password in a code comment on the fake website; fix: choose "delete the
+  comment and change the password"), M3 Zany Zoo (bit 11, Caesar shifted note decoded with the wheel;
+  clue gives the shift; fix: choose a real lock over a secret code). Client art for each.
+
+## Phase 2 (declared later)
+
+- Engine E3: `password-guess`, `log-read`, `phish-spot` widgets; parent panel (hold the logo three
+  seconds, set PIN on first open, view completed missions with dates, hint usage per step, reset progress,
+  unlock missions, session length setting); session timer nudge at mission end; badges polish.
+- Content C2: M4 Cupcake Castle (bit 12, weak pet password), M5 Moon Base Museum (bit 13, log file
+  detective), M6 Super Sock Shop (bit 14, phishing email), M7 Agent Graduation (bit 15, capstone).
+- Polish: fresh-eyes kid review pass and fixes, parent setup guide (install as app, kiosk shortcut).

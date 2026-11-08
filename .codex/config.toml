@@ -1,0 +1,29 @@
+# Project settings for restricted worker and reviewer runs.
+#
+# Model and effort are not pinned here: scripts/orchestration/codex-run.sh passes them on every run.
+# Fully non-interactive. Nothing in a worker run may wait on a human.
+approval_policy = "never"
+
+# Workers edit files in their worktree; reviewers are launched read-only by the run script.
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+# Vitest and TypeScript write caches under the npm cache directory.
+writable_roots = [
+  "C:\\Users\\Batman-PC\\AppData\\Local\\npm-cache",
+]
+# Workers install nothing. Every dependency is already in node_modules.
+network_access = false
+
+# Required on Windows, or workspace-write silently becomes read-only.
+[windows]
+sandbox = "elevated"
+
+[projects."D:\\Dev\\hax"]
+trust_level = "trusted"
+
+[projects."D:\\Dev\\hax-engine"]
+trust_level = "trusted"
+
+[projects."D:\\Dev\\hax-content"]
+trust_level = "trusted"
