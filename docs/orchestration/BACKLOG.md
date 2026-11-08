@@ -216,3 +216,6 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 - Visual polish pass: richer hacker look (scanlines, glow, subtle grid), sidekick art everywhere a sidekick
   speaks, celebratory Done screen, mission map as a fun HQ wall of client logos, and a screenshot review of
   every mission and Done screen at both sizes.
+- E3 update handling (founder saw a stale cached page on 2026-11-07): when a new service worker is waiting,
+  apply it at a safe moment (on the start screen or mission map, never mid-step) with a friendly
+  "New missions arrived!" note, so the player never has to know to refresh. Progress is never lost.
