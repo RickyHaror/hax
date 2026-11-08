@@ -29,6 +29,15 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 8:40 AM Toronto, 2026-11-08, owner hax-44. E5 BUILD running (D:/Dev/hax-engine, engine/e5,
+hard stop about 10:30 AM, evidence copies in ~/.claude/handoffs/hax-engine-e5/). Owner approved the E5-0
+schema (docs/DECISIONS.md "E5 mission schema"); schema commit 14eb9e0 on engine/e5, not on main yet.
+The coordinator is the owner's subagent: a new owner cannot message it; the old owner forwards its report.
+Content C4 (Season 1 missions 1 to 6) cannot start until the schema reaches main (lanes never use each
+other's branches). Options: have the next E5 VERIFY land everything, or ship the schema commit early
+after a review and gate. Founder told: buddies stay as crew in signal wave style, season paced ranks.
+Season 1 voice lines need a founder approved cost estimate. Lane check cron at :46.
+
 Updated about 8:25 AM Toronto, 2026-11-08, owner hax-44. E4 integrated and live (main cd676a5, CI
 42481081275 green, live index-BJf0sN17.js). Codename and sign up prompt clips recorded and pushed
 (7e19cdf, 130 clips, 744 characters). Founder approved the terminal first pivot (docs/TERMINAL-PLAN.md,
