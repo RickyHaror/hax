@@ -1,0 +1,24 @@
+.panel:has(> .idcard-screen) { display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
+.idcard-screen { display: flex; flex: 1; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
+.idcard-screen h1, .idcard-screen h2, .idcard-screen .speech-line { margin: 0; }
+.idcard-screen h1 .speech-line { font-size: 32px; }
+.idcard-screen h2 .speech-line { font-size: 26px; }
+.idcard-screen button { margin: 0; }
+.idcard-body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 24px; flex: 1; min-height: 0; min-width: 0; }
+.idcard-details, .idcard-photos { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+.idcard-details > .speech-line, .idcard-sidekick { flex: 0 0 auto; }
+.idcard-sidekick, .idcard-photo { display: flex; align-items: center; gap: 16px; }
+.idcard-photo { flex: 0 0 auto; min-height: 96px; padding: 8px 16px; border: 2px dashed var(--muted); border-radius: 16px; }
+.agent-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 64px; height: 64px; font-size: 48px; line-height: 1; }
+.idcard-photo > .agent-avatar { width: 80px; height: 80px; font-size: 64px; }
+.avatar-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.avatar-tile { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.avatar-tile > button { display: flex; justify-content: center; min-width: 64px; min-height: 80px; padding: 6px; }
+.avatar-tile > button[aria-pressed='true'] { border-color: #fff3a1; box-shadow: inset 0 0 0 2px #fff3a1; }
+.avatar-tile > .speech-line { justify-content: space-between; gap: 4px; }
+.avatar-tile .speech-line > span { overflow-wrap: normal; }
+.idcard-badges { display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 0; }
+.idcard-badges > .reading-frame { flex: 1; min-height: 0; max-height: none; border: 1px solid var(--muted); border-radius: 12px; }
+.idcard-badges ul { list-style: none; margin: 0; padding: 0; }
+.idcard-badges li { display: flex; align-items: center; gap: 8px; padding: 4px; }
+.idcard-screen > button { align-self: flex-start; flex: 0 0 auto; min-width: 120px; }
