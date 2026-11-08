@@ -8,7 +8,13 @@
   --font-code: 'JetBrains Mono', Consolas, monospace;
   color-scheme: dark;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-color: var(--green) var(--bg); scrollbar-width: auto; }
+*::-webkit-scrollbar { width: 14px; height: 14px; }
+*::-webkit-scrollbar-track { background: var(--bg); border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--green); border: 2px solid var(--bg); border-radius: 8px; }
+@supports selector(::-webkit-scrollbar) {
+  * { scrollbar-color: auto; }
+}
 html, body, #app { margin: 0; height: 100%; width: 100%; overflow: hidden; }
 body { background: var(--bg); color: var(--text); font-family: var(--font-story); font-size: 24px; line-height: 1.5; }
 body::after {
@@ -35,7 +41,8 @@ fieldset { min-width: 0; border: 1px solid var(--muted); border-radius: 12px; ma
 .card { flex: 1 1 260px; min-width: 0; border: 1px solid var(--muted); padding: 12px; border-radius: 12px; }
 .card > button { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: calc(100% - 8px); text-align: left; }
 .card > button > span { display: block; width: 100%; }
-.speech-line { font-size: 24px; display: flex; align-items: center; gap: 16px; justify-content: space-between; margin: 12px 0; }
+.speech-line { font-size: 24px; display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin: 12px 0; }
+.speech-line > span { min-width: 0; }
 .speech-line button { flex: 0 0 auto; font-size: 18px; }
 .bubble { display: flex; align-items: flex-start; gap: 16px; margin: 12px 0; }
 .bubble > div { flex: 1; min-width: 0; }
@@ -46,4 +53,28 @@ svg { flex-shrink: 0; max-width: 100%; }
   .panel { padding: 12px; }
   .bubble { flex-direction: column; }
   .speech-line { flex-wrap: wrap; }
+}
+.panel:has(.onboarding) { padding: 16px; }
+.onboarding { display: grid; gap: 8px; font-size: 18px; }
+.onboarding h1 { font-size: 34px; }
+.onboarding h2 { font-size: 26px; }
+.onboarding h1, .onboarding h2, .onboarding .speech-line, .onboarding .bubble { margin: 0; }
+.onboarding button { margin: 0; padding: 6px 10px; }
+.name-pickers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.name-pickers fieldset { margin: 0; padding: 6px 10px 10px; }
+.name-pickers .choices { display: grid; grid-template-columns: repeat(6, minmax(48px, 1fr)); gap: 6px; }
+.name-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.buddy-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.buddy-card { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 8px; border: 1px solid var(--muted); border-radius: 12px; }
+.buddy-card > button { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.buddy-card .speech-line { flex-wrap: wrap; font-size: 18px; }
+.onboarding .bubble { align-items: center; }
+.onboarding .bubble > svg { width: 56px; height: 56px; }
+.onboarding > button { justify-self: start; min-width: 120px; }
+@media (max-width: 1100px) {
+  .name-pickers .choices { grid-template-columns: repeat(3, minmax(48px, 1fr)); }
+  .buddy-choices { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .name-pickers { grid-template-columns: 1fr; }
 }

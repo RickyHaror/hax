@@ -22,19 +22,23 @@ export function Onboarding() {
   const [second, setSecond] = useState(0);
   const [sidekick, setSidekick] = useState(0);
   const [offsets, setOffsets] = useState([0, 0]);
-  return <>
+  return <div class="onboarding">
     <h1>Pick your agent name</h1>
-    <WordPicker title="First word" words={firstWords} selected={first} offset={offsets[0]!} choose={setFirst} />
-    <WordPicker title="Second word" words={secondWords} selected={second} offset={offsets[1]!} choose={setSecond} />
-    <BigButton onClick={() => setOffsets([freshOffset(firstWords.length, offsets[0]!), freshOffset(secondWords.length, offsets[1]!)])}>Shuffle</BigButton>
-    <SpeechLine line={{ text: `Your name: ${firstWords[first]} ${secondWords[second]}` }} />
-    <h2>Pick your buddy</h2><div class="choices">
-      {sidekicks.slice(0, 3).map((buddy, index) => <section class="card" key={buddy.id}>
+    <div class="name-pickers">
+      <WordPicker title="First word" words={firstWords} selected={first} offset={offsets[0]!} choose={setFirst} />
+      <WordPicker title="Second word" words={secondWords} selected={second} offset={offsets[1]!} choose={setSecond} />
+    </div>
+    <div class="name-preview">
+      <BigButton onClick={() => setOffsets([freshOffset(firstWords.length, offsets[0]!), freshOffset(secondWords.length, offsets[1]!)])}>Shuffle</BigButton>
+      <SpeechLine line={{ text: `Your name: ${firstWords[first]} ${secondWords[second]}` }} />
+    </div>
+    <h2>Pick your buddy</h2><div class="buddy-choices">
+      {sidekicks.slice(0, 3).map((buddy, index) => <section class="buddy-card" key={buddy.id}>
         <BigButton aria-pressed={sidekick === index} onClick={() => setSidekick(index)}>
-          <Art artKey={buddy.art} title={buddy.name} /><span>{buddy.name}</span>
+          <Art artKey={buddy.art} size={48} title={buddy.name} /><span>{buddy.name}</span>
         </BigButton><SpeechLine line={buddy.personality} />
       </section>)}
     </div><SidekickBubble sidekickIndex={sidekick} lines={sidekicks[sidekick]!.greeting} />
     <BigButton onClick={() => store.identify(first, second, sidekick)}>Next</BigButton>
-  </>;
+  </div>;
 }

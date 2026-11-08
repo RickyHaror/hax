@@ -29,10 +29,13 @@ export function Map() {
     <Art artKey={buddy.art} title={buddy.name} /><p>{buddy.name} · {rank(Object.keys(progress.completed).length)}</p>
     {store.notice.value && <SpeechLine line={{ text: store.notice.value }} />}
     {!store.registry.missions.length && <SpeechLine line={{ text: 'Missions coming soon' }} />}
-    {chapters.map(([chapter, title]) => <section key={chapter} aria-label={title}>
-      <h2>{title}</h2><div class="choices">{store.registry.missions.filter((m) => m.chapter === chapter)
-        .map((mission) => <MissionCard key={mission.id} mission={mission} />)}</div>
-    </section>)}
+    {chapters.map(([chapter, title]) => {
+      const missions = store.registry.missions.filter((mission) => mission.chapter === chapter);
+      return missions.length ? <section key={chapter} aria-label={title}>
+        <h2>{title}</h2><div class="choices">{missions
+          .map((mission) => <MissionCard key={mission.id} mission={mission} />)}</div>
+      </section> : null;
+    })}
     <BigButton onClick={() => store.visit({ name: 'settings' })}>Settings</BigButton>
     <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton>
   </>;
