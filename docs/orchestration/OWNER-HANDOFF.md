@@ -33,8 +33,12 @@ PAUSED by the founder about 2:10 PM Toronto, 2026-11-08, until 10:00 AM Toronto 
 Until then: launch no coordinator or worker, create no lane check cron, run nothing. An owner session that
 starts before 10:00 AM Monday reads this, stands down the previous owner as usual, and otherwise stays idle.
 At 10:00 AM Monday it is a weekday: no tests until 5:15 PM, so resume with planning, packets and worker code
-only (workers told not to run tests), E5 layout rerun and VERIFY after 5:15 PM. Engine E5 BUILD run 4 was
-told to checkpoint and stop (see build-logs/E5-checkpoint.md run 4). Content C4 checkpointed at 9fe935f.
+only (workers told not to run tests), E5 layout rerun and VERIFY after 5:15 PM. Engine E5 BUILD run 4
+checkpointed at engine/e5 6434896 (pushed): m7-graduation names fixed, hint ladder in page flow, fonts and
+clipping raised; none proven in a browser yet. The screen text catalog worker (E5-F3) was left to finish;
+its edits are uncommitted in D:/Dev/hax-engine. Monday: review that diff (no wording changes, in scope,
+generate.mjs dry run never calls the voice service), commit it, then after 5:15 PM run its tests, the dry
+run (character total for the founder) and the Chromium and Edge layout specs, then E5 VERIFY. Content C4 checkpointed at 9fe935f.
 
 Updated about 1:50 PM Toronto, 2026-11-08, owner hax-03. E5 BUILD run 3 checkpointed at engine/e5
 c2ba7b3 (pushed): E5-5 season map, E5-6 Boot Camp and parent panel restyle, clip check, layout check at all
