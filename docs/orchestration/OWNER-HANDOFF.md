@@ -29,6 +29,16 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 8:25 AM Toronto, 2026-11-08, owner hax-44. E4 integrated and live (main cd676a5, CI
+42481081275 green, live index-BJf0sN17.js). Codename and sign up prompt clips recorded and pushed
+(7e19cdf, 130 clips, 744 characters). Founder approved the terminal first pivot (docs/TERMINAL-PLAN.md,
+DECISIONS.md) and the design mockups (docs/design/terminal-v1). E5 BUILD launched about 8:25 AM (worktree
+D:/Dev/hax-engine, engine/e5, hard stop about 10:30 AM): it first proposes the mission schema
+(build-logs/E5-schema.md) and stops for owner approval; the owner resumes it. Then design system, terminal
+screen, start up, commands, mission card, profile, season map, restyles; more than one BUILD run expected.
+After schema approval: launch content C4 (Season 1 missions 1 to 6) in D:/Dev/hax-content. Season 1
+voice lines need a founder approved cost estimate (about 25k to 35k characters). Lane check cron at :46.
+
 Updated about 6:50 AM Toronto, 2026-11-08, owner hax-44 (rotation 20261108-060001; hax-fb stood down).
 E3 accepted (owner read the unreviewed 1fc96c2 diff: reset order and decoder ring layout, fine) and
 integrated: main 569e6df, gate --e2e 212/212, CI 42475210557 green, live asset index-BgkdgS8F.js matches.

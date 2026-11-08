@@ -9,7 +9,9 @@
 | Content | C2 Missions 4 to 7, C3 Playground | content/c2, c3 | integrated, live | 2026-11-07 |
 | Engine | E2 widgets plus audio playback | engine/e2 | integrated 6eea4b2, live | 2026-11-08 3:05 AM |
 | Engine | E3 finish the experience | engine/e3 | integrated 569e6df, live | 2026-11-08 6:45 AM |
-| Engine | E4 sign-up narration and speech fixes | engine/e4 | BUILD launching | 2026-11-08 6:50 AM |
+| Engine | E4 sign-up narration and speech fixes | engine/e4 | integrated cd676a5, live | 2026-11-08 8:15 AM |
+| Owner | Codename and sign up prompt clips (130, 744 chars) | main | done 7e19cdf | 2026-11-08 8:00 AM |
+| Engine | E5 terminal first rebuild | engine/e5 | BUILD running, schema proposal first | 2026-11-08 8:25 AM |
 
 ## Provider state
 
