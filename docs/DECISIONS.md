@@ -108,3 +108,15 @@ UX. From E5 and C4 on, no batch is accepted or shipped until its VERIFY run prov
 4. Layout: automated checks on every step at all four sizes for no horizontal scroll, no clipped or
    overflowing text, no overlapping elements, readable font sizes and tap targets of at least 44px; plus
    a screenshot of every step at laptop and phone size that the owner looks at before accepting.
+
+## 2026-11-08, owner: E5 run 3 follow ups
+
+- Screen text that is spoken (boot lines, PIN pad prompts, Boot Camp nudges, "New missions arrived!" and the
+  rest) gets recorded clips like every other kid facing line; no browser voice fallback for it. The engine
+  lane moves those strings into one exported catalog and may extend `scripts/audio/generate.mjs` to read it
+  (owner authorized). Lines with a name in them use the existing word clip approach. The owner records them
+  after content is final, inside the founder approved Season 1 voice cost. The clip check stays and must
+  pass before E5 ships.
+- The hint ladder never covers the work: at every size its buttons and text must not overlap the step's
+  controls. No modal exemption in the layout check.
+- Font minimums: 16px kid text on laptop, 14px on phone, 12px only for small labels.
