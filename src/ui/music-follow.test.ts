@@ -1,21 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createVoice } from '../engine/voice';
 import type { MusicPlayer, MusicTrack } from '../engine/music';
-import type { Mission, StepConfig } from '../engine/types';
+import type { Mission, Season, StepConfig } from '../engine/types';
 import { createStore, type Screen } from './store';
 import { musicTrack, startMusicFollow } from './music-follow';
 import { client, fixtureRegistry, login } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 
 const tracks: Mission[] = [login, client,
-  { ...client, id: 'terminal', client: undefined, chapter: 'terminal' },
-  { ...client, id: 'bootcamp', client: undefined, chapter: 'bootcamp' },
-  { ...client, id: 'm7-graduation' },
+  { ...client, id: 'terminal', order: 2, client: undefined, chapter: 'terminal' },
+  { ...client, id: 'bootcamp', order: 3, client: undefined, chapter: 'bootcamp' },
+  { ...client, id: 'finale', order: 4 },
 ];
-function setup() {
-  const missions = tracks.map((mission) => ({ ...mission,
+function setup(source = tracks, seasons: Season[] = []) {
+  const missions = source.map((mission) => ({ ...mission,
     steps: mission.steps.map((step) => ({ ...step, config: { ...step.config } })) }));
-  const store = createStore({ ...fakeDeps(), registry: fixtureRegistry(missions) });
+  const store = createStore({ ...fakeDeps(), registry: { ...fixtureRegistry(missions), seasons } });
   const music: MusicPlayer = { supported: true, play: vi.fn(), duck: vi.fn(),
     setVolume: vi.fn(), setEnabled: vi.fn() };
   return { store, music };
@@ -29,9 +29,54 @@ describe('screen music', () => {
     },
   );
   it.each<[string, MusicTrack]>([['login', 'hq'], ['client', 'terminal'], ['terminal', 'terminal'],
-    ['bootcamp', 'bootcamp'], ['m7-graduation', 'graduation']])('chooses %s music', (missionId, track) => {
+    ['bootcamp', 'bootcamp'], ['finale', 'graduation']])('chooses %s music', (missionId, track) => {
     const { store } = setup(); store.screen.value = { name: 'player', missionId };
     expect(musicTrack(store)).toBe(track);
+  });
+  it('uses game order without seasons and ignores retired missions', () => {
+    const retired = { ...client, id: 'old-finale', order: 20, retired: true };
+    const last = { ...client, id: 'new-finale', order: 10 };
+    const { store } = setup([last, retired, ...tracks]);
+    for (const [missionId, expected] of [['new-finale', 'graduation'], ['finale', 'terminal'],
+      ['old-finale', 'terminal'], ['missing', 'hq']]) {
+      store.screen.value = { name: 'player', missionId: missionId! };
+      expect(musicTrack(store)).toBe(expected);
+    }
+  });
+  it('uses each season list instead of global mission order or playground unlocks', () => {
+    const seasons: Season[] = [
+      { id: 'first', number: 1, title: 'First', blurb: 'Help.', requires: null,
+        missions: ['finale', 'client'] },
+      { id: 'second', number: 2, title: 'Second', blurb: 'Help.', requires: 'first',
+        missions: ['bootcamp', 'terminal'] },
+    ];
+    const { store } = setup(tracks, seasons);
+    store.registry.playground = { ...store.registry.playground!, unlockedBy: 'bootcamp' };
+    for (const [missionId, expected] of [['client', 'graduation'], ['terminal', 'graduation'],
+      ['finale', 'terminal'], ['bootcamp', 'bootcamp'], ['missing', 'hq']]) {
+      store.screen.value = { name: 'player', missionId: missionId! };
+      expect(musicTrack(store)).toBe(expected);
+    }
+  });
+  it('keeps typing and key steps quiet even in a finale', () => {
+    for (const kind of ['typing-game', 'key-find']) {
+      const finale = { ...client, id: 'quiet-finale', steps: [
+        { ...client.steps[0]!, config: { kind } as StepConfig },
+      ] };
+      const { store } = setup([finale]);
+      store.screen.value = { name: 'player', missionId: finale.id };
+      store.position.value = { phase: 'intro', index: 0 };
+      expect(musicTrack(store)).toBe('graduation');
+      store.position.value = { phase: 'step', index: 0 };
+      expect(musicTrack(store)).toBeNull();
+      store.position.value = { phase: 'outro', index: 0 };
+      expect(musicTrack(store)).toBe('graduation');
+    }
+  });
+  it('uses hq for an empty registry', () => {
+    const { store } = setup([]);
+    store.screen.value = { name: 'player', missionId: 'missing' };
+    expect(musicTrack(store)).toBe('hq');
   });
   it('matches the playground by name without extending Screen', () => {
     const { store } = setup(); store.screen.value = { name: 'playground' } as unknown as Screen;
@@ -39,7 +84,7 @@ describe('screen music', () => {
   });
   it.each(['typing-game', 'key-find'])('stops for %s only while that step is active', (kind) => {
     const mission = { ...client, steps: [{ ...client.steps[0]!, config: { kind } as StepConfig }] };
-    const store = createStore({ ...fakeDeps(), registry: fixtureRegistry([mission]) });
+    const store = createStore({ ...fakeDeps(), registry: { ...fixtureRegistry([mission, tracks[4]!]), seasons: [] } });
     store.screen.value = { name: 'player', missionId: client.id };
     store.position.value = { phase: 'intro', index: 0 }; expect(musicTrack(store)).toBe('terminal');
     store.position.value = { phase: 'step', index: 0 }; expect(musicTrack(store)).toBeNull();

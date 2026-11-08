@@ -4,14 +4,46 @@ import { readFileSync } from 'node:fs';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { caesarDecode } from '../../../engine/cipher';
-import { m3Zoo } from '../../../missions/m3-zoo';
-import { m7Graduation } from '../../../missions/m7-graduation';
-import { button, click, fill, input, submit } from '../../test/helpers';
-import { fixtureRegistry } from '../../test/fixtures';
+import type { DecoderConfig, Mission, Step } from '../../../engine/types';
+import { buildRegistry } from '../../registry';
+import { button, click, fakeDeps, fill, input, submit } from '../../test/helpers';
+import { client, fixtureRegistry } from '../../test/fixtures';
 import { Toolbar } from '../../components/Toolbar';
 import { Player } from '../../screens/Player';
 import { createStore, StoreContext } from '../../store';
-import { decoderConfig, mountTool, removeTools } from './test-helpers';
+import { StepWidget } from '../Widget';
+
+const decoderConfig: DecoderConfig = {
+  kind: 'decoder', cipher: 'caesar', message: 'IHHG WKH VHDOV', shift: 3,
+  clue: { text: 'There are 3 seals. Shift back 3 spots.' }, answer: 'FEED THE SEALS',
+};
+const decoderStep: Step = { ...client.steps[0]!, id: 'decode', config: decoderConfig };
+const decoderMission: Mission = { ...client, id: 'decoder-fixture', steps: [decoderStep, client.steps[0]!] };
+const decoderMissions = [decoderMission, ...buildRegistry().missions.filter((mission) =>
+  !mission.retired && mission.steps.some((step) => step.config.kind === 'decoder'))];
+const decoderSteps = decoderMissions.flatMap((mission) => mission.steps.flatMap((step, index) =>
+  step.config.kind === 'decoder' ? [{ mission, index }] : []));
+
+async function mountTool(config: DecoderConfig) {
+  const deps = fakeDeps();
+  const store = createStore(deps);
+  const complete = vi.fn();
+  const root = document.createElement('div');
+  root.dataset.testTools = 'true'; document.body.append(root);
+  const step: Step = { ...decoderStep, config };
+  async function reveal(showMe: boolean) {
+    await act(() => { render(<StoreContext.Provider value={store}>
+      <StepWidget step={step} config={config} showMe={showMe} onComplete={complete} />
+    </StoreContext.Provider>, root); });
+  }
+  await reveal(false);
+  return { root, deps, store, complete, reveal };
+}
+async function removeTools() {
+  for (const root of document.querySelectorAll<HTMLElement>('[data-test-tools]')) {
+    await act(() => { render(null, root); }); root.remove();
+  }
+}
 
 afterEach(removeTools);
 function shift(root: HTMLElement) { return Number(root.querySelector('[role="slider"]')!.getAttribute('aria-valuenow')); }
@@ -59,14 +91,13 @@ function viewportStyles(width: number, height: number) {
   return source;
 }
 describe('decoder mission', () => {
-  it.each([m3Zoo, m7Graduation].flatMap((mission) => [[1366, 768], [1920, 1080]]
-    .map(([width, height]) => ({ mission, width: width!, height: height! }))))(
-    'opens readable hints in the sidekick rail for $mission.id at $width x $height', async ({ mission, width, height }) => {
+  it.each(decoderSteps.flatMap(({ mission, index }) => [[1366, 768], [1920, 1080]]
+    .map(([width, height]) => ({ mission, index, width: width!, height: height! }))))(
+    'opens readable hints in the sidekick rail for $mission.id step $index at $width x $height', async ({ mission, index, width, height }) => {
       const styles = viewportStyles(width, height);
       try {
         const { root, deps } = await mountTool(decoderConfig);
         const store = createStore({ ...deps, registry: fixtureRegistry([mission]) });
-        const index = mission.steps.findIndex((step) => step.config.kind === 'decoder');
         store.go({ name: 'player', missionId: mission.id });
         store.phase(mission.id, { phase: 'step', index });
         await act(() => render(<StoreContext.Provider value={store}><Player mission={mission} /></StoreContext.Provider>, root));
@@ -81,10 +112,15 @@ describe('decoder mission', () => {
         expect(hints.textContent).toContain(mission.steps[index]!.hints[2]!.text);
         expect(input(root, 'Answer').value).toBe((mission.steps[index]!.config as typeof decoderConfig).answer);
         const otherIndex = mission.steps.findIndex((step) => step.config.kind !== 'decoder');
-        await act(() => store.phase(mission.id, { phase: 'step', index: otherIndex }));
-        const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
-        expect(otherHints.closest('[aria-label="Sidekick rail"]')).toBeTruthy();
-        expect(otherHints.querySelector('.hint-panel')).toBeNull();
+        await act(() => store.phase(mission.id, {
+          phase: otherIndex < 0 ? 'outro' : 'step', index: Math.max(0, otherIndex),
+        }));
+        const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]');
+        if (otherIndex < 0) expect(otherHints).toBeNull();
+        else {
+          expect(otherHints!.closest('[aria-label="Sidekick rail"]')).toBeTruthy();
+          expect(otherHints!.querySelector('.hint-panel')).toBeNull();
+        }
       } finally { styles.remove(); }
     });
   it.each([{ diameter: 340, font: 24 }, { diameter: 510, font: 36 }])(
@@ -113,8 +149,8 @@ describe('decoder mission', () => {
     });
   it('keeps the toolbar dialog preview, turns and close control working', async () => {
     const { root, deps } = await mountTool(decoderConfig);
-    const store = createStore({ ...deps, registry: fixtureRegistry([m3Zoo]) });
-    store.progress.value = { ...store.progress.value, completed: { [m3Zoo.id]: '2026-11-08T12:00:00.000Z' } };
+    const store = createStore({ ...deps, registry: fixtureRegistry([decoderMission]) });
+    store.progress.value = { ...store.progress.value, completed: { [decoderMission.id]: '2026-11-08T12:00:00.000Z' } };
     await act(() => { render(<StoreContext.Provider value={store}><Toolbar /></StoreContext.Provider>, root); });
     await click(root, 'Open decoder wheel');
     const dialog = root.querySelector<HTMLElement>('[role="dialog"][aria-label="Decoder wheel"]')!;
