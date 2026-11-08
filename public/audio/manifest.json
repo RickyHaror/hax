@@ -1214,6 +1214,9 @@
  },
  "music": {
   "hq": "hq.mp3",
+  "terminal": "terminal.mp3",
+  "bootcamp": "bootcamp.mp3",
+  "playground": "playground.mp3",
   "graduation": "graduation.mp3"
  }
 }

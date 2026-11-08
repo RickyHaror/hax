@@ -2,7 +2,8 @@
 // The game never calls ElevenLabs: it plays these files and falls back to the browser voice when one is missing.
 //
 //   node scripts/audio/generate.mjs --dry-run     count lines and characters, no key needed, no calls
-//   node scripts/audio/generate.mjs               generate whatever is missing (needs ELEVENLABS_API_KEY in .env.local)
+//   node scripts/audio/generate.mjs --max-chars N generate whatever is missing, spending at most N characters
+//                                                 (default 3000; needs ELEVENLABS_API_KEY in .env.local)
 //   node scripts/audio/generate.mjs --sfx-only    sound effects only
 //
 // Output: public/audio/lines/<hash>.mp3, public/audio/sfx/<name>.mp3, public/audio/manifest.json.
@@ -26,6 +27,10 @@ const manifestPath = join(root, 'public/audio/manifest.json');
 // --content <dir> loads missions from another checkout (for example a lane worktree); output stays here.
 const contentFlag = process.argv.indexOf('--content');
 const contentRoot = contentFlag > 0 ? resolve(process.argv[contentFlag + 1]) : root;
+// --max-chars <n> caps the speech characters one run may spend (default 3000). Music and sfx only
+// generate when their file is missing, so they cost nothing on reruns.
+const maxFlag = process.argv.indexOf('--max-chars');
+const maxChars = maxFlag > 0 ? Number(process.argv[maxFlag + 1]) : 3000;
 
 function readKey() {
   if (process.env.ELEVENLABS_API_KEY) return process.env.ELEVENLABS_API_KEY.trim();
@@ -118,6 +123,10 @@ async function main() {
     const missing = jobs.filter((j) => !existsSync(join(outLines, fileFor(j))));
     const chars = missing.reduce((n, j) => n + j.spoken.length, 0);
     console.log(`lines: ${jobs.length} total, ${missing.length} to generate, about ${chars} characters`);
+    // Credit guard (founder 2026-11-07: be careful with usage). Refuse big runs unless the budget allows it.
+    if (!dryRun && chars > maxChars) {
+      throw new Error(`refusing: ${chars} characters exceeds --max-chars ${maxChars}. Run --dry-run, check the content is final, then pass a budget.`);
+    }
     if (!dryRun) {
       let done = 0;
       await runPool(missing, 2, async (job) => {
