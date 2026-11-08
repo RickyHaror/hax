@@ -29,6 +29,23 @@ function screenChecks(info: TestInfo, mission: Mission, hints: 'none' | 'all'): 
     }));
     expect(size.width, `${label}: page width`).toBeLessThanOrEqual(size.viewportWidth);
     expect(size.height, `${label}: page height`).toBeLessThanOrEqual(size.viewportHeight);
+    // The mission map may scroll; it brings the next mission into view itself.
+    if (!label.endsWith('map')) {
+      const panel = await page.locator('.panel').evaluate((element) => ({
+        scrollHeight: element.scrollHeight, clientHeight: element.clientHeight,
+      }));
+      expect(panel.scrollHeight, `${label}: panel ${JSON.stringify(panel)}`)
+        .toBeLessThanOrEqual(panel.clientHeight + 2);
+    }
+    if (label.endsWith('-before')) {
+      for (const work of await page.locator('.step-work').all()) {
+        const sizes = await work.evaluate((element) => ({
+          scrollHeight: element.scrollHeight, clientHeight: element.clientHeight,
+        }));
+        expect(sizes.scrollHeight, `${label}: step-work ${JSON.stringify(sizes)}`)
+          .toBeLessThanOrEqual(sizes.clientHeight + 2);
+      }
+    }
     if (hints === 'all') {
       if (label.endsWith('-show-me')) await checkAxe(page);
       return;

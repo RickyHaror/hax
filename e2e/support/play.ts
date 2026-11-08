@@ -1,4 +1,4 @@
-import { errors, expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { normalizeShift } from '../../src/engine/cipher';
 import { VirtualFs } from '../../src/engine/fs';
 import { goalMet, Shell } from '../../src/engine/shell';
@@ -15,12 +15,7 @@ interface PlayOptions {
 
 export async function begin(page: Page): Promise<void> {
   const tap = button(page, 'Tap to begin, Agent!');
-  try {
-    await tap.waitFor({ state: 'visible', timeout: 3_000 });
-  } catch (error) {
-    if (error instanceof errors.TimeoutError) return;
-    throw error;
-  }
+  await tap.waitFor({ state: 'visible', timeout: 10_000 });
   await tap.click();
 }
 

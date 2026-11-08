@@ -168,7 +168,7 @@ describe('PhishSpot', () => {
     await act(() => { read.click(); });
     expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: 'Claim a prize' }, expect.objectContaining({ onEnd: expect.any(Function) }));
     expect(read.getAttribute('aria-pressed')).toBe('true');
-    expect(read.textContent).toBe('Reading...');
+    expect(read.querySelector('.visually-hidden')?.textContent).toBe('Reading...');
     await act(() => { read.click(); });
     expect(read.getAttribute('aria-pressed')).toBe('false');
   });

@@ -9,13 +9,10 @@ export function Toggles() {
   const { autoRead, muted } = store.progress.value.settings;
   return <>
     <div class="reading-toggle">
-      <BigButton aria-label="Read everything to me" aria-pressed={autoRead}
+      <BigButton aria-label="Read to me" aria-pressed={autoRead} class={autoRead ? 'reading-on' : undefined}
         onClick={() => store.settings({ autoRead: !autoRead })}>
-        <SpeakerIcon off={!autoRead} />Read everything to me
+        <SpeakerIcon off={!autoRead} />Read to me: {autoRead ? 'ON' : 'OFF'}
       </BigButton>
-      <span class={`reading-badge ${autoRead ? 'reading-on' : 'reading-off'}`}>
-        <SpeakerIcon off={!autoRead} />Reading to me: {autoRead ? 'ON' : 'OFF'}
-      </span>
     </div>
     <BigButton aria-pressed={!muted} onClick={() => store.settings({ muted: !muted })}>{muted ? 'Sound off' : 'Sound on'}</BigButton>
   </>;

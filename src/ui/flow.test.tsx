@@ -127,13 +127,13 @@ describe('keys and controls', () => {
     await act(() => store.openMission(client.id));
     expect(deps.voice.speakAll).toHaveBeenCalledWith(expect.arrayContaining([{ text: 'Our pizza box needs help.' }]));
     await click(root, 'Read aloud'); expect(deps.voice.speak).toHaveBeenCalled();
-    expect(button(root, 'Read everything to me').getAttribute('aria-pressed')).toBe('true');
-    await click(root, 'Read everything to me'); expect(deps.voice.cancel).toHaveBeenCalled();
-    expect(button(root, 'Read everything to me').getAttribute('aria-pressed')).toBe('false');
+    expect(button(root, 'Read to me').getAttribute('aria-pressed')).toBe('true');
+    await click(root, 'Read to me'); expect(deps.voice.cancel).toHaveBeenCalled();
+    expect(button(root, 'Read to me').getAttribute('aria-pressed')).toBe('false');
     const reads = vi.mocked(deps.voice.speakAll).mock.calls.length;
     await click(root, 'Start mission'); await click(root, 'I accept');
     expect(vi.mocked(deps.voice.speakAll).mock.calls).toHaveLength(reads);
-    await click(root, 'Read everything to me'); expect(vi.mocked(deps.voice.speakAll).mock.calls.length).toBeGreaterThan(reads);
+    await click(root, 'Read to me'); expect(vi.mocked(deps.voice.speakAll).mock.calls.length).toBeGreaterThan(reads);
     await click(root, 'Sound on'); expect(button(root, 'Sound off')).toBeTruthy();
     expect(deps.sound.setMuted).toHaveBeenLastCalledWith(true);
     await click(root, 'Sound off'); expect(deps.sound.setMuted).toHaveBeenLastCalledWith(false);

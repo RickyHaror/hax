@@ -16,9 +16,9 @@ export function ReadAloudButton({ line, sidekick }: { line: Line; sidekick?: str
     store.readLine(owner.current, line, sidekick, () => setUnavailable(true));
   };
   return <>
-    <BigButton aria-label="Read aloud" aria-pressed={reading}
-      class={reading ? 'line-reading' : undefined} onClick={read}>
-      <SpeakerIcon />{reading ? 'Reading...' : 'Read aloud'}
+    <BigButton aria-label="Read aloud" title="Read aloud" aria-pressed={reading}
+      class={`read-aloud${reading ? ' line-reading' : ''}`} onClick={read}>
+      <SpeakerIcon /><span class="visually-hidden">{reading ? 'Reading...' : 'Read aloud'}</span>
     </BigButton>
     {unavailable && <span class="speech-unavailable" role="status">
       This computer cannot talk. Ask a grown-up to turn on sound.

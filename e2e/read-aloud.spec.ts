@@ -25,15 +25,15 @@ test('begin unlocks audio and both reading controls play a clip or speech', asyn
   expect(await page.evaluate(() => window.audioCalls)).toEqual([]);
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
-  const toggle = page.getByRole('button', { name: 'Read everything to me', exact: true });
+  const toggle = page.getByRole('button', { name: 'Read to me', exact: true });
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByText('Reading to me: OFF', { exact: true })).toBeVisible();
+  await expect(page.getByText('Read to me: OFF', { exact: true })).toBeVisible();
   await page.evaluate(() => { window.audioCalls = []; });
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText('Reading to me: ON', { exact: true })).toBeVisible();
+  await expect(page.getByText('Read to me: ON', { exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
   await toggle.click();
   await page.evaluate(() => { window.audioCalls = []; });
@@ -41,7 +41,8 @@ test('begin unlocks audio and both reading controls play a clip or speech', asyn
   await line.click();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
   await expect(line).toHaveAttribute('aria-pressed', 'true');
-  await expect(line).toHaveText('Reading...');
+  await expect(line).toHaveAttribute('title', 'Read aloud');
+  await expect(line).toHaveClass(/line-reading/);
   await line.click();
   await expect(line).toHaveAttribute('aria-pressed', 'false');
 });

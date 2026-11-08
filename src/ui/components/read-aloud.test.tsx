@@ -47,26 +47,28 @@ describe('audio begin screen', () => {
 });
 
 describe('auto-read toggle', () => {
-  it('shows distinct badge states, reads current lines from the start, and cancels when off', async () => {
+  it('shows distinct toggle states, reads current lines from the start, and cancels when off', async () => {
     const deps = fakeDeps(); const store = createStore(deps);
     store.settings({ autoRead: false });
     root = await mount(store); await click(root, 'Tap to begin, Agent!');
-    const toggle = button(root, 'Read everything to me');
+    const toggle = button(root, 'Read to me');
     expect(pressed(toggle)).toBe('false');
-    expect(root.querySelector('.reading-off')?.textContent).toBe('Reading to me: OFF');
-    expect(toggle.contains(root.querySelector('.reading-badge'))).toBe(false);
-    expect(toggle.querySelector('svg')?.innerHTML).toBe(root.querySelector('.reading-badge svg')?.innerHTML);
-    await click(root, 'Read everything to me');
+    expect(toggle.textContent).toBe('Read to me: OFF');
+    expect(toggle.classList.contains('reading-on')).toBe(false);
+    expect(root.querySelectorAll('[aria-label="Read to me"]')).toHaveLength(1);
+    expect(toggle.querySelector('svg')).not.toBeNull();
+    await click(root, 'Read to me');
     expect(pressed(toggle)).toBe('true');
-    expect(root.querySelector('.reading-on')?.textContent).toBe('Reading to me: ON');
+    expect(toggle.textContent).toBe('Read to me: ON');
+    expect(toggle.classList.contains('reading-on')).toBe(true);
     expect(deps.voice.speakAll).toHaveBeenLastCalledWith([...login.intro, ...login.steps[0]!.lines]);
     const onIcon = toggle.querySelector('svg')!.innerHTML;
     vi.mocked(deps.voice.cancel).mockClear();
-    await click(root, 'Read everything to me');
+    await click(root, 'Read to me');
     expect(deps.voice.cancel).toHaveBeenCalled();
     expect(pressed(toggle)).toBe('false');
     expect(toggle.querySelector('svg')!.innerHTML).not.toBe(onIcon);
-    await click(root, 'Read everything to me');
+    await click(root, 'Read to me');
     expect(deps.voice.speakAll).toHaveBeenCalledTimes(2);
     expect(deps.voice.speakAll).toHaveBeenLastCalledWith([...login.intro, ...login.steps[0]!.lines]);
   });
@@ -87,7 +89,7 @@ describe('line read aloud feedback', () => {
     const { deps, readers } = await lines();
     const first = readers[0]!;
     await act(() => first.click());
-    expect(pressed(first)).toBe('true'); expect(first.textContent).toBe('Reading...');
+    expect(pressed(first)).toBe('true'); expect(first.querySelector('.visually-hidden')?.textContent).toBe('Reading...');
     expect(first.classList.contains('line-reading')).toBe(true);
     expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'First line.' },
       { sidekick: 'Pixel', onEnd: expect.any(Function) });
@@ -157,6 +159,6 @@ describe('line read aloud feedback', () => {
     root = await mount(identityStore()); await click(root, 'Tap to begin, Agent!');
     await click(root, 'Read aloud');
     expect(pressed(button(root, 'Read aloud'))).toBe('true');
-    expect(button(root, 'Read aloud').textContent).toBe('Reading...');
+    expect(button(root, 'Read aloud').querySelector('.visually-hidden')?.textContent).toBe('Reading...');
   });
 });

@@ -16,12 +16,13 @@ export function SecretKey() {
 }
 export function Done({ mission }: { mission: Mission }) {
   const store = useStore();
-  return <><h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
+  return <div class="done"><div class="done-summary">
+    <Art artKey={mission.badge.art} title={mission.badge.name} size={140} /><div>
+    <h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
     {!store.saved.value && <SpeechLine line={{ text: 'Write your secret key in your notebook. This computer could not save.' }} />}
-    <Art artKey={mission.badge.art} title={mission.badge.name} size={140} />
     <SpeechLine line={{ text: mission.badge.name }} />
-    <p>{rank(Object.keys(store.progress.value.completed).length)}</p><SecretKey />
-    <BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton></>;
+    <p>{rank(Object.keys(store.progress.value.completed).length)}</p><SecretKey /></div></div>
+    <BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton></div>;
 }
 export function Stop() {
   const store = useStore();

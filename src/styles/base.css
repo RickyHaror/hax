@@ -23,6 +23,7 @@ body::after {
 }
 .app-shell { height: 100%; display: flex; flex-direction: column; padding: 16px; gap: 12px; max-width: 1600px; margin: auto; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 12px; flex: 0 0 auto; }
+.toolbar button { font-size: 20px; }
 .panel { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 24px; border: 2px solid var(--green); border-radius: 16px; background: var(--panel); overflow-wrap: anywhere; }
 h1, h2, h3, p { margin: 0 0 16px; }
 h1 { font-size: clamp(28px, 3vw, 44px); line-height: 1.2; }
@@ -43,10 +44,10 @@ fieldset { min-width: 0; border: 1px solid var(--muted); border-radius: 12px; ma
 .card { flex: 1 1 260px; min-width: 0; border: 1px solid var(--muted); padding: 12px; border-radius: 12px; }
 .card > button { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: calc(100% - 8px); text-align: left; }
 .card > button > span { display: block; width: 100%; }
-.speech-line { font-size: 24px; display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin: 12px 0; }
+.speech-line { font-size: 24px; display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin: 4px 0; }
 .speech-line > span { min-width: 0; }
 .speech-line button { flex: 0 0 auto; font-size: 18px; }
-.bubble { display: flex; align-items: flex-start; gap: 16px; margin: 12px 0; }
+.bubble { display: flex; align-items: flex-start; gap: 16px; margin: 8px 0; }
 .bubble > div { flex: 1; min-width: 0; }
 svg { flex-shrink: 0; max-width: 100%; }
 .secret-key { display: block; font-family: var(--font-code); font-size: clamp(24px, 3vw, 40px); letter-spacing: .12em; padding: 20px 0; color: var(--green); }
@@ -56,9 +57,12 @@ svg { flex-shrink: 0; max-width: 100%; }
 .reading-toggle button, .speech-line button { display: inline-flex; align-items: center; gap: 8px; }
 .speaker-icon { vertical-align: middle; }
 .speaker-icon path:not(:first-child) { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.reading-badge { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border: 2px solid; border-radius: 20px; font-size: 20px; }
-.reading-on { background: var(--green); color: var(--bg); border-color: var(--green); box-shadow: 0 0 16px #39ff9f70; }
-.reading-off { color: var(--muted); border-color: var(--muted); }
+.reading-toggle button.reading-on { background: var(--green); color: var(--bg); border-color: var(--green); box-shadow: 0 0 16px #39ff9f70; }
+.speech-line button.read-aloud, button.read-aloud {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; min-width: 48px; min-height: 48px; padding: 0; gap: 0;
+}
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .speech-unavailable { flex-basis: 100%; color: var(--muted); }
 .speech-line:has(.speech-unavailable) { flex-wrap: wrap; }
 .line-reading .speaker-icon { animation: reading-pulse 800ms ease-in-out infinite alternate; }
@@ -71,6 +75,56 @@ svg { flex-shrink: 0; max-width: 100%; }
   .panel { padding: 12px; }
   .bubble { flex-direction: column; }
   .speech-line { flex-wrap: wrap; }
+}
+.panel > [role='status']:empty { display: none; }
+.app-shell > .panel:has(> .player) { display: flex; flex-direction: column; padding: 16px; }
+.player { display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
+.player h1, .done h1 { font-size: 32px; margin: 0; }
+.player h2 { font-size: 26px; line-height: 1.2; margin: 0 0 8px; }
+.player-navigation { display: flex; flex-wrap: wrap; gap: 8px; flex: 0 0 auto; }
+.player-navigation > button { margin: 0; }
+.active-step { display: grid; flex: 1; min-height: 0; min-width: 0; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.step-story, .step-work { min-height: 0; min-width: 0; overflow: auto; padding: 4px; }
+.step-work { display: flex; flex-direction: column; gap: 8px; }
+.step-work > :first-child { flex: 0 1 auto; min-height: 0; overflow: auto; }
+.step-work > section[aria-label='Hints'] { flex: 0 0 auto; }
+.player-phase { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 8px; }
+.phase-story { min-height: 0; overflow: auto; padding: 4px; }
+.player-phase > button { flex: 0 0 auto; align-self: flex-start; margin: 0; }
+.permission-heading > svg { float: right; margin-left: 16px; }
+.permission-signature { display: flex; flex-wrap: wrap; gap: 16px; }
+.permission h3 { line-height: 1.2; margin: 4px 0; }
+.done-summary { display: flex; align-items: flex-start; gap: 24px; }
+.done-summary > div { min-width: 0; }
+@media (min-width: 1000px) {
+  .active-step { grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); grid-template-rows: minmax(0, 1fr); }
+  .panel:has(> section > .choices) {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 8px 12px; padding: 16px;
+  }
+  .panel:has(> section > .choices) > h1 { grid-column: 1 / 4; grid-row: 1; margin: 0; font-size: 32px; }
+  .panel:has(> section > .choices) > svg { grid-column: 4; grid-row: 1 / 3; justify-self: end; }
+  .panel:has(> section > .choices) > p { grid-column: 1 / 4; grid-row: 2; margin: 0; }
+  .panel:has(> section > .choices) > .speech-line { grid-column: 1 / -1; grid-row: 3; }
+  .panel:has(> section > .choices) > section { display: flex; flex-direction: column; grid-row: 4; min-height: 0; min-width: 0; }
+  .panel:has(> section > .choices) > section > h2 { flex: 0 0 auto; font-size: 26px; }
+  .panel:has(> section > .choices) > section > .choices { min-height: 0; overflow: auto; flex-direction: column; flex-wrap: nowrap; padding: 4px; }
+  .panel:has(> section > .choices) .card { flex: 0 0 auto; }
+  .panel:has(> section > .choices) > button { grid-row: 5; justify-self: start; margin: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) {
+    display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 8px 16px; padding: 16px;
+  }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > h1 { grid-column: 1 / -1; margin: 0; font-size: 32px; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > h2 { grid-column: 1; grid-row: 2; font-size: 26px; margin: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > .bubble { grid-column: 1; grid-row: 3; min-width: 0; margin: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > svg { grid-column: 1; grid-row: 4; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > p { grid-column: 2; grid-row: 2; margin: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > div:has(> label) { grid-column: 2; grid-row: 3; min-width: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > div:has(> label) input { margin: 4px 0 8px; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > div:has(> label) > button { margin-top: 0; margin-bottom: 0; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > section[aria-label='Hints'] { grid-column: 2; grid-row: 4; min-height: 0; overflow: auto; }
+  .panel:has(> .glow):has(> section[aria-label='Hints']) > button { grid-column: 1 / -1; grid-row: 5; justify-self: start; margin: 0; }
 }
 .panel:has(.onboarding) { padding: 16px; }
 .onboarding { display: grid; gap: 8px; font-size: 18px; }
