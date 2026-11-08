@@ -1,10 +1,43 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createVoice } from '../engine/voice';
+import { codenameLines } from '../engine/codename';
 import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, toSaveCode, type StorageLike } from '../engine/progress';
 import { createStore, type Screen } from './store';
 import { client, dependent, fixtureRegistry } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 describe('app store', () => {
+  it.each([false, true])('reads parts with legacy voice fallback, parts supported: %s', (supported) => {
+    const deps = fakeDeps(), speakParts = vi.fn();
+    if (supported) deps.voice.speakParts = speakParts;
+    const store = createStore(deps), owner = Symbol('name');
+    const whole = { text: 'Your name: Turbo Falcon', speaker: 'narrator' as const };
+    const parts = codenameLines('Turbo', 'Falcon'), unavailable = vi.fn();
+    store.readLine(owner, whole, 'pixel', unavailable, parts);
+    const options = { sidekick: 'pixel', onEnd: expect.any(Function), onUnavailable: expect.any(Function) };
+    if (supported) {
+      expect(speakParts).toHaveBeenCalledWith(whole, parts, options);
+      expect(deps.voice.speak).not.toHaveBeenCalled();
+    } else expect(deps.voice.speak).toHaveBeenCalledWith(whole, options);
+    expect(store.reading.value).toBe(owner);
+    const callbacks = supported ? speakParts.mock.calls[0]![2] : vi.mocked(deps.voice.speak).mock.calls[0]![1]!;
+    callbacks.onUnavailable(); callbacks.onUnavailable();
+    expect(unavailable).toHaveBeenCalledOnce();
+    store.readLine(owner, whole, undefined, unavailable, parts);
+    expect(store.reading.value).toBeNull();
+    callbacks.onUnavailable(); callbacks.onEnd();
+    expect(unavailable).toHaveBeenCalledOnce();
+  });
+
+  it('clears line ownership when parts playback starts through the voice wrapper', () => {
+    const deps = fakeDeps(), speakParts = vi.fn();
+    deps.voice.speakParts = speakParts;
+    const store = createStore(deps), whole = { text: 'Your name: Turbo Falcon' };
+    store.readLine(Symbol('reader'), { text: 'Old line.' });
+    store.voice.speakParts!(whole, codenameLines('Turbo', 'Falcon'));
+    expect(store.reading.value).toBeNull();
+    expect(speakParts).toHaveBeenCalledWith(whole, codenameLines('Turbo', 'Falcon'), undefined);
+  });
+
   it.each(['idcard', 'stop'] as const)('preserves nested Back destinations from %s', (name) => {
     const store = createStore(fakeDeps()); store.identify(0, 0, 0);
     store.visit({ name }); store.visit({ name: 'parent' });

@@ -3,17 +3,19 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { useStore } from '../store';
 import { BigButton } from './BigButton';
 import { SpeakerIcon } from './SpeakerIcon';
-export function ReadAloudButton({ line, sidekick }: { line: Line; sidekick?: string }) {
+interface SpeechProps { line: Line; sidekick?: string; parts?: readonly Line[] }
+export function ReadAloudButton({ line, sidekick, parts }: SpeechProps) {
   const store = useStore();
   const owner = useRef(Symbol('reading'));
   const [unavailable, setUnavailable] = useState(false);
   const reading = store.reading.value === owner.current;
+  const partsKey = JSON.stringify(parts);
   useEffect(() => () => {
     if (store.reading.value === owner.current) store.voice.cancel();
-  }, [store, line.text, line.say, sidekick]);
+  }, [store, line.text, line.say, line.speaker, sidekick, partsKey]);
   const read = () => {
     setUnavailable(false);
-    store.readLine(owner.current, line, sidekick, () => setUnavailable(true));
+    store.readLine(owner.current, line, sidekick, () => setUnavailable(true), parts);
   };
   return <>
     <BigButton aria-label="Read aloud" title="Read aloud" aria-pressed={reading}
@@ -26,8 +28,8 @@ export function ReadAloudButton({ line, sidekick }: { line: Line; sidekick?: str
   </>;
 }
 
-export function SpeechLine({ line, sidekick }: { line: Line; sidekick?: string }) {
+export function SpeechLine({ line, sidekick, parts }: SpeechProps) {
   return <div class="speech-line"><span>{line.text}</span>
-    <ReadAloudButton line={line} sidekick={sidekick} />
+    <ReadAloudButton line={line} sidekick={sidekick} parts={parts} />
   </div>;
 }

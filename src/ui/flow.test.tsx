@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'preact/test-utils';
 import { loadProgress, isUnlocked, rank, toSaveCode } from '../engine/progress';
+import { createVoice } from '../engine/voice';
 import { createStore } from './store';
 import { buildRegistry } from './registry';
 import { client, dependent, fixtureRegistry, login } from './test/fixtures';
@@ -8,6 +9,49 @@ import { button, click, fakeDeps, fill, identityStore, input, mount, submit, unm
 let root: HTMLElement;
 afterEach(async () => { if (root) await unmount(root); vi.restoreAllMocks(); });
 describe('start and onboarding', () => {
+  it('reads the displayed name as recorded parts and uses newly picked words', async () => {
+    const clips: HTMLAudioElement[] = [], sources: string[] = [];
+    const AudioStub = vi.fn(function (src: string) {
+      const clip = document.createElement('audio');
+      clip.play = vi.fn(() => Promise.resolve()); clip.pause = vi.fn();
+      clips.push(clip); sources.push(src); return clip;
+    });
+    const speak = vi.fn();
+    const synth = { cancel: vi.fn(), speak, getVoices: () => [
+      { lang: 'en-US', localService: false } as SpeechSynthesisVoice,
+    ] } as unknown as SpeechSynthesis;
+    const voice = createVoice({ synth, Utterance: class {} as typeof SpeechSynthesisUtterance,
+      Audio: AudioStub as unknown as typeof Audio });
+    voice.setManifest({ lines: {
+      'narrator|Your name is': 'prefix.mp3', 'narrator|Brave': 'brave.mp3',
+      'narrator|Otter': 'otter.mp3', 'narrator|Swift': 'swift.mp3', 'narrator|Star': 'star.mp3',
+    }, sfx: {} });
+    const store = createStore({ ...fakeDeps(), voice });
+    store.settings({ autoRead: false }); store.go({ name: 'onboarding' });
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    const preview = root.querySelector('.name-preview')!;
+    const read = preview.querySelector<HTMLButtonElement>('[aria-label="Read aloud"]')!;
+    expect(preview.querySelector('.speech-line > span')?.textContent).toBe('Your name: Brave Otter');
+    await act(() => read.click());
+    expect(clips).toHaveLength(1);
+    for (let index = 0; index < 3; index++) {
+      expect(read.getAttribute('aria-pressed')).toBe('true');
+      await act(() => { clips[index]!.dispatchEvent(new Event('ended')); });
+    }
+    expect(read.getAttribute('aria-pressed')).toBe('false');
+    await click(root, 'Swift'); await click(root, 'Star');
+    expect(preview.querySelector('.speech-line > span')?.textContent).toBe('Your name: Swift Star');
+    await act(() => read.click());
+    for (let index = 3; index < 6; index++) {
+      await act(() => { clips[index]!.dispatchEvent(new Event('ended')); });
+    }
+    expect(sources).toEqual(['prefix', 'brave', 'otter', 'prefix', 'swift', 'star']
+      .map((name) => `/audio/lines/${name}.mp3`));
+    expect(speak).not.toHaveBeenCalled();
+    expect(root.querySelector('.speech-unavailable')).toBeNull();
+    expect(read.getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('accepts a normalized password, gives kind feedback, and saves login', async () => {
     const deps = fakeDeps(); const store = createStore(deps); root = await mount(store); await click(root, 'Tap to begin, Agent!');
     expect(root.querySelector('h1')?.textContent).toBe('AGENT HQ');

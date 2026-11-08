@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createVoice, pickVoice, SPEECH_RATE } from './voice';
+import { codenameLines } from './codename';
 
 class TestUtterance {
   volume = 1;
@@ -398,6 +399,109 @@ function recordedSetup() {
   }, sfx: {} });
   return { ...fixture, player, clips, Audio };
 }
+
+const nameWhole = { text: 'Your name: Turbo Falcon', speaker: 'narrator' as const };
+const nameFiles = {
+  'narrator|Your name is': 'prefix.mp3', 'narrator|Turbo': 'turbo.mp3', 'narrator|Falcon': 'falcon.mp3',
+};
+
+describe('recorded name parts', () => {
+  it('plays all parts in order as one reading without synthesis', () => {
+    const { player, clips, synth } = recordedSetup();
+    player.setManifest({ lines: nameFiles, sfx: {} });
+    player.setContext({ sidekick: 'hoot', missionId: 'pizza' });
+    const onEnd = vi.fn(), onUnavailable = vi.fn(), change = vi.fn();
+    player.onSpeakingChange(change);
+    player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'), { onEnd, onUnavailable, sidekick: 'pixel' });
+    for (let index = 0; index < 3; index++) {
+      expect(clips).toHaveLength(index + 1);
+      expect(player.isSpeaking()).toBe(true);
+      expect(clips[index]!.play).toHaveBeenCalledOnce();
+      expect(onEnd).not.toHaveBeenCalled();
+      const end = clips[index]!.onended!;
+      end(); end();
+    }
+    expect(clips.map((clip) => clip.src)).toEqual([
+      '/audio/lines/prefix.mp3', '/audio/lines/turbo.mp3', '/audio/lines/falcon.mp3',
+    ]);
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onUnavailable).not.toHaveBeenCalled();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(change.mock.calls).toEqual([[true], [false]]);
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it.each(Object.keys(nameFiles).flatMap((missing) => [
+    { missing, local: true }, { missing, local: false },
+  ]))('falls back to the whole line for $missing, local voice: $local', ({ missing, local }) => {
+    const { player, clips, synth, utterances } = recordedSetup();
+    player.setManifest({ lines: Object.fromEntries(Object.entries(nameFiles)
+      .filter(([key]) => key !== missing)), sfx: {} });
+    synth.getVoices.mockReturnValue([voice('en-US', local)]);
+    const onEnd = vi.fn(), onUnavailable = vi.fn();
+    player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'), { onEnd, onUnavailable });
+    expect(clips).toHaveLength(0);
+    expect(utterances.map((item) => item.text)).toEqual(local ? [nameWhole.text] : []);
+    if (local) utterances[0]!.onend?.();
+    expect(onUnavailable).toHaveBeenCalledTimes(local ? 0 : 1);
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it('keeps the existing whole-line recording fallback', () => {
+    const { player, clips, synth } = recordedSetup();
+    player.setManifest({ lines: { 'narrator|Your name: Turbo Falcon': 'whole.mp3' }, sfx: {} });
+    player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'));
+    expect(clips[0]!.src).toBe('/audio/lines/whole.mp3');
+    clips[0]!.onended?.();
+    expect(clips).toHaveLength(1);
+    expect(synth.speak).not.toHaveBeenCalled();
+  });
+
+  it.each(['manifest', 'Audio', 'parts'] as const)('uses the whole line without %s', (missing) => {
+    const { deps, utterances } = setup();
+    const { Audio, clips } = recordedSetup();
+    const player = createVoice({ ...deps, Audio: missing === 'Audio' ? null : Audio });
+    player.setManifest(missing === 'manifest' ? null : { lines: nameFiles, sfx: {} });
+    player.speakParts(nameWhole, missing === 'parts' ? [] : codenameLines('Turbo', 'Falcon'));
+    expect(utterances.map((item) => item.text)).toEqual([nameWhole.text]);
+    expect(clips).toHaveLength(0);
+  });
+
+  it('stops mid-sequence and ignores stale events without finishing or reporting unavailable', () => {
+    const { player, clips, synth } = recordedSetup();
+    player.setManifest({ lines: nameFiles, sfx: {} });
+    const onEnd = vi.fn(), onUnavailable = vi.fn();
+    player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'), { onEnd, onUnavailable });
+    clips[0]!.onended?.();
+    const clip = clips[1]!, end = clip.onended!, error = clip.onerror!;
+    clip.currentTime = 2;
+    player.cancel(); end(); error();
+    expect(clip.pause).toHaveBeenCalled();
+    expect(clip.currentTime).toBe(0);
+    expect(clip.onended).toBeNull();
+    expect(clip.onerror).toBeNull();
+    expect(clips).toHaveLength(2);
+    expect(player.isSpeaking()).toBe(false);
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(onUnavailable).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('reports unavailable only if nothing was heard, heard: %s', (heard) => {
+    const { player, clips, synth } = recordedSetup();
+    synth.getVoices.mockReturnValue([voice('en-US', false)]);
+    player.setManifest({ lines: nameFiles, sfx: {} });
+    const onEnd = vi.fn(), onUnavailable = vi.fn();
+    player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'), { onEnd, onUnavailable });
+    if (heard) clips[0]!.onended?.();
+    else clips[0]!.onerror?.();
+    clips[1]!.onerror?.(); clips[2]!.onerror?.();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(onUnavailable).toHaveBeenCalledTimes(heard ? 0 : 1);
+    expect(synth.speak).not.toHaveBeenCalled();
+  });
+});
 
 describe('recorded voice playback', () => {
   it('updates clip volume and ends ducking on disable, errors, and rejected playback', async () => {

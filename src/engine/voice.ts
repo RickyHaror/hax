@@ -31,6 +31,7 @@ export interface Voice {
   setManifest(m: AudioManifest | null): void;
   setContext(ctx: VoiceContext): void;
   speak(line: Line, opts?: SpeakOptions): void;
+  speakParts?(whole: Line, parts: readonly Line[], opts?: SpeakOptions): void;
   speakAll(lines: readonly Line[], opts?: SpeakOptions): void;
   cancel(): void;
   isSpeaking(): boolean;
@@ -212,7 +213,7 @@ function voiceControls(state: PlaybackState, cancel: () => boolean) {
   return { get enabled() { return enabled; }, stop, notify, player };
 }
 
-export function createVoice(deps: VoiceDeps = {}): Voice & VoiceControls {
+export function createVoice(deps: VoiceDeps = {}): Voice & VoiceControls & Required<Pick<Voice, 'speakParts'>> {
   const resolved = resolveDeps(deps);
   const { synth, Utterance, Audio } = resolved;
   let manifest: AudioManifest | null = null;
@@ -256,6 +257,12 @@ export function createVoice(deps: VoiceDeps = {}): Voice & VoiceControls {
     ...controls.player,
     cancel: () => { stop(); }, speakAll,
     speak: (line, opts) => speakAll([line], opts),
+    speakParts(whole, parts, opts) {
+      const ctx = { ...context, sidekick: opts?.sidekick ?? context.sidekick };
+      const recorded = manifest && Audio && parts.length > 0
+        && parts.every((line) => manifest!.lines[lineKey(line, lineRole(line, ctx))]);
+      speakAll(recorded ? parts : [whole], opts);
+    },
     isSpeaking: () => state.speaking,
   };
 }

@@ -4,6 +4,7 @@ import { Art } from '../components/Art';
 import { BigButton } from '../components/BigButton';
 import { SidekickBubble } from '../components/SidekickBubble';
 import { SpeechLine } from '../components/SpeechLine';
+import { codenameLines } from '../../engine/codename';
 function WordPicker({ words, selected, offset, choose, title }: {
   words: readonly string[]; selected: number; offset: number; choose: (index: number) => void; title: string;
 }) {
@@ -30,7 +31,8 @@ export function Onboarding() {
     </div>
     <div class="name-preview">
       <BigButton onClick={() => setOffsets([freshOffset(firstWords.length, offsets[0]!), freshOffset(secondWords.length, offsets[1]!)])}>Shuffle</BigButton>
-      <SpeechLine line={{ text: `Your name: ${firstWords[first]} ${secondWords[second]}` }} />
+      <SpeechLine line={{ text: `Your name: ${firstWords[first]} ${secondWords[second]}`, speaker: 'narrator' }}
+        parts={codenameLines(firstWords[first]!, secondWords[second]!)} />
     </div>
     <h2>Pick your buddy</h2><div class="buddy-choices">
       {sidekicks.slice(0, 3).map((buddy, index) => <section class="buddy-card" key={buddy.id}>

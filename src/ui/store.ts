@@ -48,13 +48,18 @@ function readingStore(source: Voice) {
     setContext: (context) => source.setContext(context),
     isSpeaking: () => source.isSpeaking(), cancel,
     speak(line, options) { clear(); source.speak(line, options); },
+    speakParts(whole, parts, options) {
+      clear();
+      if (source.speakParts) source.speakParts(whole, parts, options);
+      else source.speak(whole, options);
+    },
     speakAll(lines, options) {
       clear();
       if (options === undefined) source.speakAll(lines);
       else source.speakAll(lines, options);
     },
   };
-  function readLine(owner: symbol, line: Line, sidekick?: string, unavailable?: () => void) {
+  function readLine(owner: symbol, line: Line, sidekick?: string, unavailable?: () => void, parts?: readonly Line[]) {
     if (reading.value === owner) { cancel(); return; }
     cancel();
     const token = revision;
@@ -69,7 +74,9 @@ function readingStore(source: Voice) {
       if (reading.value !== owner || token !== revision) return;
       reading.value = null;
     };
-    source.speak(line, { onEnd, onUnavailable, ...(sidekick === undefined ? {} : { sidekick }) });
+    const options = { onEnd, onUnavailable, ...(sidekick === undefined ? {} : { sidekick }) };
+    if (parts && source.speakParts) source.speakParts(line, parts, options);
+    else source.speak(line, options);
   }
   return { voice, reading, readLine };
 }

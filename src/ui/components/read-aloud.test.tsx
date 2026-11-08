@@ -3,6 +3,7 @@ import { render } from 'preact';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createVoice } from '../../engine/voice';
+import { codenameLines } from '../../engine/codename';
 import { sidekicks } from '../../missions/sidekicks';
 import { createStore, StoreContext } from '../store';
 import { client, login } from '../test/fixtures';
@@ -97,6 +98,33 @@ async function lines(deps = fakeDeps()) {
 }
 
 describe('line read aloud feedback', () => {
+  it('passes parts through and cancels changed parts without canceling an unchanged reading', async () => {
+    const deps = fakeDeps(), speakParts = vi.fn(); deps.voice.speakParts = speakParts;
+    const store = createStore(deps), line = { text: 'Your name', speaker: 'narrator' as const };
+    root = document.createElement('div'); document.body.append(root);
+    const show = async (first: string) => act(() => render(<StoreContext.Provider value={store}>
+      <SpeechLine line={line} parts={codenameLines(first, 'Falcon')} />
+    </StoreContext.Provider>, root));
+    await show('Turbo'); await click(root, 'Read aloud');
+    expect(speakParts).toHaveBeenLastCalledWith(line, codenameLines('Turbo', 'Falcon'),
+      { onEnd: expect.any(Function), onUnavailable: expect.any(Function) });
+    expect(pressed(button(root, 'Read aloud'))).toBe('true');
+    const oldOptions = speakParts.mock.calls[0]![2];
+    await show('Turbo');
+    expect(pressed(button(root, 'Read aloud'))).toBe('true');
+    await show('Swift');
+    expect(store.reading.value).toBeNull();
+    expect(pressed(button(root, 'Read aloud'))).toBe('false');
+    await click(root, 'Read aloud');
+    expect(speakParts).toHaveBeenLastCalledWith(line, codenameLines('Swift', 'Falcon'), expect.any(Object));
+    await act(() => { oldOptions.onUnavailable(); oldOptions.onEnd(); });
+    expect(root.querySelector('[role="status"]')).toBeNull();
+    expect(pressed(button(root, 'Read aloud'))).toBe('true');
+    await act(() => speakParts.mock.calls[1]![2].onEnd());
+    expect(pressed(button(root, 'Read aloud'))).toBe('false');
+    expect(deps.voice.speak).not.toHaveBeenCalled();
+  });
+
   it('shows Reading immediately, stops on the second press, and ignores stale endings', async () => {
     const { deps, readers } = await lines();
     const first = readers[0]!;
