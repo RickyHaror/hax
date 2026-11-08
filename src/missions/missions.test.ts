@@ -55,6 +55,7 @@ function checkLine(line: Line): void {
   expect(typeof line.text).toBe('string');
   expect(line.text.trim()).not.toBe('');
   expect(Object.keys(line).every((key) => ['text', 'say', 'speaker'].includes(key))).toBe(true);
+  expect(line.say, line.text).not.toBe(line.text);
   if (needsSay(line.text)) {
     expect(typeof line.say, line.text).toBe('string');
     expect(line.say?.trim(), line.text).toBeTruthy();
@@ -227,6 +228,12 @@ describe('mission data check helpers', () => {
     expect(() => checkLine({ text: ' ' })).toThrow();
     const extra = { text: 'Hello!', extra: 'This is not a Line key.' };
     expect(() => checkLine(extra)).toThrow();
+  });
+
+  it('rejects copied spoken text while allowing distinct spoken forms', () => {
+    expect(() => checkLine({ text: 'Hello!', say: 'Hello!' })).toThrow();
+    expect(() => checkLine({ text: 'Type ls.', say: 'Type ls.' })).toThrow();
+    expect(() => checkLine({ text: 'Type ls.', say: 'Type L S.' })).not.toThrow();
   });
 
   it('decodes mixed case, wraparound and punctuation', () => {

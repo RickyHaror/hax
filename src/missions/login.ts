@@ -19,6 +19,7 @@ export const login: Mission = {
   steps: [
     {
       id: 'door',
+      art: 'login-screen',
       title: 'Find the password',
       lines: [{ text: 'A password is like a secret handshake.' }],
       hints: [

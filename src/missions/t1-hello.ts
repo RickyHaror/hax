@@ -64,8 +64,8 @@ export const t1Hello: Mission = {
       title: 'Read the note',
       lines: [
         { text: 'A file is like a sheet of paper.' },
-        { text: 'The cat command shows what is on that paper.', say: 'The cat command shows what is on that paper.' },
-        { text: 'Put a space and the file name after cat.', say: 'Put a space and the file name after cat.' },
+        { text: 'The cat command shows what is on that paper.' },
+        { text: 'Put a space and the file name after cat.' },
         { text: 'Read notes.txt with the chip.', say: 'Read notes dot T X T with the chip.' },
       ],
       hints: [

@@ -4,6 +4,12 @@ import { art } from '../art';
 import { login, LOGIN_PASSWORD } from './login';
 
 describe('The Front Door', () => {
+  it('uses the registered login picture for the door step', () => {
+    const step = login.steps.find((entry) => entry.id === 'door');
+    expect(step?.art).toBe('login-screen');
+    expect(Object.hasOwn(art, step?.art ?? '')).toBe(true);
+  });
+
   it('uses a short word and digits with an uppercase alternative', () => {
     expect(login.steps).toHaveLength(1);
     const config = login.steps[0]!.config;

@@ -40,14 +40,14 @@ export const t3Tools: Mission = {
       id: 'get-help',
       title: 'Ask for help',
       lines: [
-        { text: 'The help command lists the tools you can use.', say: 'The help command lists the tools you can use.' },
+        { text: 'The help command lists the tools you can use.' },
         { text: 'It is like asking a friend for a tip.' },
-        { text: 'Try the help chip.', say: 'Try the help chip.' },
+        { text: 'Try the help chip.' },
       ],
       hints: [
         { text: 'You can always ask for a tip.' },
-        { text: 'The new tool is called help.', say: 'The new tool is called help.' },
-        { text: 'Type help and press Enter.', say: 'Type help and press Enter.' },
+        { text: 'The new tool is called help.' },
+        { text: 'Type help and press Enter.' },
       ],
       success: [{ text: 'Nice! Now you know where to find your tools.' }],
       config: {
@@ -60,14 +60,14 @@ export const t3Tools: Mission = {
       title: 'Make some space',
       lines: [
         { text: 'Try ls to put some names on the screen.', say: 'Try L S to put some names on the screen.' },
-        { text: 'The clear command wipes old words from the screen.', say: 'The clear command wipes old words from the screen.' },
+        { text: 'The clear command wipes old words from the screen.' },
         { text: 'It is like wiping a chalk board.' },
         { text: 'Your files stay safe. Just the screen gets a tidy.' },
       ],
       hints: [
         { text: 'Let us make room for new words.' },
-        { text: 'Use clear to tidy the screen.', say: 'Use clear to tidy the screen.' },
-        { text: 'Type clear and press Enter.', say: 'Type clear and press Enter.' },
+        { text: 'Use clear to tidy the screen.' },
+        { text: 'Type clear and press Enter.' },
       ],
       success: [{ text: 'All tidy! Your files are still here.' }],
       config: {
@@ -103,7 +103,7 @@ export const t3Tools: Mission = {
       title: 'Read the secret snack',
       lines: [
         { text: 'Our hidden file is called .snack.', say: 'Our hidden file is called dot snack.' },
-        { text: 'Use cat to read it, just like any file.', say: 'Use cat to read it, just like any file.' },
+        { text: 'Use cat to read it, just like any file.' },
         { text: 'Keep the dot when you type its name.' },
         { text: 'Try typing this one. You can do it!' },
       ],
