@@ -1,9 +1,46 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { act } from 'preact/test-utils';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { client, fixtureRegistry } from './test/fixtures';
 import { click, fakeDeps, identityStore, mount, unmount } from './test/helpers';
 
 let root: HTMLElement;
-afterEach(async () => { if (root) await unmount(root); });
+let styles: HTMLStyleElement;
+beforeEach(() => {
+  styles = document.createElement('style');
+  styles.textContent = readFileSync('src/styles/base.css', 'utf8');
+  document.head.append(styles);
+});
+afterEach(async () => { if (root) await unmount(root); styles.remove(); });
+
+describe('scroll containers and announcements', () => {
+  it('keeps the empty update region rendered and reveals updates in the same region', async () => {
+    const store = identityStore(); root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    const region = root.querySelector<HTMLElement>('.panel > [role="status"]')!;
+    const empty = getComputedStyle(region);
+    expect(empty.display).not.toBe('none');
+    expect(empty.visibility).not.toBe('hidden');
+    expect(empty.position).toBe('absolute');
+    expect(empty.width).toBe('1px');
+    expect(empty.height).toBe('1px');
+    await act(() => { store.updatePending.value = true; });
+    expect(root.querySelector('.panel > [role="status"]')).toBe(region);
+    expect(region.textContent).toContain('New missions arrived!');
+    expect(getComputedStyle(region).position).not.toBe('absolute');
+    expect(region.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
+  });
+
+  it('contains absolute read aloud labels inside each scrolling player column', async () => {
+    const store = identityStore(); store.openMission(client.id);
+    store.phase(client.id, { phase: 'step', index: 1 });
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    for (const selector of ['.panel', '.step-story', '.step-work']) {
+      const container = root.querySelector<HTMLElement>(selector)!;
+      expect(container.querySelector('.visually-hidden')).toBeTruthy();
+      expect(getComputedStyle(container).position).toBe('relative');
+    }
+  });
+});
 
 describe('map chapters', () => {
   it('shows the coming soon message without empty chapter sections', async () => {

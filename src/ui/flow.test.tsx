@@ -44,6 +44,34 @@ describe('start and onboarding', () => {
 });
 
 describe('mission journey', () => {
+  it.each([false, true])('reads ethics once in the intro and slip, already included: %s', async (included) => {
+    const ethics = { text: 'Only hack what you own or have permission to hack.', say: 'Ask first.' };
+    const mission = { ...client,
+      intro: included ? [...client.intro, ethics] : client.intro,
+      client: { ...client.client!, notAllowed: included
+        ? [...client.client!.notAllowed, ethics] : client.client!.notAllowed },
+    };
+    const deps = fakeDeps(); deps.registry = fixtureRegistry([mission]);
+    const store = identityStore(deps); root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    await act(() => store.openMission(mission.id));
+    const spoken = vi.mocked(deps.voice.speakAll).mock.lastCall![0];
+    expect(spoken.filter((line) => line.text === ethics.text)).toEqual([
+      included ? ethics : { text: ethics.text },
+    ]);
+    for (const phase of ['intro', 'permission']) {
+      const lines = [...root.querySelectorAll('.speech-line')].filter((line) =>
+        line.querySelector('span')?.textContent === ethics.text);
+      expect(lines).toHaveLength(1);
+      const read = lines[0]!.querySelector<HTMLButtonElement>('button[aria-label="Read aloud"]')!;
+      await act(() => read.click());
+      expect(deps.voice.speak).toHaveBeenLastCalledWith(
+        included ? ethics : { text: ethics.text }, expect.any(Object));
+      if (phase === 'intro') await click(root, 'Start mission');
+    }
+    await click(root, 'I accept');
+    expect(store.position.value.phase).toBe('step');
+  });
+
   it('shows a readable save failure with the secret key and Next', async () => {
     const deps = fakeDeps();
     deps.storage.setItem = () => { throw new Error('Storage unavailable'); };

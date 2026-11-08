@@ -5,6 +5,12 @@
 .tool-page { padding: 8px 16px; max-height: 30vh; overflow: auto; }
 .tool-page h3 .speech-line { font-size: 28px; }
 .tool-source { margin: 8px; padding: 12px; font: 24px/1.5 var(--font-code); max-height: 30vh; overflow: auto; background: var(--bg); }
+@media (min-width: 1000px) {
+  .step-work > .mission-tool, .step-work .tool-page {
+    max-height: none; overflow: visible;
+  }
+  .step-work .tool-source { max-height: none; }
+}
 .source-line { display: block; min-height: 1.5em; }
 .source-tag { color: var(--green); }
 .source-attribute { color: #b8dcff; }

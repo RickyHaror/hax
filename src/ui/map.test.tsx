@@ -74,14 +74,14 @@ describe('mission map', () => {
       { text: expect.stringContaining(`Finish ${client.title} first`) }, expect.any(Object));
   });
 
-  it.each([false, true])('scrolls only the next card on mount, reduced motion: %s', async (reduced) => {
+  it.each([false, true])('scrolls the next chapter to its heading on mount, reduced motion: %s', async (reduced) => {
     const scroll = vi.fn();
     Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scroll });
     const matchMedia = vi.fn(() => ({ matches: reduced }));
     vi.stubGlobal('matchMedia', matchMedia);
     await showMap(undefined, [login.id]);
     expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)');
-    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
-    expect(scroll.mock.contexts[0]).toBe(missionButton(client.title).parentElement);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: 'start', behavior: reduced ? 'instant' : 'smooth' });
+    expect(scroll.mock.contexts[0]).toBe(missionButton(client.title).closest('section[aria-label="Missions"]'));
   });
 });

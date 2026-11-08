@@ -21,6 +21,16 @@
 .case-pretend-link { text-decoration: underline; }
 .case-found { max-height: 15vh; overflow: auto; padding: 6px; }
 .case-found ul { margin: 0; padding-left: 24px; }
+@media (min-width: 1000px) {
+  .step-work > .case-widget, .step-work .case-email, .step-work .case-found {
+    max-height: none; overflow: visible;
+  }
+  .step-work > .case-log {
+    display: grid; grid-template-rows: auto minmax(144px, 1fr) auto auto auto;
+    flex: 1 0 0; min-height: min-content;
+  }
+  .step-work .case-log-lines { min-height: 0; max-height: none; }
+}
 .case-glow { outline: 3px solid var(--green); outline-offset: 2px; animation: case-pulse 1.2s ease-in-out infinite alternate; }
 .case-widget :focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; }
 @keyframes case-pulse { to { box-shadow: 0 0 14px var(--green); } }

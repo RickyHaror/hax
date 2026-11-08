@@ -18,7 +18,9 @@ function MissionCard({ mission, next }: { mission: Mission; next: boolean }) {
   useEffect(() => {
     if (!next) return;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    card.current?.scrollIntoView?.({ block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
+    card.current?.closest('.map-chapters > section')?.scrollIntoView?.({
+      block: 'start', behavior: reduced ? 'instant' : 'smooth',
+    });
   }, [next]);
   return <section ref={card} class={`map-card${next ? ' map-card-next' : ''}`}>
     <BigButton class="map-mission" disabled={!unlocked} onClick={() => store.openMission(mission.id)}>

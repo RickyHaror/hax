@@ -7,16 +7,20 @@ import { SidekickBubble } from '../components/SidekickBubble';
 import { HintLadder } from '../components/HintLadder';
 import { StepWidget } from '../widgets';
 export const ethics = { text: 'Only hack what you own or have permission to hack.' };
+function withEthics(lines: Step['lines']) {
+  return lines.some((line) => line.text === ethics.text) ? lines : [...lines, ethics];
+}
 function Permission({ mission, accept }: { mission: Mission; accept: () => void }) {
   const client = mission.client!;
-  return <section class="player-phase permission"><div class="phase-story">
-    <header class="permission-heading"><Art artKey={client.art} title={client.company} />
+  return <section class="player-phase permission"><div class="phase-story permission-columns">
+    <div><header class="permission-heading"><Art artKey={client.art} title={client.company} size={120} />
       <h2>Permission slip</h2><div class="permission-signature">
         <SpeechLine line={{ text: client.company }} /><SpeechLine line={{ text: `Signed: ${client.contact}` }} />
       </div></header>
-    <h3>You may test</h3>{client.allowed.map((line, i) => <SpeechLine key={i} line={line} />)}
-    <h3>Leave these alone</h3>{client.notAllowed.map((line, i) => <SpeechLine key={i} line={line} />)}
-    <SpeechLine line={ethics} /></div><BigButton onClick={accept}>I accept</BigButton>
+    <h3>You may test</h3>{client.allowed.map((line, i) => <SpeechLine key={i} line={line} />)}</div>
+    <div><h3>Leave these alone</h3>{withEthics(client.notAllowed).map((line, i) =>
+      <SpeechLine key={i} line={line} />)}</div>
+    </div><BigButton onClick={accept}>I accept</BigButton>
   </section>;
 }
 function ActiveStep({ mission, step, index }: { mission: Mission; step: Step; index: number }) {
@@ -41,7 +45,7 @@ function PlayerPhase({ mission }: { mission: Mission }) {
   const { phase, index } = store.position.value;
   const move = (next: 'step' | 'outro', nextIndex = 0) =>
     store.phase(mission.id, { phase: next === 'step' && !mission.steps[nextIndex] ? 'outro' : next, index: nextIndex });
-  if (phase === 'intro') return <MessagePhase lines={mission.client ? [...mission.intro, ethics] : mission.intro}
+  if (phase === 'intro') return <MessagePhase lines={mission.client ? withEthics(mission.intro) : mission.intro}
     label="Start mission" next={() => mission.client
       ? store.phase(mission.id, { phase: 'permission', index: 0 }) : move('step')} />;
   if (phase === 'permission' && mission.client) return <Permission mission={mission} accept={() => move('step')} />;

@@ -1,6 +1,6 @@
 .terminal-widget {
   display: grid;
-  grid-template-columns: minmax(180px, 25%) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 32%) minmax(0, 1fr);
   gap: 10px;
   height: 310px;
   max-height: 42vh;
@@ -17,12 +17,14 @@
   border-radius: 10px;
   background: var(--bg);
 }
-.terminal-folders { overflow: auto; padding: 8px; }
+.terminal-folders { overflow: auto; overflow-wrap: normal; padding: 8px; }
+.terminal-folders * { overflow-wrap: normal; word-break: normal; }
 .terminal-folders h3 { margin: 0; font-size: 24px; }
 .terminal-folders ul { list-style: none; margin: 0; padding-left: 14px; }
 .terminal-folders > ul { padding-left: 0; }
 .terminal-tree-entry { display: flex; align-items: baseline; gap: 6px; padding: 2px; }
-.terminal-tree-entry > span { overflow-wrap: anywhere; }
+.terminal-tree-entry > span { flex-shrink: 0; white-space: nowrap; }
+.terminal-tree-entry > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .terminal-tree-entry[aria-current='true'] {
   background: var(--panel);
   outline: 2px solid var(--green);
@@ -60,7 +62,7 @@
 .terminal-cursor { width: 12px; height: 26px; background: var(--green); animation: terminal-blink 1s steps(1) infinite; }
 @keyframes terminal-blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .terminal-cursor { animation: none; } }
-.panel:has(.terminal-widget) {
+.panel:has(> section > .terminal-widget) {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -68,8 +70,8 @@
   padding: 12px;
   overflow: hidden;
 }
-.panel:has(.terminal-widget) > h1 { grid-column: 1 / -1; margin: 0; }
-.panel:has(.terminal-widget) > button { justify-self: start; margin: 0; }
+.panel:has(> section > .terminal-widget) > h1 { grid-column: 1 / -1; margin: 0; }
+.panel:has(> section > .terminal-widget) > button { justify-self: start; margin: 0; }
 .panel > section:has(> .terminal-widget) {
   grid-column: 1 / -1;
   display: grid;
@@ -104,3 +106,6 @@
 .panel > section:has(> .terminal-widget) > .terminal-widget { grid-area: terminal; }
 .panel > section:has(> .terminal-widget) > section[aria-label='Hints'] { grid-area: hints; }
 .terminal-input-line > span:first-child { max-width: 65%; overflow-wrap: anywhere; }
+@media (min-width: 1000px) {
+  .step-work > .terminal-widget { flex: 1 0 260px; height: auto; max-height: none; min-height: 260px; }
+}

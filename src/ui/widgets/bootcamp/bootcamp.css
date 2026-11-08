@@ -1,4 +1,7 @@
 .bootcamp { max-height: 380px; overflow: auto; padding: 8px; }
+@media (min-width: 1000px) {
+  .step-work > .bootcamp { max-height: none; overflow: visible; }
+}
 .bc-targets, .bc-items, .bc-zones { display: flex; flex-wrap: wrap; gap: 12px; }
 .bc-targets > button { display: grid; justify-items: center; min-width: 140px; min-height: 150px; }
 .bc-pulse { animation: bc-pulse 1.8s ease-in-out infinite; }

@@ -1,4 +1,8 @@
 .explorer-widget { max-height: min(44vh, 360px); overflow: auto; font-size: 24px; padding: 8px; }
+@media (min-width: 1000px) {
+  .step-work > .explorer-widget { max-height: none; overflow: visible; }
+  .step-work .file-viewer { max-height: none; overflow: visible; }
+}
 .explorer-widget button { min-height: 48px; min-width: 48px; }
 .explorer-widget button:focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; }
 .explorer-widget .speech-line { margin: 6px 0; }
