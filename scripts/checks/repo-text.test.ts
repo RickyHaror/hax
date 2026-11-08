@@ -11,6 +11,7 @@ const TOOLING_FILES = new Set([
   'AGENTS.md',
   'CLAUDE.md',
   'docs/orchestration/ORCHESTRATOR.md',
+  'docs/orchestration/OWNER-HANDOFF.md',
   'docs/orchestration/REVIEWER-BRIEF.md',
   'docs/orchestration/task-packet.md',
   'scripts/orchestration/codex-run.sh',
