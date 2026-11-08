@@ -57,3 +57,14 @@
 - The grown-up PIN panel stays and is restyled to the new look.
 - Fit rule: a 1366x768 laptop in Edge leaves about 650px of height. The layout scales to fit any window
   height, offers a full screen button, and e2e covers a 1366x650 viewport as well as 1920x1080 and 390x844.
+
+## 2026-11-08, owner: E5 mission schema
+
+- Schema shape from the E5-0 proposal: additive, one `hack` step kind, machines, contract and alarm on the
+  mission, a `Season` type. Old step kinds stay valid until content replaces the old missions.
+- Save code v2 with 48 mission bits; v1 codes still accepted.
+- Ranks: Rookie 0, Agent 60, Senior Agent 200, Specialist 600, Crew Chief 1200; 20 XP per mission.
+- Extra commands: `open`, `submit`, `unlock`, `exit`. Mission 10 reads and reports mail only for now.
+- Machines share prompt colors; up to 4 more tokens allowed if they pass 8:1 and are never amber or red.
+- The picked sidekick (Bit, Pixel, Hoot) stays as the crew voice, drawn in the signal wave avatar style.
+- Flags look like `CLUE{...}`.
