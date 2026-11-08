@@ -29,6 +29,15 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 1:50 PM Toronto, 2026-11-08, owner hax-03. E5 BUILD run 3 checkpointed at engine/e5
+c2ba7b3 (pushed): E5-5 season map, E5-6 Boot Camp and parent panel restyle, clip check, layout check at all
+four sizes with 364 screenshots, check:reading fixed. Chromium e2e 104 pass, 148 fail on real layout findings
+(small fonts, hint ladder overlapping work, 15 clipped text cases); 192 spoken screen lines have no clips.
+Owner decided all three questions (docs/DECISIONS.md "E5 run 3 follow ups"). E5 BUILD run 4 launched about
+1:50 PM, hard stop about 2:55 PM, this owner's subagent (report forwarded to the next owner): fix packets per
+finding group, screen text catalog plus generate.mjs dry run total. Next: rerun layout on Chromium and Edge,
+then E5 VERIFY. Founder still owes the voice cost answer; the screen text lines add to it.
+
 Updated about 12:30 PM Toronto, 2026-11-08, owner hax-03. Content C4 BUILD run 2 checkpointed at
 content/c4 9fe935f (pushed): all eight decisions applied, unit proof 260 pass, sequencing table in
 build-logs/C4-sequencing.md. For C4 VERIFY: put the machine names (game-server, bakery-web) in the m3 and m4
