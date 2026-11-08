@@ -5,6 +5,7 @@ import { BigButton } from './BigButton';
 import { SpeechLine } from './SpeechLine';
 import { SpeakerIcon } from './SpeakerIcon';
 import { AudioControls, AudioPanel } from './AudioControls';
+import { Logo } from './Logo';
 export function Toggles() {
   const store = useStore();
   const { autoRead, muted } = store.progress.value.settings;
@@ -83,6 +84,7 @@ export function Toolbar() {
   const unlocked = store.registry.missions.some((mission) => Object.hasOwn(store.progress.value.completed, mission.id)
     && mission.steps.some((step) => step.config.kind === 'decoder'));
   return <nav class="toolbar" aria-label="Game tools">
+    <Logo />
     <BigButton aria-label="Sound controls" aria-expanded={audioOpen}
       onClick={(event) => { audioOpener.current = event.currentTarget; setAudioOpen(!audioOpen); }}><SpeakerIcon />Sound controls</BigButton>
     <AudioPanel open={audioOpen} close={closeAudio} opener={audioOpener}><Toggles /></AudioPanel>

@@ -17,6 +17,7 @@ export interface Progress {
   firstWord: number | null;
   secondWord: number | null;
   sidekick: number | null;
+  avatar: number | null;
   completed: Record<MissionId, string>;
   extraBits: number;
   current: ResumePoint | null;
@@ -30,7 +31,7 @@ export const RANKS: readonly string[] = Object.freeze([
 
 export function createProgress(): Progress {
   return {
-    schema: SCHEMA_VERSION, firstWord: null, secondWord: null, sidekick: null,
+    schema: SCHEMA_VERSION, firstWord: null, secondWord: null, sidekick: null, avatar: null,
     completed: {}, extraBits: 0, current: null, hints: {},
     settings: { autoRead: true, muted: false, sessionMinutes: 0,
       voices: { on: true, level: 'medium' }, sounds: { on: true, level: 'medium' },
@@ -123,6 +124,7 @@ export function loadProgress(storage: StorageLike | null | undefined): Progress 
       firstWord: inRange(value.firstWord, 63) ? value.firstWord : null,
       secondWord: inRange(value.secondWord, 63) ? value.secondWord : null,
       sidekick: inRange(value.sidekick, 3) ? value.sidekick : null,
+      avatar: inRange(value.avatar, 7) ? value.avatar : null,
       completed: completedFrom(value.completed),
       extraBits: inRange(value.extraBits, 0xffffff) ? value.extraBits : 0,
       current: currentFrom(value.current), hints: hintsFrom(value.hints),
@@ -151,6 +153,10 @@ export function setIdentity(
     secondWord: inRange(id.secondWord, 63) ? id.secondWord : null,
     sidekick: inRange(id.sidekick, 3) ? id.sidekick : null,
   };
+}
+
+export function setAvatar(p: Progress, index: number): Progress {
+  return { ...p, avatar: inRange(index, 7) ? index : null };
 }
 
 export function hasIdentity(p: Progress): boolean {
@@ -191,6 +197,14 @@ export function recordHint(
 
 export function updateSettings(p: Progress, patch: Partial<Settings>): Progress {
   return { ...p, settings: settingsFrom({ ...p.settings, ...patch }) };
+}
+
+export function resetProgress(p: Progress): Progress {
+  return { ...createProgress(), pin: p.pin };
+}
+
+export function unlockMission(p: Progress, missionId: MissionId, now: Date): Progress {
+  return completeMission(p, missionId, now);
 }
 
 export function isUnlocked(p: Progress, mission: Mission): boolean {

@@ -2,8 +2,9 @@ import { computed, signal, type Signal } from '@preact/signals';
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
 import {
-  loadProgress, saveProgress, setIdentity, hasIdentity, setCurrent, completeMission,
+  loadProgress, saveProgress, setIdentity, setAvatar, hasIdentity, setCurrent, completeMission,
   recordHint, updateSettings, isUnlocked, applySaveCode, reconcileExtraBits,
+  resetProgress, unlockMission,
   type StorageLike, type Progress, type Settings,
 } from '../engine/progress';
 import type { Voice } from '../engine/voice';
@@ -12,15 +13,19 @@ import { applyAudioSettings, type MusicPlayer } from '../engine/music';
 import type { Registry } from './registry';
 import type { Line, Mission } from '../engine/types';
 import { isSafeMoment } from './pwa/safe';
+import { clearPlayground } from '../engine/playground';
+import { parentAccess } from './screens/parent/access';
+import { sessionRemaining } from '../engine/session';
 
 export interface StoreDeps {
   registry: Registry; storage: StorageLike | null; voice: Voice; sound: SoundPlayer; now?: () => Date;
   music?: MusicPlayer;
 }
 export type Screen =
+  | { name: 'parent' }
   | { name: 'start' } | { name: 'onboarding' } | { name: 'map' } | { name: 'playground' }
   | { name: 'player'; missionId: string } | { name: 'done'; missionId: string }
-  | { name: 'stop' } | { name: 'savecode' } | { name: 'settings' };
+  | { name: 'stop' } | { name: 'savecode' } | { name: 'settings' } | { name: 'idcard' };
 export interface Position { phase: 'intro' | 'permission' | 'step' | 'success' | 'outro'; index: number }
 function resumePosition(mission: Mission, value: string | null): Position {
   try {
@@ -128,14 +133,34 @@ export function createStore(deps: StoreDeps) {
   const { progress, save, go, notice } = store;
   initialize(store);
   const now = () => (deps.now ?? (() => new Date()))();
+  const sessionStartedAt = now().getTime();
   return {
     ...store,
+    sessionStartedAt,
+    sessionRemaining: () => sessionRemaining(sessionStartedAt, progress.value.settings.sessionMinutes,
+      () => now().getTime()),
+    parentAccess: parentAccess(() => progress.value, () => now().getTime()),
+    parentPin(pin: Progress['pin']) { save({ ...progress.value, pin }); },
+    parentUnlock(missionId: string) {
+      if (deps.registry.missions.some((mission) => mission.id === missionId)) {
+        save(unlockMission(progress.value, missionId, now()));
+      }
+    },
+    parentReset() {
+      const cleared = clearPlayground(deps.storage);
+      save(resetProgress(progress.value));
+      store.position.value = { phase: 'intro', index: 0 };
+      store.revealCount.value = 0; notice.value = '';
+      go({ name: 'start' });
+      return cleared && store.saved.value;
+    },
     updateReady: signal(false),
     updatePending: signal(false),
     safeMoment: computed(() => isSafeMoment(store.screen.value, store.position.value)),
     identify(firstWord: number, secondWord: number, sidekick: number) {
       save(setIdentity(progress.value, { firstWord, secondWord, sidekick })); go({ name: 'map' });
     },
+    avatar(index: number) { save(setAvatar(progress.value, index)); },
     settings(patch: Partial<Settings>) {
       save(updateSettings(progress.value, patch));
       if (patch.autoRead === false) store.voice.cancel();

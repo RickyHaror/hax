@@ -4,11 +4,14 @@ import { isSafeMoment } from './safe';
 
 const phases: Position['phase'][] = ['intro', 'permission', 'step', 'success', 'outro'];
 const screens: Screen[] = [
-  { name: 'map' }, { name: 'settings' },
+  { name: 'map' }, { name: 'settings' }, { name: 'idcard' },
   { name: 'done', missionId: 'client' }, { name: 'stop' }, { name: 'savecode' },
 ];
 
 describe('safe update moments', () => {
+  it.each(phases)('defers updates throughout the parent panel with a %s position', (phase) => {
+    expect(isSafeMoment({ name: 'parent' }, { phase, index: 0 })).toBe(false);
+  });
   it.each(phases)('defers updates during playground free play with a %s position', (phase) => {
     expect(isSafeMoment({ name: 'playground' }, { phase, index: 0 })).toBe(false);
   });

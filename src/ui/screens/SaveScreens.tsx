@@ -7,6 +7,7 @@ import { BigButton } from '../components/BigButton';
 import { SidekickBubble } from '../components/SidekickBubble';
 import { SpeechLine } from '../components/SpeechLine';
 import { Toggles } from '../components/Toolbar';
+import { SessionNudge } from './parent/SessionNudge';
 export function SecretKey() {
   const store = useStore();
   return <section aria-label="Secret decryption key">
@@ -29,7 +30,8 @@ export function Done({ mission }: { mission: Mission }) {
       <Art artKey={buddy.art} title={buddy.name} size={120} />
       <SpeechLine line={{ text: 'You did it! I am so proud of you.' }} sidekick={buddy.id} />
     </section>
-    <BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton></div>;
+    <div class="parent-session-actions"><BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton>
+      <SessionNudge /></div></div>;
 }
 export function Stop() {
   const store = useStore();

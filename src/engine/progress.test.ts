@@ -8,8 +8,8 @@ import {
 import {
   RANKS, SCHEMA_VERSION, STORAGE_KEY, applySaveCode, badgesEarned, checkPin,
   completeMission, createProgress, hashPin, hasIdentity, isUnlocked, loadProgress,
-  rank, reconcileExtraBits, recordHint, saveProgress, setCurrent, setIdentity, setPin, toSaveCode,
-  updateSettings, type Progress, type StorageLike,
+  rank, reconcileExtraBits, recordHint, saveProgress, setAvatar, setCurrent, setIdentity, setPin, toSaveCode,
+  updateSettings, resetProgress, unlockMission, type Progress, type StorageLike,
 } from './progress';
 
 class MemoryStorage implements StorageLike {
@@ -108,7 +108,7 @@ describe('progress storage', () => {
     expect(STORAGE_KEY).toBe('hax.v1');
     expect(SCHEMA_VERSION).toBe(1);
     expect(p).toEqual({
-      schema: 1, firstWord: null, secondWord: null, sidekick: null,
+      schema: 1, firstWord: null, secondWord: null, sidekick: null, avatar: null,
       completed: {}, extraBits: 0, current: null, hints: {},
       settings: { autoRead: true, muted: false, sessionMinutes: 0,
         voices: { on: true, level: 'medium' }, sounds: { on: true, level: 'medium' },
@@ -226,6 +226,35 @@ describe('progress storage', () => {
         .toEqual({ ...createProgress().settings, autoRead: true, muted: true, sessionMinutes: 0 });
     }
     expect(loadValue(populated()).current).toEqual(populated().current);
+  });
+});
+
+describe('avatar progress', () => {
+  it('defaults missing and malformed stored avatars to null', () => {
+    for (const avatar of [undefined, null, -1, 8, 1.5, '1', true, {}, []]) {
+      expect(loadValue({ ...populated(), avatar })).toEqual({ ...populated(), avatar: null });
+    }
+  });
+
+  it('saves and reloads every avatar without changing other progress', () => {
+    const storage = new MemoryStorage();
+    const original = freeze(populated());
+    for (let index = 0; index < 8; index++) {
+      const next = setAvatar(original, index);
+      expect(next).not.toBe(original);
+      expect(next).toEqual({ ...original, avatar: index });
+      expect(saveProgress(storage, next)).toBe(true);
+      expect(loadProgress(storage)).toEqual(next);
+    }
+    expect(original).toEqual(populated());
+  });
+
+  it('rejects invalid choices without changing other progress or save codes', () => {
+    const original = freeze(setAvatar(populated(), 7));
+    for (const index of [-1, 8, 0.5, NaN, Infinity]) {
+      expect(setAvatar(original, index)).toEqual({ ...original, avatar: null });
+    }
+    expect(toSaveCode(original, missions)).toBe(toSaveCode(populated(), missions));
   });
 });
 
@@ -452,6 +481,20 @@ describe('progress save codes', () => {
 });
 
 describe('parent PIN', () => {
+  it('resets all progress and settings while keeping the PIN', () => {
+    const p = freeze(populated());
+    expect(resetProgress(p)).toEqual({ ...createProgress(), pin: p.pin });
+    expect(p).toEqual(populated());
+  });
+
+  it('marks a mission complete for testing, unlocking its dependent mission', () => {
+    const p = freeze(createProgress());
+    const next = unlockMission(p, 'first', now);
+    expect(next.completed.first).toBe(now.toISOString());
+    expect(isUnlocked(next, missions[2]!)).toBe(true);
+    expect(unlockMission(freeze(next), 'first', new Date())).toEqual(next);
+    expect(p.completed).toEqual({});
+  });
   it('hashes salt, colon, and PIN using SHA-256', async () => {
     const expected = createHash('sha256').update('aabb:1234').digest('hex');
     expect(await hashPin('1234', 'aabb')).toBe(expected);

@@ -1,0 +1,30 @@
+.panel:has(> .parent-screen) { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.parent-screen {
+  display: flex; flex: 1 1 0px; flex-direction: column;
+  min-height: 0; min-width: 0; overflow: hidden; gap: 8px;
+}
+.parent-screen header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; }
+.parent-screen h1 { margin: 0; }
+.parent-reading {
+  position: relative; flex: 1 1 auto; min-height: 0; min-width: 0;
+  overflow: auto; padding: 8px; scrollbar-gutter: stable;
+}
+.parent-reading:focus-visible { outline: 4px solid #fff3a1; outline-offset: -4px; }
+.parent-reading section { margin-bottom: 12px; }
+.parent-reading h2, .parent-reading h3, .parent-reading p, .parent-reading ul { margin: 0 0 8px; }
+.parent-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.parent-pin {
+  display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 4px 16px;
+  width: min(100%, 640px); min-height: 0; align-self: start; margin: 0 auto;
+}
+.parent-pin > h2, .parent-pin > .speech-line { grid-column: 1 / -1; }
+.parent-pin-pad { grid-row: 3 / 5; }
+.parent-pin > [role='status'] { grid-column: 2; align-self: end; }
+.parent-pin > button { grid-column: 2; align-self: start; justify-self: start; }
+.parent-pin button { margin: 0; padding: 4px 10px; }
+.parent-pin h2, .parent-pin .speech-line { margin: 0; }
+.parent-pin-pad output { display: block; margin: 4px 0; }
+.parent-digits { display: grid; grid-template-columns: repeat(3, minmax(48px, 1fr)); gap: 4px; margin-bottom: 4px; }
+.parent-digits button:last-child { grid-column: 2; }
+.parent-session-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.parent-session-actions > .speech-line { flex-basis: 100%; order: -1; }
