@@ -29,6 +29,11 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 3:15 AM Toronto, 2026-11-08. E2 accepted and live (main 6eea4b2, e2e 160/160, CI
+42457870537 green, live assets match; 16 missions in the registry, all play through). Engine E3 BUILD
+running (worktree D:/Dev/hax-engine, branch engine/e3, hard stop about 5:10 AM, checkpoint
+build-logs/E3-checkpoint.md). Then an E3 VERIFY run. Content lane idle.
+
 Updated about 1:10 AM Toronto, 2026-11-08, owner rotation 20261108-000001 (old owner stood down,
 done marker written). E2 VERIFY run 1 stopped at 4e4f885 (e2e 124 pass, 36 fail: seven tall steps at
 1366x768 plus an outdated update.spec). Owner approved E2-V6 (fit as a rule, 1920 scaling) and the
