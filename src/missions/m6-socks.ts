@@ -83,7 +83,7 @@ export const m6Socks: Mission = {
       hints: [
         { text: 'Look for the inbox folder.' },
         { text: 'Walk into inbox. Read odd_email.txt with cat.', say: 'Walk into inbox. Read odd email dot T X T with cat.' },
-        { text: 'Type ls, then cd inbox, then cat odd_email.txt.', say: 'Type L S, then C D inbox, then cat odd email dot T X T.' },
+        { text: 'Type cd and press Enter. Then cd inbox. Then cat odd_email.txt.', say: 'Type C D and press Enter. Then C D inbox. Then cat odd email dot T X T.' },
       ],
       success: [
         { text: 'Free socks? That email wants a secret in return!' },
@@ -96,7 +96,7 @@ export const m6Socks: Mission = {
           { type: 'cwd', path: '/home/agent/inbox' },
           { type: 'read', path: '/home/agent/inbox/odd_email.txt' },
         ] },
-        chips: ['ls', 'cd inbox', 'cat odd_email.txt'],
+        chips: ['cd', 'ls', 'cd inbox', 'cat odd_email.txt'],
       },
     },
     {

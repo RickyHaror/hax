@@ -69,7 +69,7 @@ export const m4Cupcake: Mission = {
       hints: [
         { text: 'The staff folder holds a file about Barry.' },
         { text: 'Walk into staff. Then read baker.txt with cat.', say: 'Walk into staff. Then read baker dot T X T with cat.' },
-        { text: 'Type cd staff, then cat baker.txt.', say: 'Type C D staff, then cat baker dot T X T.' },
+        { text: 'Type cd and press Enter. Then type cd staff, then cat baker.txt.', say: 'Type C D and press Enter. Then type C D staff, then cat baker dot T X T.' },
       ],
       success: [
         { text: 'Sprinkles and a birth year! Keep those clues in mind.' },
@@ -82,7 +82,7 @@ export const m4Cupcake: Mission = {
           { type: 'cwd', path: '/home/agent/staff' },
           { type: 'read', path: '/home/agent/staff/baker.txt' },
         ] },
-        chips: ['ls', 'cd staff', 'ls', 'cat baker.txt'],
+        chips: ['cd', 'ls', 'cd staff', 'ls', 'cat baker.txt'],
       },
     },
     {

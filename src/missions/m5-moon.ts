@@ -78,7 +78,7 @@ export const m5Moon: Mission = {
       hints: [
         { text: 'Look for the folder with the museum name.' },
         { text: 'Go inside the museum folder with cd museum.', say: 'Go inside the museum folder with C D museum.' },
-        { text: 'Type ls. Then cd museum. Then ls and cat door.log.', say: 'Type L S. Then C D museum. Then L S and cat door dot log.' },
+        { text: 'Type cd and press Enter. Then cd museum. Then cat door.log.', say: 'Type C D and press Enter. Then C D museum. Then cat door dot log.' },
       ],
       success: [
         { text: 'You found the door diary! Let us check the names.' },
@@ -91,7 +91,7 @@ export const m5Moon: Mission = {
           { type: 'cwd', path: '/home/agent/museum' },
           { type: 'read', path: '/home/agent/museum/door.log' },
         ] },
-        chips: ['ls', 'cd museum', 'ls', 'cat door.log'],
+        chips: ['cd', 'ls', 'cd museum', 'ls', 'cat door.log'],
       },
     },
     {
