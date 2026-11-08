@@ -1,0 +1,6 @@
+.clue-toast-slot { min-height: 58px; flex: none; }
+.clue-toast { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 4px 8px; border: 1px solid var(--go); border-radius: 10px; background: var(--panel); width: fit-content; margin-left: auto; }
+.clue-plus { color: var(--bg); background: var(--go); border-radius: 4px; font: 700 14px var(--font-mono); padding: 3px 6px; }
+.clue-toast .speech-line { font-size: 16px; margin: 0; flex-wrap: nowrap; }
+.clue-toast button { margin: 0; padding: 0; width: 44px; min-width: 44px; min-height: 44px; font-size: 20px; }
+@media (max-width: 599px) { .clue-toast { width: 100%; justify-content: space-between; } }

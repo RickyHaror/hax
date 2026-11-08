@@ -1,10 +1,11 @@
-import { badgesEarned, rankFor, xpEarned } from '../../engine/progress';
+import { badgesEarned, xpEarned } from '../../engine/progress';
 import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
 import { AVATARS, Avatar } from '../components/Avatar';
 import { BigButton } from '../components/BigButton';
 import { SpeechLine } from '../components/SpeechLine';
 import { ReadingBox } from '../widgets/tools/ReadingBox';
+import { RankBadge } from '../components/RankBadge';
 import './idcard.css';
 
 function EarnedBadges() {
@@ -40,6 +41,19 @@ function PhotoPicker() {
   </section>;
 }
 
+function CommandsLearned() {
+  const store = useStore();
+  const commands = [...new Set(store.registry.missions
+    .filter((mission) => Object.hasOwn(store.progress.value.completed, mission.id))
+    .flatMap((mission) => mission.teaches ?? []))];
+  return <section class="idcard-commands" aria-label="Commands learned">
+    <h2><SpeechLine line={{ text: 'Commands learned' }} /></h2>
+    {commands.length ? <ul>{commands.map((command) => <li key={command}>
+      <SpeechLine line={{ text: command }} /></li>)}</ul>
+      : <SpeechLine line={{ text: 'Learn commands as you play.' }} />}
+  </section>;
+}
+
 export function IdCard() {
   const store = useStore();
   const progress = store.progress.value;
@@ -49,11 +63,15 @@ export function IdCard() {
     <div class="idcard-body">
       <div class="idcard-details">
         <SpeechLine line={{ text: hackerName(store.progress, store.registry) }} />
-        <SpeechLine line={{ text: rankFor(xpEarned(progress, store.registry.missions)).name }} />
+        <RankBadge xp={xpEarned(progress, store.registry.missions)} />
         <section class="idcard-sidekick" aria-label="Your sidekick">
-          <Art artKey={buddy.art} title={buddy.name} size={80} />
+          <span class="profile-signal"><svg width="40" height="40" viewBox="0 0 24 24"
+            role="img" aria-label={buddy.name} fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" /></svg>
+            <span aria-hidden="true">{buddy.name === 'Bit' ? '⚙' : buddy.name === 'Pixel' ? '◇' : '◉'}</span></span>
           <SpeechLine line={{ text: buddy.name }} sidekick={buddy.id} />
         </section>
+        <CommandsLearned />
         <EarnedBadges />
       </div>
       <PhotoPicker />

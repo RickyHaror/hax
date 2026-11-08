@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { buildRegistry } from './registry';
+import { buildRegistry, readSeasons } from './registry';
+import type { Season } from '../engine/types';
 import { client, dependent, login } from './test/fixtures';
 import { playground } from '../missions/playground';
 describe('content registry', () => {
+  const season: Season = { id: 's1', number: 1, title: 'Town', blurb: 'Help our town.', missions: ['one'], requires: null };
+  it('accepts absent, empty and filled season sources without changing the input', () => {
+    expect(readSeasons(undefined)).toEqual([]);
+    expect(readSeasons({})).toEqual([]);
+    expect(buildRegistry({ seasons: [] }).seasons).toEqual([]);
+    const seasons = [{ ...season, id: 's2', number: 2, requires: 's1' }, season];
+    expect(buildRegistry({ seasons }).seasons.map((entry) => entry.id)).toEqual(['s1', 's2']);
+    expect(seasons[0]!.id).toBe('s2');
+  });
+  it('drops malformed season entries while preserving valid entries', () => {
+    const malformed = [null, 1, [], {}, { ...season, id: '' }, { ...season, number: 1.5 },
+      { ...season, number: '1' }, { ...season, title: null }, { ...season, blurb: false },
+      { ...season, missions: ['one', 2] }, { ...season, requires: undefined }];
+    expect(readSeasons([...malformed, season])).toEqual([season]);
+  });
   it('uses playground content and accepts null or a replacement', () => {
     expect(buildRegistry().playground).toBe(playground);
     expect(buildRegistry({ playground: null }).playground).toBeNull();

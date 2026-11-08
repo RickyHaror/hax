@@ -10,6 +10,7 @@ import { StepWidget } from '../widgets';
 import { createHackRun, HackContext, type HackRun } from '../widgets/hack/Hack';
 import { TopBar } from '../components/TopBar';
 import { Toolbar } from '../components/Toolbar';
+import { MissionCard } from '../components/MissionCard';
 import './player.css';
 export const ethics = { text: 'Only hack what you own or have permission to hack.' };
 function withEthics(lines: Step['lines']) {
@@ -56,6 +57,8 @@ function PlayerPhase({ mission, helpOpen, closeHelp }: { mission: Mission; helpO
   const { phase, index } = store.position.value;
   const move = (next: 'step' | 'outro', nextIndex = 0) =>
     store.phase(mission.id, { phase: next === 'step' && !mission.steps[nextIndex] ? 'outro' : next, index: nextIndex });
+  if (phase === 'intro' && mission.contract) return <MissionCard mission={mission}
+    start={() => mission.client ? store.phase(mission.id, { phase: 'permission', index: 0 }) : move('step')} />;
   if (phase === 'intro') return <MessagePhase mission={mission} lines={mission.client ? withEthics(mission.intro) : mission.intro}
     label="Start mission" next={() => mission.client
       ? store.phase(mission.id, { phase: 'permission', index: 0 }) : move('step')} />;

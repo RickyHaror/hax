@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { rankFor, toSaveCode, xpEarned } from '../../engine/progress';
+import { rankFor, toSaveCode, xpEarned, XP_PER_MISSION } from '../../engine/progress';
 import type { Mission } from '../../engine/types';
 import { useStore } from '../store';
 import { Art } from '../components/Art';
@@ -10,6 +10,8 @@ import { Toggles } from '../components/Toolbar';
 import { SessionNudge } from './parent/SessionNudge';
 import { TopBar } from '../components/TopBar';
 import { TerminalWindow } from '../terminal/TerminalWindow';
+import { RankBadge } from '../components/RankBadge';
+import { ClueToast } from '../components/ClueToast';
 import './startup.css';
 export function SecretKey() {
   const store = useStore();
@@ -23,19 +25,34 @@ export function SecretKey() {
 export function Done({ mission }: { mission: Mission }) {
   const store = useStore();
   const buddy = store.registry.sidekicks[store.progress.value.sidekick ?? 0] ?? store.registry.sidekicks[0]!;
+  const xp = xpEarned(store.progress.value, store.registry.missions);
+  const gained = mission.xp ?? XP_PER_MISSION;
+  const before = rankFor(Math.max(0, xp - gained));
+  const after = rankFor(xp);
   return <div class="done"><div class="done-sparkles" aria-hidden="true">
     {Array.from({ length: 12 }, (_, index) => <i key={index} style={{ '--spark': index }} />)}
-    </div><div class="done-summary">
-    <div class="done-badge"><Art artKey={mission.badge.art} title={mission.badge.name} size={200} /></div><div>
-    <h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
+    </div>{mission.contract && <ClueToast xp={gained} />}
+    <div class="done-scroll" tabIndex={0} aria-label="Mission rewards">
+    <h2 class="done-access" aria-label="ACCESS GRANTED"><SpeechLine line={{ text: 'ACCESS GRANTED' }} /></h2>
+    <div class="done-unlocked"><SpeechLine line={{ text: 'UNLOCKED' }} /></div>
+    <div class="done-summary">
+    <div class="done-badge"><Art artKey={mission.badge.art} title={mission.badge.name} size={80} /></div><div>
+    <div class="done-saved"><h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
+      <ReadAloudButton line={{ text: store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!' }} /></div>
     {!store.saved.value && <SpeechLine line={{ text: 'Write your secret key in your notebook. This computer could not save.' }} />}
     <SpeechLine line={{ text: mission.badge.name }} />
-    <p>{rankFor(xpEarned(store.progress.value, store.registry.missions)).name}</p><SecretKey /></div></div>
+    </div></div>
+    {mission.contract && <section class="done-flag" aria-label="Captured clue">
+      <SpeechLine line={{ text: mission.contract.flag }} /></section>}
+    <div class="done-rewards"><div><SpeechLine line={{ text: `+${gained} XP` }} />
+      {before.name !== after.name && <SpeechLine line={{ text: `Rank up! ${before.name} to ${after.name}` }} />}
+      <RankBadge xp={xp} /></div><SecretKey /></div>
     <section class="done-cheer" aria-label={`${buddy.name} says`}>
-      <Art artKey={buddy.art} title={buddy.name} size={120} />
+      <Art artKey={buddy.art} title={buddy.name} size={48} />
       <SpeechLine line={{ text: 'You did it! I am so proud of you.' }} sidekick={buddy.id} />
-    </section>
+    </section></div>
     <div class="parent-session-actions"><BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton>
+      <BigButton onClick={() => store.visit({ name: 'idcard' })}>My agent card</BigButton>
       <SessionNudge /></div></div>;
 }
 export function Stop() {

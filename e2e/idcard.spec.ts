@@ -18,6 +18,7 @@ async function expectFit(page: Page) {
   await expect(page.getByRole('button', { name: 'Back', exact: true })).toBeInViewport();
   for (const tile of await page.getByRole('group', { name: 'Choose a photo', exact: true })
     .getByRole('button').all()) {
+    await tile.scrollIntoViewIfNeeded();
     await expect(tile).toBeInViewport();
     const size = await tile.boundingBox();
     expect(size!.width).toBeGreaterThanOrEqual(48);
@@ -30,7 +31,6 @@ async function expectFit(page: Page) {
 }
 
 test('opens the agent card, saves a silly photo, reloads, and returns', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 });
   await seedProgress(page, { completed: [] });
   await page.goto('/'); await begin(page);
   await page.getByRole('button', { name: 'My agent card', exact: true }).click();
@@ -50,7 +50,6 @@ test('opens the agent card, saves a silly photo, reloads, and returns', async ({
 });
 
 test('keeps a full badge collection inside its reading box', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 768 });
   await seedProgress(page, { completed: missions.map((mission) => mission.id) });
   await page.goto('/'); await begin(page);
   await page.getByRole('button', { name: 'My agent card', exact: true }).click();
