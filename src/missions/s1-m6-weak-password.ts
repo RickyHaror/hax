@@ -154,7 +154,7 @@ export const s1m6WeakPassword: Mission = {
       hints: [
         { text: 'You showed Sam how his lock could open.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit CLUE, open brace. Add pets, dash, make, dash, weak, dash, passwords. Close brace. Press Enter.' },
+        { text: 'Type submit, a space, then CLUE and an open brace. Add pets, hyphen, make, hyphen, weak, hyphen, passwords. End with a close brace. Press Enter.' },
       ],
       success: [{ text: 'Job done! Sam gives you a toy train cheer.' }],
       config: {

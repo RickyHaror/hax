@@ -70,7 +70,7 @@ export const s1m4PageSource: Mission = {
       hints: [
         { text: 'The page may have a secret note.' },
         { text: 'Use view-source with the bakery address.' },
-        { text: 'Type view-source sunny, dash, bakery, dot, example. Press Enter.',
+        { text: 'Type view-source, a space, then sunny, hyphen, bakery.example. Press Enter.',
           say: 'Type view source, space, sunny bakery dot example. Press Enter.' },
       ],
       success: [{ text: 'You found the admin password in a note!' }],
@@ -90,7 +90,7 @@ export const s1m4PageSource: Mission = {
       hints: [
         { text: 'Use the secret from the page note.' },
         { text: 'The user is admin. The password is cupcake42.' },
-        { text: 'Type connect bakery, dash, web. Then enter admin and cupcake42.' },
+        { text: 'Type connect, a space, then bakery, hyphen, web. Press Enter.' },
       ],
       success: [{ text: 'You are in! Bea can fix this hole.' }],
       config: {
@@ -124,7 +124,7 @@ export const s1m4PageSource: Mission = {
       hints: [
         { text: 'Your flag proves you found the hole.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit CLUE, open brace. Add page, dash, source, dash, is, dash, public. Close brace. Press Enter.' },
+        { text: 'Type submit, a space, then CLUE and an open brace. Add page, hyphen, source, hyphen, is, hyphen, public. End with a close brace. Press Enter.' },
       ],
       success: [{ text: 'Job done! Bea gives you a bun cheer!' }],
       config: {

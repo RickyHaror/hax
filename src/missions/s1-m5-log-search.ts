@@ -145,7 +145,7 @@ export const s1m5LogSearch: Mission = {
       hints: [
         { text: 'You found the one line you need.' },
         { text: 'Use submit with the whole flag.' },
-        { text: 'Type submit CLUE, open brace. Add grep, dash, finds, dash, the, dash, needle. Close brace. Press Enter.' },
+        { text: 'Type submit, a space, then CLUE and an open brace. Add grep, hyphen, finds, hyphen, the, hyphen, needle. End with a close brace. Press Enter.' },
       ],
       success: [{ text: 'Job done! Mr Pages rings his book cart bell.' }],
       config: {

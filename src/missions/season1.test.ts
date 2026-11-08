@@ -43,8 +43,8 @@ function checkAddresses(mission: Mission): void {
   const names = new Set((mission.machines ?? []).flatMap((machine) => fileNames(machine.fs)));
   walk(mission, (value) => {
     if (typeof value !== 'string') return;
-    expect(value).not.toMatch(/http|www\./i);
-    for (const address of value.match(/(?:[a-z0-9-]+\.)+[a-z][a-z0-9-]*/gi) ?? []) {
+    expect(value).not.toMatch(/http|www\.|\b(?:\d{1,3}\.){3}\d{1,3}\b/i);
+    for (const address of value.match(/(?:[\w.+-]+@)?[\w-]+(?:\.[\w-]+)+/g) ?? []) {
       expect(address.endsWith('.example') || names.has(address), address).toBe(true);
     }
   });
@@ -92,6 +92,7 @@ function checkSteps(mission: Mission): void {
     expect(step.config.kind).toBe('hack');
     if (step.config.kind !== 'hack') throw new Error('Expected a hack step');
     const config = step.config;
+    host = config.start ?? host;
     const [command, target] = config.showMe.trim().split(/\s+/);
     if (command === 'connect') host = target!;
     expect(step.hints).toHaveLength(3);
@@ -135,14 +136,21 @@ function followCommand(mission: Mission, route: Route, input: string): void {
     expect(route.machine?.login?.user).toBe(args[0]);
   } else if (command === 'cd') {
     expect(route.fs!.cd(args[0]).ok, input).toBe(true);
-  } else if (command === 'cat') {
-    const result = route.fs!.read(args[0]!);
+  } else if (command === 'cat' || command === 'grep') {
+    const path = command === 'grep' ? args[1]! : args[0]!;
+    const result = route.fs!.read(path);
     expect(result.ok, input).toBe(true);
     if (result.ok) route.read = {
-      host: route.machine!.host, path: route.fs!.resolve(args[0]!), content: result.value,
+      host: route.machine!.host, path: route.fs!.resolve(path),
+      content: command === 'grep'
+        ? result.value.split('\n').filter((line) => line.includes(args[0]!)).join('\n')
+        : result.value,
     };
   } else if (command === 'ls') {
-    expect(route.fs!.list(undefined, { all: args.includes('-a') }).ok).toBe(true);
+    expect(route.fs!.list(args.find((arg) => arg !== '-a'), { all: args.includes('-a') }).ok).toBe(true);
+  } else if (command === 'view-source') {
+    expect(mission.machines!.some((machine) =>
+      machine.pages?.some((page) => page.address === args[0]))).toBe(true);
   } else if (command === 'submit') {
     expect(args).toEqual([mission.contract!.flag]);
   }
@@ -186,11 +194,11 @@ function checkFlagRoute(mission: Mission): void {
 }
 
 describe('Corner Town season data', () => {
-  it('lists all six planned missions but exports only the first three', () => {
+  it('exports all six planned missions in season order', () => {
     expect(season1).toMatchObject({ id: 's1', number: 1, title: 'Corner Town', requires: null });
     expect(season1.blurb.trim()).not.toBe('');
     expect(season1.missions).toEqual(plannedIds);
-    expect(season1Missions.map((mission) => mission.id)).toEqual(plannedIds.slice(0, 3));
+    expect(season1Missions.map((mission) => mission.id)).toEqual(season1.missions);
     for (const field of ['id', 'bit', 'order'] as const) {
       const values = [...missions, ...season1Missions].map((mission) => mission[field]);
       expect(new Set(values).size, field).toBe(values.length);
@@ -208,9 +216,11 @@ describe('Corner Town season data', () => {
           badge: { id: mission.id, art: 'badge-s1' },
         });
         expect(mission.badge.name.trim()).not.toBe('');
-        expect(mission.intro.some((line) => /only hack.*own.*permission.*hack/i.test(line.text))).toBe(true);
+        expect(mission.intro.some((line) => /only hack.*own.*permission to hack/.test(line.text))).toBe(true);
         expect(mission.contract?.client.name.trim()).toBeTruthy();
         expect(mission.contract?.client.role.trim()).toBeTruthy();
+        expect(mission.contract?.problem.text.trim()).toBeTruthy();
+        expect(mission.contract?.goal.text.trim()).toBeTruthy();
         expect(mission.contract?.flag).toMatch(/^CLUE\{[^}]+\}$/);
         expect(mission.machines?.length).toBeGreaterThan(0);
         const hosts = mission.machines!.map((machine) => machine.host);
@@ -245,9 +255,14 @@ describe('Corner Town season data', () => {
         expect(lines.length).toBeGreaterThan(0);
         lines.forEach(checkLine);
         // Also inspect text objects so extra keys cannot hide a broken Line from collection.
+        const rawLines: Line[] = [];
         walk(mission, (value) => {
-          if (value && typeof value === 'object' && 'text' in value) checkLine(value as Line);
+          if (value && typeof value === 'object' && 'text' in value) {
+            checkLine(value as Line);
+            rawLines.push(value as Line);
+          }
         });
+        expect(lines).toEqual(rawLines);
         expect(fleschKincaidGrade(lines.map((line) => line.text))).toBeLessThanOrEqual(MAX_GRADE);
       });
     });
@@ -323,11 +338,34 @@ describe('season data validation guards', () => {
     expect(() => checkFlagRoute(locked)).toThrow();
   });
 
+  it('rejects log searches that cannot reveal the flag', () => {
+    for (const path of ['/var/log/visits.log', '/var/log/missing.log']) {
+      const mission = structuredClone(season1Missions[4]!);
+      const search = mission.steps[3]!.config as HackConfig;
+      search.showMe = `grep oops ${path}`;
+      search.goal = { type: 'on', host: 'log-server', goal: {
+        type: 'run', command: 'grep', args: ['oops', path],
+      } };
+      expect(() => checkFlagRoute(mission)).toThrow();
+    }
+  });
+
+  it('rejects missing source pages and directory listing targets', () => {
+    const route: Route = { command: '', args: [] };
+    expect(() => followCommand(season1Missions[3]!, route, 'view-source missing.example')).toThrow();
+    const mission = season1Missions[4]!;
+    followCommand(mission, route, 'connect log-server');
+    expect(() => followCommand(mission, route, 'ls /missing')).toThrow();
+  });
+
   it('allows pretend addresses and file names but rejects other addresses', () => {
     const mission = structuredClone(season1Missions[0]!);
     mission.blurb = 'Visit shop.example and read flag.txt.';
     expect(() => checkAddresses(mission)).not.toThrow();
-    for (const text of ['Visit shop.invalid.', 'Use the http protocol.', 'Visit www.shop.example.']) {
+    for (const text of [
+      'Visit shop.invalid.', 'Use the http protocol.', 'Visit www.shop.example.',
+      'Visit 192.0.2.1.', 'Write to sam@shop.invalid.',
+    ]) {
       mission.blurb = text;
       expect(() => checkAddresses(mission)).toThrow();
     }
