@@ -2,12 +2,17 @@
 
 | Lane | Batch | Branch | State | Last update (Toronto) |
 |---|---|---|---|---|
-| Owner | Phase 0 scaffold | main | in progress | 2026-11-07 |
-| Engine | E1 foundation | engine/e1 | not started | |
-| Content | C1 first missions | content/c1 | not started | |
+| Owner | Phase 0 scaffold | main | done | 2026-11-07 8:40 PM |
+| Content | C1 login, Boot Camp, Terminal, M1 to M3 | content/c1 | integrated d1bed87, live | 2026-11-07 9:20 PM |
+| Owner | AU-1 audio: 12 sfx, 1,196 Phase 1 voice lines | main | done 5e7752d | 2026-11-07 9:20 PM |
+| Engine | E1 foundation | engine/e1 | VERIFY running (review follow-ups) | 2026-11-07 9:20 PM |
+| Content | C2 Missions 4 to 7 | content/c2 | BUILD running | 2026-11-07 9:20 PM |
+| Engine | E2 widgets plus audio playback | engine/e2 | waits for E1 integration | |
 
 ## Provider state
 
 - GitHub: private repo RickyHaror/hax, Actions secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` set.
-- Cloudflare: zone huxton.ca added (Free), nameservers nova and roman.ns.cloudflare.com, pending.
-- Registrar: huxton.ca transfer from Gandi to Namecheap in progress; set nameservers after it completes.
+- Cloudflare: zone huxton.ca active (nova and roman.ns.cloudflare.com). Pages project `hax`
+  (`hax-d7j.pages.dev`), custom domain `hax.huxton.ca` live.
+- Registrar: AWS Route 53 Domains (Gandi backend). Old Route 53 hosted zone can be deleted by the founder.
+- ElevenLabs: key in `.env.local` (git-ignored), used only by `scripts/audio/generate.mjs`.
