@@ -93,7 +93,7 @@ svg { flex-shrink: 0; max-width: 100%; }
 .step-work > * { flex: 0 0 auto; }
 .step-work > section[aria-label='Hints'] { flex: 0 0 auto; }
 .reading-frame { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 4.5em; max-height: 50vh; }
-.reading-box { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; scrollbar-gutter: stable; padding: 4px; }
+.reading-box { position: relative; flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; scrollbar-gutter: stable; padding: 4px; }
 .reading-box:focus-visible { outline-offset: -4px; }
 .reading-content { min-width: 0; }
 .reading-cue-line { position: static; display: flex; flex: 0 0 auto; justify-content: flex-end; min-height: 26px; margin: 0 4px; }
