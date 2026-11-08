@@ -21,7 +21,7 @@ export function ReadAloudButton({ line, sidekick }: { line: Line; sidekick?: str
       <SpeakerIcon /><span class="visually-hidden">{reading ? 'Reading...' : 'Read aloud'}</span>
     </BigButton>
     {unavailable && <span class="speech-unavailable" role="status">
-      This computer cannot talk. Ask a grown-up to turn on sound.
+      I can't read this line here.
     </span>}
   </>;
 }

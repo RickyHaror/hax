@@ -1,15 +1,27 @@
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { render } from 'preact';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createVoice } from '../../engine/voice';
+import { sidekicks } from '../../missions/sidekicks';
 import { createStore, StoreContext } from '../store';
 import { client, login } from '../test/fixtures';
 import { button, click, fakeDeps, identityStore, mount, unmount } from '../test/helpers';
 import { SpeechLine } from './SpeechLine';
+import { SidekickBubble } from './SidekickBubble';
 
 let root: HTMLElement;
 afterEach(async () => { if (root) await unmount(root); });
 const pressed = (element: Element) => element.getAttribute('aria-pressed');
+const unavailableCopy = "I can't read this line here.";
+
+function remoteSpeech() {
+  const speak = vi.fn();
+  const synth = { cancel: vi.fn(), speak, getVoices: () => [
+    { lang: 'en-US', localService: false, name: 'Remote' } as SpeechSynthesisVoice,
+  ] } as unknown as SpeechSynthesis;
+  return { synth, speak, Utterance: class {} as typeof SpeechSynthesisUtterance };
+}
 
 describe('audio begin screen', () => {
   it('renders only the begin screen and keeps voice and sound idle until tapped', async () => {
@@ -128,22 +140,33 @@ describe('line read aloud feedback', () => {
     const deps = { ...fakeDeps(), voice: createVoice({ synth: null, Utterance: null, Audio: null }) };
     const { readers } = await lines(deps);
     await act(() => readers[0]!.click());
-    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
-    expect(root.textContent).toContain('Ask a grown-up to turn on sound.');
+    const notice = root.querySelector('[role="status"]')!;
+    const spokenLine = readers[0]!.closest('.speech-line')!;
+    expect(notice.textContent?.trim()).toBe(unavailableCopy);
+    expect(notice.parentElement).toBe(spokenLine);
+    expect(readers[0]!.nextElementSibling).toBe(notice);
+    expect(spokenLine.lastElementChild).toBe(notice);
+    expect(readers[1]!.closest('.speech-line')!.querySelector('[role="status"]')).toBeNull();
+    expect(root.querySelectorAll('[role="status"]')).toHaveLength(1);
     expect(pressed(readers[0]!)).toBe('false');
   });
 
   it('reports unavailable speech after a delayed voice lookup ends', async () => {
     const deps = fakeDeps(); deps.voice = { ...deps.voice, supported: false };
     const { readers } = await lines(deps);
+    expect(root.querySelector('[role="status"]')).toBeNull();
     await act(() => readers[0]!.click());
+    expect(root.querySelector('[role="status"]')).toBeNull();
     expect(pressed(readers[0]!)).toBe('true');
     await act(() => {
       const options = vi.mocked(deps.voice.speak).mock.calls[0]![1]!;
       options.onUnavailable!(); options.onEnd!();
     });
-    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
+    expect(root.querySelector('[role="status"]')?.textContent?.trim()).toBe(unavailableCopy);
     expect(pressed(readers[0]!)).toBe('false');
+    await act(() => readers[0]!.click());
+    expect(root.querySelector('[role="status"]')).toBeNull();
+    expect(pressed(readers[0]!)).toBe('true');
   });
 
   it('shows unavailable feedback when a recorded clip rejects without speech', async () => {
@@ -155,21 +178,18 @@ describe('line read aloud feedback', () => {
     const { readers, store } = await lines({ ...fakeDeps(), voice });
     await act(async () => { readers[0]!.click(); await Promise.resolve(); });
     expect(voice.supported).toBe(true);
-    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
+    expect(root.querySelector('[role="status"]')?.textContent?.trim()).toBe(unavailableCopy);
     expect(pressed(readers[0]!)).toBe('false');
     expect(store.reading.value).toBeNull();
   });
 
   it('shows unavailable feedback when only remote English speech exists', async () => {
-    const speak = vi.fn();
-    const voice = createVoice({ Audio: null, Utterance: class {} as typeof SpeechSynthesisUtterance,
-      synth: { cancel: vi.fn(), speak, getVoices: () => [
-        { lang: 'en-US', localService: false, name: 'Remote' } as SpeechSynthesisVoice,
-      ] } as unknown as SpeechSynthesis });
+    const speech = remoteSpeech();
+    const voice = createVoice({ Audio: null, ...speech });
     const { readers } = await lines({ ...fakeDeps(), voice });
     await act(() => readers[0]!.click());
-    expect(speak).not.toHaveBeenCalled();
-    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
+    expect(speech.speak).not.toHaveBeenCalled();
+    expect(root.querySelector('[role="status"]')?.textContent?.trim()).toBe(unavailableCopy);
     expect(pressed(readers[0]!)).toBe('false');
   });
 
@@ -186,6 +206,94 @@ describe('line read aloud feedback', () => {
     await act(() => { clip.dispatchEvent(new Event('ended')); });
     expect(pressed(readers[0]!)).toBe('false');
     expect(root.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it.each([0, 1, 2])('plays buddy %s personality with its own clip despite remote voices', async (index) => {
+    const buddy = sidekicks[index]!;
+    const clip = document.createElement('audio');
+    clip.play = vi.fn(() => Promise.resolve()); clip.pause = vi.fn();
+    const AudioStub = vi.fn(function () { return clip; });
+    const speech = remoteSpeech();
+    const voice = createVoice({ ...speech, Audio: AudioStub as unknown as typeof Audio });
+    voice.setManifest({ lines: { [`${buddy.id}|${buddy.personality.text}`]: 'buddy.mp3' }, sfx: {} });
+    const deps = { ...fakeDeps(), voice };
+    deps.registry = { ...deps.registry, sidekicks };
+    const store = createStore(deps); store.settings({ autoRead: false });
+    store.go({ name: 'onboarding' });
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    const card = root.querySelectorAll('.buddy-card')[index]!;
+    const read = card.querySelector<HTMLButtonElement>('[aria-label="Read aloud"]')!;
+    await act(() => read.click());
+    expect(AudioStub).toHaveBeenCalledExactlyOnceWith('/audio/lines/buddy.mp3');
+    expect(clip.play).toHaveBeenCalledOnce();
+    expect(pressed(read)).toBe('true');
+    expect(root.querySelector('.speech-unavailable')).toBeNull();
+    await act(() => { clip.dispatchEvent(new Event('ended')); });
+    expect(pressed(read)).toBe('false');
+    expect(speech.speak).not.toHaveBeenCalled();
+    expect(root.querySelector('.speech-unavailable')).toBeNull();
+  });
+
+  it('reads with an allowed local voice without an unavailable notice', async () => {
+    const speech = remoteSpeech();
+    speech.synth.getVoices = () => [
+      { lang: 'en-US', localService: true, name: 'Local' } as SpeechSynthesisVoice,
+    ];
+    const voice = createVoice({ ...speech, Audio: null });
+    const { readers } = await lines({ ...fakeDeps(), voice });
+    await act(() => readers[0]!.click());
+    expect(speech.speak).toHaveBeenCalledOnce();
+    expect(root.querySelector('[role="status"]')).toBeNull();
+    const utterance = speech.speak.mock.calls[0]![0] as SpeechSynthesisUtterance;
+    expect(utterance.voice?.localService).toBe(true);
+    await act(() => utterance.onend!(new Event('end') as SpeechSynthesisEvent));
+    expect(pressed(readers[0]!)).toBe('false');
+    expect(root.querySelector('[role="status"]')).toBeNull();
+  });
+
+  it('keeps unavailable automatic narration quiet until the line is tapped', async () => {
+    const voice = createVoice({ ...remoteSpeech(), Audio: null });
+    const speakAll = vi.spyOn(voice, 'speakAll');
+    const { store } = await lines({ ...fakeDeps(), voice });
+    const story = [{ text: 'First line.' }];
+    await act(() => render(<StoreContext.Provider value={store}>
+      <SidekickBubble lines={story} />
+    </StoreContext.Provider>, root));
+    expect(speakAll).toHaveBeenCalledWith(story);
+    expect(voice.isSpeaking()).toBe(false);
+    expect(root.querySelector('[role="status"]')).toBeNull();
+    await click(root, 'Read aloud');
+    expect(root.querySelector('[role="status"]')?.textContent?.trim()).toBe(unavailableCopy);
+  });
+
+  it('keeps an unavailable map notice beside its own read button', async () => {
+    const voice = createVoice({ ...remoteSpeech(), Audio: null });
+    root = await mount(identityStore({ ...fakeDeps(), voice }));
+    await click(root, 'Tap to begin, Agent!');
+    const read = button(root, 'Read aloud');
+    const card = read.closest('.map-card')!;
+    await act(() => read.click());
+    const notice = root.querySelector('.speech-unavailable')!;
+    expect(notice.getAttribute('role')).toBe('status');
+    expect(notice.textContent?.trim()).toBe(unavailableCopy);
+    expect(notice.parentElement).toBe(card);
+    expect(read.nextElementSibling).toBe(notice);
+    for (const other of root.querySelectorAll('.map-card')) {
+      if (other !== card) expect(other.querySelector('.speech-unavailable')).toBeNull();
+    }
+  });
+
+  it('removes the old unavailable copy from every source file', () => {
+    const oldCopy = [
+      ['This computer', 'cannot talk.'].join(' '),
+      ['Ask a grown-up', 'to turn on sound.'].join(' '),
+    ];
+    for (const path of readdirSync('src', { recursive: true, encoding: 'utf8' })) {
+      const file = `src/${path}`;
+      if (!statSync(file).isFile()) continue;
+      const source = readFileSync(file, 'utf8');
+      for (const copy of oldCopy) expect(source, file).not.toContain(copy);
+    }
   });
 
   it('gives map read buttons the same visible playback state', async () => {

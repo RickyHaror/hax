@@ -36,7 +36,7 @@ export function Onboarding() {
       {sidekicks.slice(0, 3).map((buddy, index) => <section class="buddy-card" key={buddy.id}>
         <BigButton aria-pressed={sidekick === index} onClick={() => setSidekick(index)}>
           <Art artKey={buddy.art} size={48} title={buddy.name} /><span>{buddy.name}</span>
-        </BigButton><SpeechLine line={buddy.personality} />
+        </BigButton><SpeechLine line={buddy.personality} sidekick={buddy.id} />
       </section>)}
     </div><SidekickBubble sidekickIndex={sidekick} lines={sidekicks[sidekick]!.greeting} />
     <BigButton onClick={() => store.identify(first, second, sidekick)}>Next</BigButton>
