@@ -1,4 +1,5 @@
-import type { ComponentChildren, TargetedKeyboardEvent } from 'preact';
+import type { ComponentChildren, TargetedKeyboardEvent, TargetedPointerEvent } from 'preact';
+import { useRef } from 'preact/hooks';
 import { ALPHABET, caesarDecode, normalizeShift } from '../../../engine/cipher';
 import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
@@ -33,9 +34,42 @@ function WheelFace({ current }: { current: number }) {
     </div>
   </>;
 }
+function useWheelDrag(current: number, onShift: (shift: number) => void) {
+  const drag = useRef<{ id: number; angle: number; total: number; start: number } | null>(null);
+  function angle(event: TargetedPointerEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return Math.atan2(event.clientY - rect.y - rect.height / 2, event.clientX - rect.x - rect.width / 2);
+  }
+  return {
+    onPointerDown(event: TargetedPointerEvent<HTMLDivElement>) {
+      if (event.button !== 0 || drag.current) return;
+      event.preventDefault();
+      event.currentTarget.focus();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      drag.current = { id: event.pointerId, angle: angle(event), total: 0, start: current };
+    },
+    onPointerMove(event: TargetedPointerEvent<HTMLDivElement>) {
+      const state = drag.current;
+      if (!state || state.id !== event.pointerId) return;
+      const next = angle(event);
+      state.total += Math.atan2(Math.sin(next - state.angle), Math.cos(next - state.angle));
+      state.angle = next;
+      const shift = normalizeShift(state.start + Math.round(state.total * 26 / (2 * Math.PI)));
+      if (shift !== current) onShift(shift);
+    },
+    onPointerUp(event: TargetedPointerEvent<HTMLDivElement>) {
+      if (drag.current?.id !== event.pointerId) return;
+      drag.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    },
+    onPointerCancel() { drag.current = null; },
+    onLostPointerCapture() { drag.current = null; },
+  };
+}
 export function DecoderWheel({ message, shift, onShift, children, secretMessage }: DecoderWheelProps) {
   const store = useStore();
   const current = normalizeShift(shift);
+  const drag = useWheelDrag(current, onShift);
   const sharedMessage = message !== undefined && current === 0 ? secretMessage : undefined;
   function turn(amount: number) { onShift(normalizeShift(current + amount)); store.sound.play('click'); }
   function keyDown(event: TargetedKeyboardEvent<HTMLDivElement>) {
@@ -52,7 +86,7 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage 
     <div class="wheel-layout">
       <div class="wheel-control" role="slider" tabIndex={0} aria-label="Decoder wheel"
         aria-valuemin={0} aria-valuemax={25} aria-valuenow={current} aria-valuetext={`Shift: ${current}`}
-        onKeyDown={keyDown}>
+        onKeyDown={keyDown} {...drag}>
         <WheelFace current={current} />
       </div>
       <div class="wheel-actions">

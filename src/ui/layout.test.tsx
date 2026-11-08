@@ -3,6 +3,7 @@ import { act } from 'preact/test-utils';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { client, fixtureRegistry } from './test/fixtures';
 import { click, fakeDeps, identityStore, mount, unmount } from './test/helpers';
+import { createStore } from './store';
 
 let root: HTMLElement;
 let styles: HTMLStyleElement;
@@ -14,6 +15,16 @@ beforeEach(() => {
 afterEach(async () => { if (root) await unmount(root); styles.remove(); });
 
 describe('scroll containers and announcements', () => {
+  it('keeps the login clue, spoken question, password and Check together', async () => {
+    root = await mount(createStore(fakeDeps())); await click(root, 'Tap to begin, Agent!');
+    const login = root.querySelector<HTMLElement>('.login-screen')!;
+    expect(login.querySelector('.login-art svg[role="img"]')).toBeTruthy();
+    expect(login.querySelector('.answer-form .speech-line')?.textContent).toContain('Read the note.');
+    expect(login.querySelector('.answer-form button[aria-label="Read aloud"]')).toBeTruthy();
+    expect(login.querySelector('input[aria-label="Password"], label input')).toBeTruthy();
+    expect([...login.querySelectorAll('button')].some((b) => b.textContent === 'Check')).toBe(true);
+  });
+
   it('keeps the empty update region rendered and reveals updates in the same region', async () => {
     const store = identityStore(); root = await mount(store); await click(root, 'Tap to begin, Agent!');
     const region = root.querySelector<HTMLElement>('.panel > [role="status"]')!;

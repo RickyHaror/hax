@@ -33,7 +33,10 @@
   font-weight: bold;
 }
 .terminal-panel { display: flex; flex-direction: column; }
-.terminal-output { padding: 6px 10px; }
+.terminal-output { flex: 1; padding: 6px 10px; }
+.terminal-widget > .reading-frame > .reading-box { display: flex; }
+.terminal-widget .reading-content { display: flex; flex: 1; }
+.terminal-widget .terminal-reading { flex: 1; }
 .terminal-line { display: flex; align-items: center; gap: 6px; }
 .terminal-line .speech-line { width: 100%; margin: 0; font-family: inherit; }
 .terminal-line .speech-line > span { white-space: pre-wrap; overflow-wrap: anywhere; }

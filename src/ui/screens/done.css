@@ -1,0 +1,31 @@
+.panel:has(> .done) { display: flex; flex-direction: column; padding: 20px; }
+.done { position: relative; isolation: isolate; display: flex; flex: 1; flex-direction: column; justify-content: center; gap: 16px; min-height: 0; }
+.done-summary { display: flex; align-items: center; gap: 24px; }
+.done-summary > div { min-width: 0; }
+.done-summary > div:last-child { flex: 1; }
+.done h1 { color: var(--green); text-shadow: 0 0 18px #39ff9f70; }
+.done-summary p { margin: 4px 0; }
+.done .secret-key { padding: 8px 0; }
+.done-badge { flex: 0 0 auto; padding: 16px; border-radius: 50%; background: radial-gradient(circle, #39ff9f22, transparent 70%); }
+.done-badge svg { display: block; filter: drop-shadow(0 0 16px #39ff9f80); }
+.done-cheer { display: flex; align-items: center; gap: 20px; }
+.done > button { align-self: flex-start; margin: 0; min-width: 140px; }
+.done-sparkles { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.done-sparkles i {
+  position: absolute; left: calc(5% + var(--spark) * 8%); top: calc(5% + mod(var(--spark), 3) * 28%);
+  width: 12px; height: 12px; background: #39ff9f; opacity: .15;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  animation: done-burst 900ms ease-out both; animation-delay: calc(var(--spark) * 30ms);
+}
+.done-sparkles i:nth-child(3n) { background: #fff3a1; }
+@keyframes done-burst {
+  from { transform: translateY(60px) scale(0) rotate(0); opacity: 0; }
+  to { transform: translateY(0) scale(1) rotate(100deg); opacity: .15; }
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  .done-badge svg { width: 260px; height: 260px; }
+  .done-cheer > svg { width: 160px; height: 160px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .done-sparkles i { animation: none; }
+}

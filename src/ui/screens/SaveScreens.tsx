@@ -16,12 +16,19 @@ export function SecretKey() {
 }
 export function Done({ mission }: { mission: Mission }) {
   const store = useStore();
-  return <div class="done"><div class="done-summary">
-    <Art artKey={mission.badge.art} title={mission.badge.name} size={140} /><div>
+  const buddy = store.registry.sidekicks[store.progress.value.sidekick ?? 0] ?? store.registry.sidekicks[0]!;
+  return <div class="done"><div class="done-sparkles" aria-hidden="true">
+    {Array.from({ length: 12 }, (_, index) => <i key={index} style={{ '--spark': index }} />)}
+    </div><div class="done-summary">
+    <div class="done-badge"><Art artKey={mission.badge.art} title={mission.badge.name} size={200} /></div><div>
     <h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
     {!store.saved.value && <SpeechLine line={{ text: 'Write your secret key in your notebook. This computer could not save.' }} />}
     <SpeechLine line={{ text: mission.badge.name }} />
     <p>{rank(Object.keys(store.progress.value.completed).length)}</p><SecretKey /></div></div>
+    <section class="done-cheer" aria-label={`${buddy.name} says`}>
+      <Art artKey={buddy.art} title={buddy.name} size={120} />
+      <SpeechLine line={{ text: 'You did it! I am so proud of you.' }} sidekick={buddy.id} />
+    </section>
     <BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton></div>;
 }
 export function Stop() {
@@ -50,7 +57,7 @@ export function SaveCode() {
 export function Settings() {
   const store = useStore();
   const [show, setShow] = useState(false);
-  return <><h1>Settings</h1><Toggles />
+  return <div class="audio-settings"><h1>Settings</h1><Toggles />
     <BigButton onClick={() => setShow(!show)} aria-expanded={show}>Show my secret key</BigButton>
-    {show && <SecretKey />}<BigButton onClick={store.back}>Back</BigButton></>;
+    {show && <SecretKey />}<BigButton onClick={store.back}>Back</BigButton></div>;
 }

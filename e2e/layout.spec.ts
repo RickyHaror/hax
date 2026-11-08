@@ -1,4 +1,119 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { createProgress, STORAGE_KEY } from '../src/engine/progress';
+import type { Mission } from '../src/engine/types';
+import { missions } from '../src/missions';
+import { begin } from './support/play';
+
+async function resumeLayout(page: Page, mission: Mission, phase: 'step' | 'outro' = 'step') {
+  const progress = { ...createProgress(), firstWord: 0, secondWord: 0, sidekick: 0,
+    completed: Object.fromEntries(missions.filter((entry) => entry.id !== mission.id)
+      .map((entry) => [entry.id, '2026-11-08T12:00:00.000Z'])),
+    current: { missionId: mission.id, stepId: JSON.stringify([phase, 0]) },
+  };
+  await page.addInitScript(({ key, progress }) => {
+    localStorage.clear(); localStorage.setItem(key, JSON.stringify(progress));
+  }, { key: STORAGE_KEY, progress });
+  await page.goto('/'); await begin(page);
+  await page.evaluate(() => document.fonts.ready);
+}
+
+async function expectScreenFit(page: Page) {
+  const layout = await page.evaluate(() => {
+    const panel = document.querySelector('main')!;
+    return { pageWidth: document.documentElement.scrollWidth, pageHeight: document.documentElement.scrollHeight,
+      width: innerWidth, height: innerHeight, panelWidth: panel.scrollWidth, panelHeight: panel.scrollHeight,
+      visibleWidth: panel.clientWidth, visibleHeight: panel.clientHeight };
+  });
+  expect(layout.pageWidth).toBeLessThanOrEqual(layout.width);
+  expect(layout.pageHeight).toBeLessThanOrEqual(layout.height);
+  expect(layout.panelWidth).toBeLessThanOrEqual(layout.visibleWidth);
+  expect(layout.panelHeight).toBeLessThanOrEqual(layout.visibleHeight);
+}
+
+test('terminal output fills the desktop work column', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'terminal')!);
+  const work = await page.locator('.step-work').boundingBox();
+  const output = await page.getByRole('log', { name: 'Terminal output' }).boundingBox();
+  expect(work).not.toBeNull(); expect(output).not.toBeNull();
+  expect(output!.height).toBeGreaterThanOrEqual(work!.height * .6);
+  await expect(page.getByRole('textbox', { name: 'Command', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await expectScreenFit(page);
+  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeInViewport({ ratio: 1 });
+});
+
+test('decoder letters are readable and its controls fit the laptop', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'decoder')!);
+  const fonts = await page.locator('.wheel-letter').evaluateAll((letters) =>
+    letters.map((letter) => parseFloat(getComputedStyle(letter).fontSize)));
+  expect(fonts).toHaveLength(52);
+  for (const size of fonts) expect(size).toBeGreaterThanOrEqual(24);
+  const wheel = page.getByRole('slider', { name: 'Decoder wheel', exact: true });
+  const laptop = await wheel.boundingBox(); expect(laptop).not.toBeNull();
+  await page.getByRole('button', { name: 'Turn right', exact: true }).click();
+  await expect(wheel).toHaveAttribute('aria-valuenow', '1');
+  const box = laptop!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height * .2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * .8, box.y + box.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect(wheel).not.toHaveAttribute('aria-valuenow', '1');
+  await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+  const tool = await page.locator('.decoder-tool').evaluate((element) => ({
+    height: element.clientHeight, content: element.scrollHeight,
+  }));
+  expect(tool.content).toBeLessThanOrEqual(tool.height);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  const desktop = await wheel.boundingBox();
+  expect(desktop!.width).toBeGreaterThan(laptop!.width);
+  expect(await page.locator('.wheel-letter').first().evaluate((letter) =>
+    parseFloat(getComputedStyle(letter).fontSize))).toBeGreaterThan(fonts[0]!);
+});
+
+test('start login keeps the note and Check in view', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto('/'); await begin(page);
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.locator('.login-art svg')).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.answer-form .speech-line').first()).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('textbox', { name: 'Password', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+  await page.getByRole('button', { name: 'Check', exact: true }).click();
+  for (let rung = 0; rung < 3; rung++) await page.getByRole('button', { name: 'Help me', exact: true }).click();
+  await expectScreenFit(page);
+  await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeInViewport({ ratio: 1 });
+});
+
+test('mission login keeps the note and Check in view', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await resumeLayout(page, missions.find((mission) => mission.chapter === 'login')!);
+  await expect(page.locator('.step-story > svg')).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.answer-form .speech-line').first()).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('textbox', { name: 'Answer', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Check', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+});
+
+test('celebration fits the laptop with still sparkles under reduced motion', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await resumeLayout(page, missions.find((mission) => mission.steps[0]?.config.kind === 'terminal')!, 'outro');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Great work, Agent! Mission saved.', exact: true })).toBeVisible();
+  await expect(page.getByText('You did it! I am so proud of you.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeInViewport({ ratio: 1 });
+  await expectScreenFit(page);
+  const sparkle = page.locator('.done-sparkles i').first();
+  await expect(sparkle).toBeVisible();
+  expect(await sparkle.evaluate((element) => getComputedStyle(element).animationName)).toBe('none');
+});
 
 test('onboarding fits with Next visible and no sideways scroll', async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());

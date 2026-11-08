@@ -57,6 +57,31 @@ describe('decoder mission', () => {
     await press('ArrowRight'); expect(shift(root)).toBe(0);
     await press('ArrowRight'); expect(preview(root)).toBe(caesarDecode(decoderConfig.message, 1));
   });
+  it('drags across the angle boundary and stops on release or cancel', async () => {
+    const { root } = await mountTool(decoderConfig);
+    const wheel = root.querySelector<HTMLElement>('[role="slider"]')!;
+    wheel.getBoundingClientRect = () => ({ x: 0, y: 0, width: 300, height: 300 } as DOMRect);
+    wheel.setPointerCapture = vi.fn(); wheel.releasePointerCapture = vi.fn();
+    async function pointer(type: string, degrees: number, pointerId = 1) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.assign(event, { button: 0, pointerId,
+        clientX: 150 + 100 * Math.cos(degrees * Math.PI / 180),
+        clientY: 150 + 100 * Math.sin(degrees * Math.PI / 180) });
+      await act(() => { wheel.dispatchEvent(event); });
+    }
+    await pointer('pointerdown', 170);
+    await pointer('pointermove', -170, 2); expect(shift(root)).toBe(0);
+    await pointer('pointermove', -170); expect(shift(root)).toBe(1);
+    expect(preview(root)).toBe(caesarDecode(decoderConfig.message, 1));
+    await pointer('pointermove', 170); expect(shift(root)).toBe(0);
+    await pointer('pointerup', 170);
+    expect(wheel.releasePointerCapture).toHaveBeenCalledWith(1);
+    await pointer('pointermove', 90); expect(shift(root)).toBe(0);
+    await pointer('pointerdown', 0); await pointer('pointermove', 90);
+    const stopped = shift(root); expect(stopped).toBe(7);
+    await pointer('pointercancel', 90); await pointer('pointermove', 180);
+    expect(shift(root)).toBe(stopped);
+  });
   it('nudges wrong answers and accepts spacing and case on native form submission', async () => {
     const { root, complete, deps } = await mountTool(decoderConfig);
     expect(input(root, 'Answer').form).toBe(button(root, 'Check').form);
