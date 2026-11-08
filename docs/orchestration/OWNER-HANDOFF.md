@@ -29,6 +29,13 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 11:50 AM Toronto, 2026-11-08, owner hax-f4. Founder set a release bar (docs/DECISIONS.md
+"release bar for every batch"): every step played in e2e, audio proven to match on screen text, sensible
+order, layout checks plus owner screenshot review at laptop and phone sizes. Put it in every E5 and C4
+VERIFY brief (and E5-5/E5-6 BUILD briefs should add the overflow, clip and tap target checks and the
+audio to text check if missing). Season 1 audio is part of the bar, so voice recording (founder approved
+cost) comes before launch.
+
 Updated about 11:55 AM Toronto, 2026-11-08, owner hax-f4. Engine E5 BUILD run 2 checkpointed, all
 agents finished: engine/e5 pushed at c4601aa (E5-3 start up restyle, E5-4a save code v2 and ranks,
 E5-4b hack session engine, E5-4c hack step widget, package.json cleanup). E5-5 and E5-6 not started

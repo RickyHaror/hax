@@ -88,3 +88,23 @@
 - `unlock <file>` uses the machine's login password (or its sudo password when it has no login). No per
   file password field; content writes locked file puzzles to fit.
 - The engine lane may also point the `check:reading` script in package.json at the real check (or remove it).
+
+## 2026-11-08, founder: release bar for every batch
+
+Founder asked: every step tested, audio confirmed to read the text on screen, everything in a sensible
+order, and layouts on laptop and phone that work with no squeezed, clipped or off screen text and no poor
+UX. From E5 and C4 on, no batch is accepted or shipped until its VERIFY run proves all of this:
+
+1. Every step: an e2e playthrough drives every step of every live mission, Boot Camp, terminal training,
+   sign up and Playground to the end, including each hint rung and Show me, in Chromium and Edge at
+   1366x650, 1366x768, 1920x1080 and 390x844.
+2. Audio matches the screen: a test proves every kid facing line has a recorded clip whose source text is
+   exactly the text shown (or its `say` form), and e2e checks that the clip played on each step belongs
+   to the visible text, in the order the text appears. Missing or stale clips fail the check. New lines
+   are recorded only after content is final, with the founder approving the cost first.
+3. Sensible order: the fresh reviewer reads each mission top to bottom and confirms every command is
+   taught before it is needed, every hint fits its step, every password or flag can be found before it is
+   asked for, and missions unlock in a sensible order.
+4. Layout: automated checks on every step at all four sizes for no horizontal scroll, no clipped or
+   overflowing text, no overlapping elements, readable font sizes and tap targets of at least 44px; plus
+   a screenshot of every step at laptop and phone size that the owner looks at before accepting.
