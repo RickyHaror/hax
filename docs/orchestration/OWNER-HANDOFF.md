@@ -29,6 +29,13 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 12:30 PM Toronto, 2026-11-08, owner hax-03. Content C4 BUILD run 2 checkpointed at
+content/c4 9fe935f (pushed): all eight decisions applied, unit proof 260 pass, sequencing table in
+build-logs/C4-sequencing.md. For C4 VERIFY: put the machine names (game-server, bakery-web) in the m3 and m4
+step text, prove the m6 unlock step completes only after the right password, mission 1 alarm limit now 8.
+For E5 VERIFY: src/ui/music-follow.ts and decoder.test.tsx still name retired m7-graduation. E5 BUILD
+run 3 still running; it flags 186 UI literal speech lines with no recorded clip (decision pending its report).
+
 Updated about 12:10 PM Toronto, 2026-11-08, owner hax-03 (hax-f4 stood down, marker written). Two
 coordinators launched about 12:05 PM, hard stop about 2:05 PM, both this owner's subagents (a new owner
 gets their reports forwarded): engine E5 BUILD run 3 (D:/Dev/hax-engine, engine/e5: E5-5 map and seasons

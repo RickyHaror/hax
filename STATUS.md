@@ -12,7 +12,7 @@
 | Engine | E4 sign-up narration and speech fixes | engine/e4 | integrated cd676a5, live | 2026-11-08 8:15 AM |
 | Owner | Codename and sign up prompt clips (130, 744 chars) | main | done 7e19cdf | 2026-11-08 8:00 AM |
 | Engine | E5 terminal first rebuild | engine/e5 | schema live 07f5a43; BUILD 3 running | 2026-11-08 12:05 PM |
-| Content | C4 Season 1 missions 1 to 6 | content/c4 | BUILD 2 running | 2026-11-08 12:05 PM |
+| Content | C4 Season 1 missions 1 to 6 | content/c4 | BUILD 2 checkpointed 9fe935f | 2026-11-08 12:25 PM |
 
 ## Provider state
 
