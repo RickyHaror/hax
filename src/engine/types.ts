@@ -24,7 +24,7 @@ export interface Line {
 /** Three-rung hint ladder: nudge, bigger hint, show me. */
 export type HintLadder = readonly [nudge: Line, bigger: Line, showMe: Line];
 
-export type Chapter = 'login' | 'bootcamp' | 'terminal' | 'missions';
+export type Chapter = 'login' | 'bootcamp' | 'terminal' | 'missions' | 'season';
 
 export interface Badge {
   id: string;
@@ -53,12 +53,98 @@ export interface FsFile {
   content: string;
   /** Locked files cannot be read until unlocked. Lockdown steps lock files. */
   locked?: boolean;
+  /** Pretend permissions for `chmod`, for example "644" (anyone can read) or "600" (only me). */
+  mode?: string;
 }
 export interface FsDir {
   type: 'dir';
   children: Record<string, FsNode>;
 }
 export type FsNode = FsFile | FsDir;
+
+/* ---------- Seasons ---------- */
+
+/** Stable season identifier, for example "s1". */
+export type SeasonId = string;
+
+export interface Season {
+  id: SeasonId;
+  number: number;
+  title: string;
+  blurb: string;
+  /** Mission ids in play order. This list is the season order. */
+  missions: MissionId[];
+  /** Season that must be finished first, or null for Season 1. */
+  requires: SeasonId | null;
+}
+
+/* ---------- Target machines ---------- */
+
+/** Prompt color tokens from DSFoundations (--pc-hq, --pc-shop, --pc-bakery, --pc-library). */
+export type PromptColor = 'hq' | 'shop' | 'bakery' | 'library';
+
+export interface MachineLogin {
+  user: string;
+  password: string;
+  /** Other accepted spellings, case insensitive. */
+  accept?: string[];
+}
+
+export interface MailMessage {
+  /** Shown as its number in `mail`. */
+  id: string;
+  /** Pretend sender, for example "Sunny-Bakery Help <help@sunny-bakkery.example>". */
+  from: string;
+  subject: string;
+  body: string[];
+  /** True for the trick email the player should `report`. */
+  fake?: boolean;
+}
+
+export interface WebPage {
+  /** Pretend address ending in .example, with an optional path. */
+  address: string;
+  title: string;
+  /** Lines `view-source` prints. A password may hide in an <!-- comment -->. */
+  source: string[];
+}
+
+export interface Machine {
+  /** Pretend host, for example "shop-pc". */
+  host: string;
+  /** Owner shown by `scan`, for example "Corner Shop". */
+  owner: string;
+  /** User after a successful login (or from the start when there is no login). */
+  user: string;
+  color: PromptColor;
+  /** One to four lines, each at most 36 characters. */
+  banner: string[];
+  fs: FsDir;
+  /** Home and start directory, for example "/home/admin". */
+  home: string;
+  /** Present when `connect` asks for a login first. */
+  login?: MachineLogin;
+  /** Present when `sudo` works on this machine. Success makes the prompt root@host #. */
+  sudo?: { password: string; accept?: string[] };
+  /** Pretend open doors listed by `scan <host>` (mission 7). */
+  ports?: { port: number; name: string; open: boolean }[];
+  mail?: MailMessage[];
+  pages?: WebPage[];
+  /** False hides it from `scan` (the HQ machine, for example). Default true. */
+  listed?: boolean;
+}
+
+/* ---------- Contract ---------- */
+
+export interface Contract {
+  client: { name: string; role: string; art?: string };
+  problem: Line;
+  goal: Line;
+  /** Hosts in scope. `connect` to any other host prints the out of scope warning and does nothing. */
+  allowed: string[];
+  /** The flag the player captures, for example "CLUE{old-passwords-are-easy-to-guess}". */
+  flag: string;
+}
 
 /* ---------- Step goals ---------- */
 
@@ -71,7 +157,40 @@ export type TerminalGoal =
   | { type: 'deleted'; path: string }
   | { type: 'all'; goals: TerminalGoal[] };
 
+/** Goals for a hack step. Plain TerminalGoal paths apply to the machine the player is on. */
+export type HackGoal =
+  | TerminalGoal
+  | { type: 'on'; host: string; goal: TerminalGoal }
+  | { type: 'connected'; host: string }
+  | { type: 'logged-in'; host: string }
+  | { type: 'root'; host: string }
+  | { type: 'found-port'; host: string; port: number }
+  | { type: 'decoded'; text: string }
+  | { type: 'reported'; host: string; mailId: string }
+  | { type: 'passwd'; host: string }
+  | { type: 'chmod'; host: string; path: string; mode: string }
+  | { type: 'flag' }
+  | { type: 'all'; goals: HackGoal[] };
+
 /* ---------- Step kinds (one widget each, built by the engine lane) ---------- */
+
+/** A command to type into the prompt, with an optional short hint. */
+export interface CommandChip {
+  command: string;
+  hint?: string;
+}
+
+export interface HackConfig {
+  kind: 'hack';
+  /** Host the step starts on when it is the first step, otherwise the session carries on. Default "hq". */
+  start?: string;
+  /** Commands that work in this step. Others get the friendly "not yet" line. */
+  commands: string[];
+  chips?: CommandChip[];
+  /** The command line the Help me "Show me" rung types into the prompt. He still presses Enter. */
+  showMe: string;
+  goal: HackGoal;
+}
 
 export interface ClickTargetsConfig {
   kind: 'click-targets';
@@ -201,6 +320,7 @@ export type StepConfig =
   | ChoiceConfig
   | PassphraseConfig
   | TerminalConfig
+  | HackConfig
   | WebSourceConfig
   | DecoderConfig
   | PasswordGuessConfig
@@ -290,4 +410,23 @@ export interface Mission {
   intro: Line[];
   steps: Step[];
   outro: Line[];
+  /** Season this mission belongs to. Order comes from Season.missions. */
+  season?: SeasonId;
+  contract?: Contract;
+  /** Machines in this mission. The engine adds the HQ machine (agent@hq) when none has host "hq". */
+  machines?: Machine[];
+  /** Commands this mission adds to his toolkit (profile "Commands learned"). */
+  teaches?: string[];
+  /** XP for finishing. Default 20. */
+  xp?: number;
+  /** Alarm meter. Absent means no alarm in this mission. */
+  alarm?: { limit: number };
+  /** True keeps an old mission in the registry for saves but takes it off the map. */
+  retired?: boolean;
+}
+
+/** Rank name and the XP needed to reach it. */
+export interface RankDef {
+  name: string;
+  xp: number;
 }
