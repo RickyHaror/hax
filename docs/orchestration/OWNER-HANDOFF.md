@@ -29,6 +29,18 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Final handoff from owner 20261108-000001 to hax-fb (rotation 20261108-030000), 3:00 AM Toronto
+2026-11-08 (earlier "3:15 AM" timestamps below were estimates; E3 launched just before 3 AM).
+Engine E3 BUILD coordinator is still running in D:/Dev/hax-engine on branch engine/e3 (tip 6690253,
+no E3 commits yet; uncommitted worker edits in src/engine/{progress,sound}.ts, e2e specs and more).
+Wave 1 workers: AU-4 music and audio controls, E3-1 Playground (both running), polish A (done, held
+uncommitted because SaveScreens.tsx is shared with AU-4). Remaining items: E2-4 ID card, parent panel
+and timer, polish B, update-handling gap check. Hard stop about 5 AM, checkpoint
+build-logs/E3-checkpoint.md. Any exported type change in src/engine/types.ts must come to the owner
+first. Its terminal report will be forwarded to hax-fb. Then: E3 VERIFY run (fresh reviewer,
+gate --e2e, screenshot pass), accept and ship. Content lane idle. Founder has been told E2 is live
+and the boy can start playing.
+
 Updated about 3:15 AM Toronto, 2026-11-08. E2 accepted and live (main 6eea4b2, e2e 160/160, CI
 42457870537 green, live assets match; 16 missions in the registry, all play through). Engine E3 BUILD
 running (worktree D:/Dev/hax-engine, branch engine/e3, hard stop about 5:10 AM, checkpoint
