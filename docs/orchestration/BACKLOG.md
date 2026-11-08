@@ -180,7 +180,7 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 
 ## Background music (founder 2026-11-07, optional nice-to-have; ElevenLabs music API confirmed working)
 
-- **AU-3 Music (owner):** extend `scripts/audio/generate.mjs` with a `music` section in `voices.json`
+- **AU-3 Music (owner, DONE 2026-11-07: hq, terminal, bootcamp, playground, graduation in public/audio/music, soft sneaky spy style chosen by the founder):** extend `scripts/audio/generate.mjs` with a `music` section in `voices.json`
   and generate a small set of loopable instrumental tracks into `public/audio/music/`: HQ and mission
   map (calm, curious), terminal missions (light focused pulse), Agent Playground (playful), Boot Camp
   (bouncy), and a short graduation theme. About 60 to 90 seconds each, mp3 64 kbps, under 3 MB total.
@@ -199,3 +199,10 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 - The parent panel can set defaults and lock music off if it distracts.
 - Tests: each channel toggles alone; volumes persist across reload; music ducks under voices; muting all
   three silences everything.
+
+### ElevenLabs usage rule (founder 2026-11-07: be careful with usage)
+
+- Generate audio only after the content it voices is integrated and final. Always `--dry-run` first.
+- `generate.mjs` refuses a run above `--max-chars` (default 3000). Tell the founder the estimate before
+  any run above about 5,000 characters. The plan allows 2 concurrent requests.
+- Remaining planned spend: M4 to M7 voices (about 16,000) and the Agent Playground (about 8,000).
