@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:reading": "node scripts/checks/reading-level.mjs",
+    "check:reading": "vitest run scripts/checks/content.test.ts scripts/checks/readability.test.ts",
     "check:links": "vitest run scripts/checks",
     "check:copy": "vitest run scripts/checks",
     "e2e": "playwright test",
