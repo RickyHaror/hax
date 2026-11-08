@@ -1,13 +1,17 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
 import { render } from 'preact';
 import { act } from 'preact/test-utils';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ReadingBox } from './ReadingBox';
 
 let root: HTMLDivElement;
+let stylesheet: HTMLStyleElement | undefined;
 afterEach(async () => {
   await act(() => render(null, root));
   root.remove();
+  stylesheet?.remove();
+  stylesheet = undefined;
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -70,6 +74,32 @@ it('updates the cue when the reader shrinks to leave room for controls', async (
   await scroll(28); expect(cue.hidden).toBe(true);
   await scroll(0); expect(cue.hidden).toBe(false);
   size(108, 300, 108); await resize(); expect(cue.hidden).toBe(true);
+});
+
+it('reserves a separate cue line outside the scroller even when hidden', async () => {
+  stylesheet = document.createElement('style');
+  stylesheet.textContent = readFileSync('src/styles/base.css', 'utf8');
+  document.head.append(stylesheet);
+  const { box, cue, size, resize, scroll } = await setup();
+  const frameStyle = getComputedStyle(box.parentElement!);
+  expect(frameStyle.display).toBe('flex');
+  expect(frameStyle.flexDirection).toBe('column');
+  const cueLine = cue.parentElement!;
+  expect(box.contains(cueLine)).toBe(false);
+  for (const overflowing of [false, true]) {
+    size(overflowing ? 600 : 200); await resize();
+    const style = getComputedStyle(cueLine);
+    expect(style.position).toBe('static');
+    expect(style.display).toBe('flex');
+    expect(style.flexShrink).toBe('0');
+    expect(style.minHeight).toBe('26px');
+    expect(getComputedStyle(cue).position).toBe('static');
+    expect(cue.hidden).toBe(!overflowing);
+  }
+  await scroll(400);
+  expect(cue.hidden).toBe(true);
+  expect(getComputedStyle(cueLine).minHeight).toBe('26px');
+  expect(getComputedStyle(cueLine).display).toBe('flex');
 });
 
 it('observes the box and content, then cleans up on unmount', async () => {

@@ -96,7 +96,8 @@ svg { flex-shrink: 0; max-width: 100%; }
 .reading-box { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; scrollbar-gutter: stable; padding: 4px; }
 .reading-box:focus-visible { outline-offset: -4px; }
 .reading-content { min-width: 0; }
-.reading-cue { position: absolute; bottom: 4px; right: 24px; padding: 0 8px; border: 1px solid var(--muted); border-radius: 6px; background: var(--bg); color: var(--green); font: 16px/1.5 var(--font-story); pointer-events: none; }
+.reading-cue-line { position: static; display: flex; flex: 0 0 auto; justify-content: flex-end; min-height: 26px; margin: 0 4px; }
+.reading-cue { position: static; padding: 0 8px; border: 1px solid var(--muted); border-radius: 6px; background: var(--bg); color: var(--green); font: 16px/1.5 var(--font-story); pointer-events: none; }
 .reading-cue[hidden] { display: none; }
 .player-phase { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 8px; }
 .phase-story { min-height: 0; overflow: auto; padding: 4px; }
@@ -117,7 +118,7 @@ svg { flex-shrink: 0; max-width: 100%; }
   }
   .step-work > :has(.reading-box), .step-work > .decoder-tool { flex: 1 1 auto; }
   .step-work :where(.mission-tool, .case-widget, .explorer-widget, .bootcamp) > * { flex: 0 0 auto; }
-  /* Leave two text lines and reader padding when fixed controls need more room. */
+  /* Leave room for reading and the cue when fixed controls need space. */
   .step-work .reading-frame { flex: 1 1 auto; min-height: calc(2lh + 8px); max-height: none; }
   .step-work > section[aria-label='Hints'] { display: flex; align-items: center; gap: 8px; }
   .step-work > section[aria-label='Hints'] > button { flex: 0 0 auto; }

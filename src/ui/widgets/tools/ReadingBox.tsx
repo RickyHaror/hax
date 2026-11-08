@@ -32,6 +32,8 @@ export function ReadingBox({ children, boxRef, label }: ReadingBoxProps) {
       role={label ? 'region' : undefined} aria-label={label}>
       <div class="reading-content" ref={content}>{children}</div>
     </div>
-    <span class="reading-cue" aria-hidden="true" hidden={!more}>Scroll for more</span>
+    <div class="reading-cue-line" aria-hidden="true">
+      <span class="reading-cue" aria-hidden="true" hidden={!more}>Scroll for more</span>
+    </div>
   </div>;
 }
