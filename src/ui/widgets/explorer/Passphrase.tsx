@@ -37,9 +37,11 @@ export function Passphrase({ config, showMe, onComplete }: WidgetProps<Passphras
     </div>
     <meter aria-label="Strength" min={0} max={config.count} value={picked.length}
       aria-valuetext={strength} />
+    <div class="passphrase-status">
     <SpeechLine line={{ text: strength }} />
     <div aria-live="polite"><SpeechLine line={{ text: left > 0
       ? `Pick ${left} more ${left === 1 ? 'word' : 'words'}.` : 'Your word team is ready.' }} /></div>
+    </div>
     {full && <SpeechLine line={{ text: 'Your team is full. Tap a word to swap it.' }} />}
     <BigButton disabled={left !== 0} onClick={() => { if (left === 0) finish(); }}>Check</BigButton>
   </section>;

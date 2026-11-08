@@ -46,8 +46,10 @@ export function TypingGame(props: WidgetProps<TypingGameConfig>) {
   const { state, word, nudge, catchWord } = usePackets(props);
   const done = state.caught >= props.config.goal;
   return <section class="bootcamp" aria-label="Packet catcher">
+    <div class="bc-score">
     <div aria-live="polite"><SpeechLine line={{ text: `Caught ${state.caught} of ${props.config.goal}` }} /></div>
     {props.showMe && !done && <div class="bc-next-letter"><SpeechLine line={{ text: `Type ${keyName(word[state.letters] ?? '')}` }} /></div>}
+    </div>
     <div class="bc-play-area">{!done && <BigButton aria-label={`Catch ${word}`} class="bc-packet"
       style={{ transform: `translate(-50%, ${state.position * 1.4}px)` }}
       onClick={() => { if (props.showMe) catchWord(); }}>

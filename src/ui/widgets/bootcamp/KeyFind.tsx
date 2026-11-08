@@ -7,6 +7,7 @@ import { isEditingOrInDialog } from '../../components/keyboard';
 import { useStore } from '../../store';
 import { useCompletion, useKeyboard } from './hooks';
 import { keyLayout, keyName, keyPrompt, sameKey } from './helpers';
+import { ReadingBox } from '../tools/ReadingBox';
 function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>) {
   const store = useStore(), finish = useCompletion(onComplete);
   const index = useRef(0), timer = useRef<number | undefined>(undefined);
@@ -40,7 +41,7 @@ export function KeyFind(props: WidgetProps<KeyFindConfig>) {
   const { target, flash, nudge, press } = useKeyQuest(props);
   return <section class="bootcamp" aria-label="Key practice">
     <SpeechLine line={{ text: target === undefined ? 'You found every key!' : keyPrompt(target) }} />
-    <div class={`bc-keyboard ${props.showMe ? 'bc-key-help' : ''}`} aria-label="Practice keyboard">{keyLayout().map((row, index) => <div class="bc-key-row" key={index}>
+    <ReadingBox><div class={`bc-keyboard ${props.showMe ? 'bc-key-help' : ''}`} aria-label="Practice keyboard">{keyLayout().map((row, index) => <div class="bc-key-row" key={index}>
       {row.map((cap, position) => <BigButton key={position} aria-label={keyName(cap.key)} tabIndex={props.showMe ? 0 : -1}
         class={`${target !== undefined && sameKey(cap.key, target) ? 'bc-key-target' : ''} ${sameKey(cap.key, flash) ? 'bc-key-flash' : ''}`}
         style={{ flexGrow: cap.width }} onClick={() => { if (props.showMe) press(cap.key); }}
@@ -49,7 +50,7 @@ export function KeyFind(props: WidgetProps<KeyFindConfig>) {
         }}>
         {props.showMe && target !== undefined && sameKey(cap.key, target) && <span aria-hidden="true">↓ </span>}{keyName(cap.key)}
       </BigButton>)}
-    </div>)}</div>
+    </div>)}</div></ReadingBox>
     {nudge && <SpeechLine line={{ text: nudge }} />}
   </section>;
 }

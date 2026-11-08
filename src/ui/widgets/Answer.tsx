@@ -29,6 +29,6 @@ export function Answer({ config, showMe, onComplete, password = false }: WidgetP
     <BigButton type={password ? 'button' : 'submit'} onClick={password ? check : undefined}>Check</BigButton>
     {wrong && <SpeechLine line={{ text: 'Good try. Look at the clue and try again.' }} />}
   </>;
-  return password ? <div>{content}</div>
-    : <form onSubmit={(event) => { event.preventDefault(); check(); }}>{content}</form>;
+  return password ? <div class="answer-form">{content}</div>
+    : <form class="answer-form" onSubmit={(event) => { event.preventDefault(); check(); }}>{content}</form>;
 }

@@ -5,6 +5,7 @@ import { SpeechLine } from '../../components/SpeechLine';
 import { breadcrumbs, findNode, folderName, listFolder } from './tree';
 import { useExplorer } from './useExplorer';
 import { useFileDrag } from './useFileDrag';
+import { ReadingBox } from '../tools/ReadingBox';
 
 function EntryIcon({ folder }: { folder: boolean }) {
   return <svg aria-hidden="true" width="64" height="56" viewBox="0 0 64 56">
@@ -23,7 +24,7 @@ export function FileExplorer(props: WidgetProps<FileExplorerConfig>) {
     <nav class="file-crumbs" aria-label="Folders">{breadcrumbs(model.folder).map((crumb) =>
       <BigButton key={crumb.path} aria-current={crumb.path === model.folder ? 'location' : undefined}
         onClick={() => model.navigate(crumb.path)}>{crumb.name}</BigButton>)}</nav>
-    <div class="file-items">{listFolder(model.tree, model.folder).map((entry) => {
+    <ReadingBox><div class="file-items">{listFolder(model.tree, model.folder).map((entry) => {
       const folder = entry.node.type === 'dir';
       const dragging = drag?.file === entry.path && drag.moved;
       return <div key={entry.path} class="file-entry">
@@ -41,10 +42,11 @@ export function FileExplorer(props: WidgetProps<FileExplorerConfig>) {
           <BigButton onClick={() => model.move(selectedFile, entry.path)}>Move to {entry.name}</BigButton>}
       </div>;
     })}</div>
-    <div aria-live="polite">{model.message && <SpeechLine line={{ text: model.message }} />}</div>
     {viewer?.type === 'file' && <section class="file-viewer" aria-label={folderName(model.viewer!)}>
       <SpeechLine line={{ text: viewer.content }} />
       <BigButton onClick={model.closeFile}>Close file</BigButton>
     </section>}
+    </ReadingBox>
+    <div aria-live="polite">{model.message && <SpeechLine line={{ text: model.message }} />}</div>
   </section>;
 }

@@ -6,6 +6,7 @@
   --muted: #a9d9c3;
   --font-story: 'Atkinson Hyperlegible', system-ui, sans-serif;
   --font-code: 'JetBrains Mono', Consolas, monospace;
+  --player-scale: 1;
   color-scheme: dark;
 }
 * { box-sizing: border-box; scrollbar-color: var(--green) var(--bg); scrollbar-width: auto; }
@@ -89,8 +90,14 @@ svg { flex-shrink: 0; max-width: 100%; }
 .active-step { display: grid; flex: 1; min-height: 0; min-width: 0; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
 .step-story, .step-work { position: relative; min-height: 0; min-width: 0; overflow: auto; padding: 4px; }
 .step-work { display: flex; flex-direction: column; gap: 8px; }
-.step-work > :first-child { flex-shrink: 0; }
+.step-work > * { flex: 0 0 auto; }
 .step-work > section[aria-label='Hints'] { flex: 0 0 auto; }
+.reading-frame { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 4.5em; max-height: 50vh; }
+.reading-box { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; scrollbar-gutter: stable; padding: 4px; }
+.reading-box:focus-visible { outline-offset: -4px; }
+.reading-content { min-width: 0; }
+.reading-cue { position: absolute; bottom: 4px; right: 24px; padding: 0 8px; border: 1px solid var(--muted); border-radius: 6px; background: var(--bg); color: var(--green); font: 16px/1.5 var(--font-story); pointer-events: none; }
+.reading-cue[hidden] { display: none; }
 .player-phase { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 8px; }
 .phase-story { min-height: 0; overflow: auto; padding: 4px; }
 .player-phase > button { flex: 0 0 auto; align-self: flex-start; margin: 0; }
@@ -103,7 +110,29 @@ svg { flex-shrink: 0; max-width: 100%; }
 .done-summary > div { min-width: 0; }
 @media (min-width: 1000px) {
   .active-step { grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); grid-template-rows: minmax(0, 1fr); }
-  .step-work > :first-child { max-height: none; overflow: visible; }
+  .step-work { overflow: visible; gap: 4px; font-size: calc(24px * var(--player-scale)); }
+  .step-work > :first-child:where(:not(button):not(.answer-form)) {
+    display: flex; flex-direction: column; flex: 0 0 auto;
+    min-height: 0; min-width: 0; max-height: none; overflow: visible; gap: 4px;
+  }
+  .step-work > :has(.reading-box), .step-work > .decoder-tool { flex: 1 1 auto; }
+  .step-work :where(.mission-tool, .case-widget, .explorer-widget, .bootcamp) > * { flex: 0 0 auto; }
+  /* Leave two text lines and reader padding when fixed controls need more room. */
+  .step-work .reading-frame { flex: 1 1 auto; min-height: calc(2lh + 8px); max-height: none; }
+  .step-work > section[aria-label='Hints'] { display: flex; align-items: center; gap: 8px; }
+  .step-work > section[aria-label='Hints'] > button { flex: 0 0 auto; }
+  .step-work > section[aria-label='Hints'] .speech-line { flex: 1; min-width: 0; }
+  .player .speech-line { font-size: calc(24px * var(--player-scale)); margin: 0; }
+  .player h1 { font-size: calc(32px * var(--player-scale)); }
+  .player h2, .player h3 { font-size: calc(26px * var(--player-scale)); }
+  .player button, .player input { min-height: calc(48px * var(--player-scale)); min-width: calc(48px * var(--player-scale)); }
+  .player button { padding: 4px 10px; }
+  .player .read-aloud { width: calc(48px * var(--player-scale)); height: calc(48px * var(--player-scale)); padding: 0; }
+  .step-work .answer-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 4px 8px; }
+  .answer-form > .speech-line { grid-column: 1 / -1; }
+  .answer-form > label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .answer-form input { flex: 1; min-width: 48px; width: 0; margin: 0; }
+  .answer-form > button { margin: 0; }
   .permission-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
   .permission-signature { flex-direction: column; gap: 0; }
   .panel:has(> section > .choices) {
@@ -134,6 +163,10 @@ svg { flex-shrink: 0; max-width: 100%; }
   .panel:has(> .glow):has(> section[aria-label='Hints']) > div:has(> label) > button { margin-top: 0; margin-bottom: 0; }
   .panel:has(> .glow):has(> section[aria-label='Hints']) > section[aria-label='Hints'] { grid-column: 2; grid-row: 4; min-height: 0; overflow: auto; }
   .panel:has(> .glow):has(> section[aria-label='Hints']) > button { grid-column: 1 / -1; grid-row: 5; justify-self: start; margin: 0; }
+}
+@media (min-width: 1800px) and (min-height: 1000px) {
+  :root { --player-scale: 1.1666667; }
+  .app-shell { max-width: 1840px; }
 }
 .panel:has(.onboarding) { padding: 16px; }
 .onboarding { display: grid; gap: 8px; font-size: 18px; }

@@ -8,6 +8,7 @@ import { SpeechLine } from '../../components/SpeechLine';
 import { PretendSecretInput } from '../../components/PretendSecretInput';
 import { useStore } from '../../store';
 import type { WidgetProps } from '../Widget';
+import { ReadingBox } from '../tools/ReadingBox';
 
 function Profile({ config, showMe }: Pick<WidgetProps<PasswordGuessConfig>, 'config' | 'showMe'>) {
   const clue = Math.max(0, config.profile.facts.findIndex((fact) =>
@@ -44,7 +45,7 @@ export function PasswordGuess({ config, showMe, onComplete }: WidgetProps<Passwo
   const field = { value, autoComplete: 'off',
     onInput: (event: TargetedInputEvent<HTMLInputElement>) => setValue(event.currentTarget.value) };
   return <div class="case-widget case-password">
-    <Profile config={config} showMe={showMe} />
+    <ReadingBox><Profile config={config} showMe={showMe} /></ReadingBox>
     <div class="case-login">
       <p>Username: {config.username}</p>
       <PretendSecretInput {...field} onCheck={check} />

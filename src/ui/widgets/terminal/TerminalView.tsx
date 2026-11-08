@@ -4,6 +4,7 @@ import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
 import { useStore } from '../../store';
 import { FolderTree } from './FolderTree';
+import { ReadingBox } from '../tools/ReadingBox';
 
 export interface TerminalViewProps {
   shell: Shell;
@@ -49,17 +50,23 @@ function useTerminal(shell: Shell, onRun?: TerminalViewProps['onRun']) {
   return { value, setValue, lines, run, keyDown };
 }
 
-function Output({ lines }: { lines: DisplayLine[] }) {
+function Output({ lines, shell, hidden, focusInput }: {
+  lines: DisplayLine[]; shell: Shell; hidden: boolean; focusInput: () => void;
+}) {
   const output = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (output.current) output.current.scrollTop = output.current.scrollHeight;
   });
-  return <div class="terminal-output" ref={output} role="log" aria-label="Terminal output" tabIndex={0}>
+  return <ReadingBox boxRef={output}><div class="terminal-reading">
+    <FolderTree fs={shell.fs} hidden={hidden} />
+    <section class="terminal-panel" aria-label="Terminal" onClick={focusInput}>
+    <div class="terminal-output" role="log" aria-label="Terminal output" tabIndex={0}>
     {lines.map((line, index) => <div key={index} class={`terminal-line terminal-${line.kind}`}>
       {line.kind === 'hint' && <span class="terminal-sidekick" aria-label="Sidekick">★</span>}
       <SpeechLine line={{ text: line.text }} />
     </div>)}
-  </div>;
+    </div></section>
+  </div></ReadingBox>;
 }
 
 export function TerminalView({ shell, chips = [], solution, onRun }: TerminalViewProps) {
@@ -73,10 +80,8 @@ export function TerminalView({ shell, chips = [], solution, onRun }: TerminalVie
   const hidden = shell.events.some((event) => event.type === 'run'
     && event.command === 'ls' && event.ok && event.flags.includes('a'));
   return <div class="terminal-widget">
-    <FolderTree fs={shell.fs} hidden={hidden} />
-    <section class="terminal-panel" aria-label="Terminal" onClick={() => input.current?.focus()}>
-      <Output lines={terminal.lines} />
-      <div class="terminal-controls">
+      <Output lines={terminal.lines} shell={shell} hidden={hidden} focusInput={() => input.current?.focus()} />
+      <div class="terminal-controls" onClick={() => input.current?.focus()}>
         {solution !== undefined && <div class="terminal-solution">
           <SpeechLine line={{ text: 'Try this: Click a chip to run it.' }} />
           <CommandChips commands={solution} run={runChip} />
@@ -92,6 +97,5 @@ export function TerminalView({ shell, chips = [], solution, onRun }: TerminalVie
           <BigButton type="submit">Run</BigButton>
         </form>
       </div>
-    </section>
   </div>;
 }

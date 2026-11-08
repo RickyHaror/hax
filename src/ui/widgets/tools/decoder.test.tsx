@@ -9,6 +9,27 @@ afterEach(removeTools);
 function shift(root: HTMLElement) { return Number(root.querySelector('[role="slider"]')!.getAttribute('aria-valuenow')); }
 function preview(root: HTMLElement) { return root.querySelector('[aria-label="Decoded message"] .speech-line > span')!.textContent; }
 describe('decoder mission', () => {
+  it('shares one coded line and read button at zero shift', async () => {
+    const { root, deps } = await mountTool(decoderConfig);
+    const codedLines = () => [...root.querySelectorAll('.speech-line > span')]
+      .filter((line) => line.textContent === decoderConfig.message);
+    const decoded = root.querySelector<HTMLElement>('[aria-label="Decoded message"]')!;
+    const secret = root.querySelector<HTMLElement>('[aria-label="Secret message"]')!;
+    expect(codedLines()).toHaveLength(1);
+    expect(preview(root)).toBe(decoderConfig.message);
+    expect(secret.textContent).toContain(decoderConfig.message);
+    expect(decoded.querySelectorAll('button[aria-label="Read aloud"]')).toHaveLength(1);
+    await click(secret, 'Read aloud');
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: decoderConfig.message },
+      expect.objectContaining({ onEnd: expect.any(Function) }));
+    await click(root, 'Turn right');
+    expect(codedLines()).toHaveLength(1);
+    expect(preview(root)).toBe(caesarDecode(decoderConfig.message, 1));
+    await click(root, 'Turn left');
+    expect(codedLines()).toHaveLength(1);
+    await click(decoded, 'Read aloud');
+    expect(deps.voice.speak).toHaveBeenCalledTimes(2);
+  });
   it('turns both ways with wrapping and updates the decoded message', async () => {
     const { root, deps } = await mountTool(decoderConfig);
     expect(root.querySelector('[aria-label="Secret message"]')?.textContent).toContain(decoderConfig.message);

@@ -126,15 +126,16 @@ describe('terminal input', () => {
 
   it('keeps the latest output in view after each command', async () => {
     const { draw } = await setup();
-    Object.defineProperty(output(), 'scrollHeight', { configurable: true, value: 800 });
+    const reader = output().closest<HTMLElement>('.reading-box')!;
+    Object.defineProperty(reader, 'scrollHeight', { configurable: true, value: 800 });
     await run('ls');
-    expect(output().scrollTop).toBe(800);
-    Object.defineProperty(output(), 'scrollHeight', { configurable: true, value: 1200 });
+    expect(reader.scrollTop).toBe(800);
+    Object.defineProperty(reader, 'scrollHeight', { configurable: true, value: 1200 });
     await run('pwd');
-    expect(output().scrollTop).toBe(1200);
-    output().scrollTop = 0;
+    expect(reader.scrollTop).toBe(1200);
+    reader.scrollTop = 0;
     await draw(true);
-    expect(output().scrollTop).toBe(1200);
+    expect(reader.scrollTop).toBe(1200);
   });
 });
 

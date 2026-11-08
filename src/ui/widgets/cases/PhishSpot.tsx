@@ -4,6 +4,7 @@ import { ReadAloudButton, SpeechLine } from '../../components/SpeechLine';
 import { useStore } from '../../store';
 import type { WidgetProps } from '../Widget';
 import { splitClueText, type CluePart } from './clueText';
+import { ReadingBox } from '../tools/ReadingBox';
 
 interface ClueActions { found: string[]; showMe: boolean; choose: (id: string) => void }
 function ClueSpan({ part, found, showMe, choose }: { part: CluePart } & ClueActions) {
@@ -43,6 +44,7 @@ export function PhishSpot({ config, showMe, onComplete }: WidgetProps<PhishSpotC
   }
   const actions = { found, showMe, choose };
   return <section class="case-widget case-phish">
+    <ReadingBox>
     <div class="case-email" role="region" aria-label="Pretend email" tabIndex={0}>
       <EmailLine parts={split.fields[0]!} prefix="From: " {...actions} />
       <EmailLine parts={split.fields[1]!} prefix="Subject: " {...actions} />
@@ -56,10 +58,13 @@ export function PhishSpot({ config, showMe, onComplete }: WidgetProps<PhishSpotC
       <ReadAloudButton line={{ text: part.text }} />
     </div>)}
     <div class="case-found" aria-live="polite">
-      <SpeechLine line={{ text: `Found ${found.length} of ${config.needed}` }} />
       <ul>{found.map((id) => <li key={id}>
         <SpeechLine line={config.clues.find((clue) => clue.id === id)!.explain} />
       </li>)}</ul>
+    </div>
+    </ReadingBox>
+    <div class="case-count" aria-live="polite">
+      <SpeechLine line={{ text: `Found ${found.length} of ${config.needed}` }} />
     </div>
   </section>;
 }
