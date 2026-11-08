@@ -19,7 +19,7 @@ async function setup() {
 async function run(command: string) {
   const field = root.querySelector<HTMLInputElement>('input[aria-label="Command"]')!;
   await act(() => { field.value = command; field.dispatchEvent(new Event('input', { bubbles: true })); });
-  await click(root, 'Run');
+  await click(root, 'Enter');
 }
 function output() { return root.querySelector('[aria-label="Terminal output"]')!; }
 

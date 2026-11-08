@@ -20,7 +20,7 @@ function TerminalStep({ config, showMe, onComplete }: WidgetProps<TerminalConfig
       onComplete();
     }
   }
-  return <TerminalView shell={shell} chips={config.chips}
+  return <TerminalView shell={shell} chips={config.chips} commands={config.commands}
     solution={showMe ? solveTerminal(config, shell.state) : undefined} onRun={afterRun} />;
 }
 

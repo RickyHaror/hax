@@ -41,6 +41,78 @@ async function key(key: string) {
 async function run(value: string) { await type(value); await key('Enter'); }
 
 describe('terminal input', () => {
+  it('leaves the phone keyboard closed until Command is focused', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    try {
+      await setup();
+      expect(document.activeElement).not.toBe(field());
+      await act(() => field().focus());
+      expect(document.activeElement).toBe(field());
+    } finally { vi.unstubAllGlobals(); }
+  });
+
+  it('only completes learned commands and help', async () => {
+    await setup({ ...terminalConfig(), commands: ['ls'] });
+    await type('ca'); await key('Tab'); expect(field().value).toBe('ca');
+    await type('he'); await key('Tab'); expect(field().value).toBe('help ');
+    await type('l'); await key('Tab'); expect(field().value).toBe('ls ');
+  });
+
+  it('shows ghost completion and finishes commands, files and folders without running', async () => {
+    const { deps, complete } = await setup();
+    await type('pw');
+    expect(root.querySelector('.command-ghost')?.textContent).toBe('d ');
+    await key('Tab'); expect(field().value).toBe('pwd ');
+    await type('cat no');
+    await click(root, 'Tab'); expect(field().value).toBe('cat notes.txt ');
+    expect(document.activeElement).toBe(field());
+    expect(output().textContent).not.toContain('The duck wears tiny boots.');
+    await type('cd sn');
+    await key('Tab'); expect(field().value).toBe('cd snacks/');
+    expect(folders().querySelector('[aria-current="true"]')?.textContent).toContain('agent');
+    expect(deps.sound.play).not.toHaveBeenCalled();
+    expect(complete).not.toHaveBeenCalled();
+    await key('Enter');
+    expect(folders().querySelector('[aria-current="true"]')?.textContent).toContain('snacks');
+    await type('cat me'); await key('Tab');
+    expect(field().value).toBe('cat menu.txt ');
+  });
+
+  it('shows ambiguous options and clears them after typing or history', async () => {
+    await setup();
+    await run('pwd');
+    await type('c'); await key('Tab');
+    expect(field().value).toBe('c');
+    const options = () => root.querySelector('[aria-label="Completion options"]');
+    expect(options()?.textContent).toContain('cat');
+    expect(options()?.textContent).toContain('cd');
+    expect(options()?.textContent).toContain('clear');
+    expect(root.querySelector('.command-ghost')?.textContent).toBe('');
+    await key('ArrowUp'); expect(field().value).toBe('pwd');
+    expect(options()).toBeNull();
+    await type('c'); await click(root, 'Tab');
+    expect(options()).not.toBeNull();
+    await type('cat'); expect(options()).toBeNull();
+    await type('xyz'); await key('Tab'); expect(field().value).toBe('xyz');
+  });
+
+  it('only captures Tab with text and leaves composing keys alone', async () => {
+    await setup();
+    async function dispatch(key: string, isComposing = false) {
+      const event = new KeyboardEvent('keydown', { key, isComposing, bubbles: true, cancelable: true });
+      await act(() => { field().dispatchEvent(event); });
+      return event.defaultPrevented;
+    }
+    expect(await dispatch('Tab')).toBe(false);
+    await type('   '); expect(await dispatch('Tab')).toBe(false);
+    await type('pw'); expect(await dispatch('Tab', true)).toBe(false);
+    expect(field().value).toBe('pw');
+    expect(await dispatch('Enter', true)).toBe(false);
+    expect(output().textContent).not.toContain('agent@hax:~$ pw');
+    expect(await dispatch('Tab')).toBe(true);
+    expect(field().value).toBe('pwd ');
+  });
+
   it('keeps Command focused inside the app and restores panel focus on other screens', async () => {
     const mission: Mission = { ...login, id: 'terminal', chapter: 'bootcamp',
       steps: [{ ...login.steps[0]!, config: terminalConfig() }] };
@@ -86,21 +158,25 @@ describe('terminal input', () => {
     expect(deps.sound.play).toHaveBeenCalledWith('success');
   });
 
-  it('runs through Run and ignores blank input', async () => {
+  it('runs through Enter and ignores blank input', async () => {
     const { complete, deps } = await setup();
-    await type('   '); await click(root, 'Run');
+    await type('   '); await click(root, 'Enter');
     expect(deps.sound.play).not.toHaveBeenCalled();
-    await type('cat notes.txt'); await click(root, 'Run');
+    await type('cat notes.txt'); await click(root, 'Enter');
     expect(complete).toHaveBeenCalledTimes(1);
     expect(output().textContent).toContain('agent@hax:~$ cat notes.txt');
   });
 
-  it('types a chip visibly and runs it', async () => {
-    const { complete } = await setup({ ...terminalConfig(), chips: ['cat notes.txt'] });
+  it('types a chip visibly and waits for Enter', async () => {
+    const { complete, deps } = await setup({ ...terminalConfig(), chips: ['cat notes.txt'] });
     await click(root, 'cat notes.txt');
-    expect(field().value).toBe('cat notes.txt');
-    expect(output().textContent).toContain('The duck wears tiny boots.');
+    expect(field().value).toBe('cat notes.txt ');
+    expect(output().textContent).not.toContain('The duck wears tiny boots.');
     expect(document.activeElement).toBe(field());
+    expect(complete).not.toHaveBeenCalled();
+    expect(deps.sound.play).not.toHaveBeenCalled();
+    await key('Enter');
+    expect(output().textContent).toContain('The duck wears tiny boots.');
     expect(complete).toHaveBeenCalledTimes(1);
   });
 
@@ -117,11 +193,11 @@ describe('terminal input', () => {
 
   it('focuses the input when the output is clicked and reads lines aloud', async () => {
     const { deps } = await setup();
-    button(root, 'Run').focus();
+    button(root, 'Enter').focus();
     await act(() => output().click());
     expect(document.activeElement).toBe(field());
     await click(root, 'Read aloud');
-    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Type a command, or click a chip.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Type a command. Press Enter to run it.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
   });
 
   it('keeps the latest output in view after each command', async () => {
@@ -162,23 +238,34 @@ describe('terminal goals and help', () => {
     expect(vi.mocked(deps.sound.play).mock.calls.filter(([name]) => name === 'success')).toHaveLength(1);
   });
 
-  it('shows solution chips and updates them as each part is met', async () => {
+  it('types the next solution through Show me and waits for Enter', async () => {
     const { complete, draw, store } = await setup(terminalConfig(goals[5]!.goal));
-    expect(root.textContent).not.toContain('Try this:');
+    expect(root.querySelector('.terminal-solution')).toBeNull();
     await draw(true);
-    expect(root.textContent).toContain('Try this:');
-    await click(root, 'cd snacks');
+    await click(root, 'Show me');
+    expect(field().value).toBe('cd snacks ');
+    expect(document.activeElement).toBe(field());
+    expect(folders().querySelector('[aria-current="true"]')?.textContent).toContain('agent');
     expect(complete).not.toHaveBeenCalled();
-    expect(button(root, 'cat menu.txt')).toBeTruthy();
+    await key('Enter');
+    expect(folders().querySelector('[aria-current="true"]')?.textContent).toContain('snacks');
+    expect(complete).not.toHaveBeenCalled();
     await act(() => { store.revealCount.value += 1; });
-    await click(root, 'cat menu.txt');
+    await click(root, 'Show me');
+    expect(field().value).toBe('cat menu.txt ');
+    expect(complete).not.toHaveBeenCalled();
+    await click(root, 'Enter');
     expect(complete).toHaveBeenCalledTimes(1);
+    expect(root.querySelector('.terminal-solution')).toBeNull();
   });
 
   it('recomputes help after wandering into another folder', async () => {
     const { complete } = await setup(terminalConfig(), true);
     await run('cd snacks');
-    await click(root, 'cat ../notes.txt');
+    await click(root, 'Show me');
+    expect(field().value).toBe('cat ../notes.txt ');
+    expect(complete).not.toHaveBeenCalled();
+    await key('Enter');
     expect(complete).toHaveBeenCalledTimes(1);
   });
 
@@ -266,6 +353,10 @@ describe('terminal output and folders', () => {
       <TerminalView shell={shell} chips={['pwd']} onRun={onRun} />
     </StoreContext.Provider>, root));
     await click(root, 'pwd');
+    expect(onRun).not.toHaveBeenCalled();
+    expect(shell.events).toEqual([]);
+    expect(field().value).toBe('pwd ');
+    await click(root, 'Enter');
     expect(onRun).toHaveBeenCalledTimes(1);
     expect(shell.events.at(-1)).toMatchObject({ type: 'run', command: 'pwd', ok: true });
     await type('ls'); await submit(root);

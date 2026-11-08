@@ -33,7 +33,7 @@ test('finds every playground egg through the terminal and keeps discoveries on r
   await page.goto('/'); await begin(page);
   await page.getByRole('button', { name: 'Agent Playground', exact: true }).click();
   await expectFit(page);
-  await expect(page.getByText('Type a command, or click a chip.', { exact: true })).toBeInViewport();
+  await expect(page.getByText('Type a command. Press Enter to run it.', { exact: true })).toBeInViewport();
   for (const egg of playground.eggs) {
     const trigger = egg.trigger;
     if (trigger.type === 'command') await run(page, trigger.command);

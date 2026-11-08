@@ -134,12 +134,12 @@ async function runTerminal(
   for (const planned of commands) {
     const command = hints === 'all' ? solveTerminal(config, shell.state)[0] : planned;
     if (!command) throw new Error('Terminal solution ended before its goal.');
-    if (hints === 'all') await button(page, command).click();
-    else {
-      const input = page.getByRole('textbox', { name: 'Command', exact: true });
-      await input.fill(command);
-      await input.press('Enter');
-    }
+    const input = page.getByRole('textbox', { name: 'Command', exact: true });
+    if (hints === 'all') {
+      await button(page, 'Show me').click();
+      await expect(input).toHaveValue(`${command} `);
+    } else await input.fill(command);
+    await input.press('Enter');
     shell.run(command);
   }
   expect(goalMet(config.goal, shell.state)).toBe(true);

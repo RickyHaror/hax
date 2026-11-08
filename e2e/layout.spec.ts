@@ -38,11 +38,11 @@ test('terminal output fills the desktop work column', async ({ page }) => {
   expect(work).not.toBeNull(); expect(output).not.toBeNull();
   expect(output!.height).toBeGreaterThanOrEqual(work!.height * .6);
   await expect(page.getByRole('textbox', { name: 'Command', exact: true })).toBeInViewport({ ratio: 1 });
-  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeInViewport({ ratio: 1 });
   await expectScreenFit(page);
   await page.setViewportSize({ width: 1366, height: 768 });
   await expectScreenFit(page);
-  await expect(page.getByRole('button', { name: 'Run', exact: true })).toBeInViewport({ ratio: 1 });
+  await expect(page.getByRole('button', { name: 'Enter', exact: true })).toBeInViewport({ ratio: 1 });
 });
 
 test('decoder letters are readable and its controls fit the laptop', async ({ page }) => {

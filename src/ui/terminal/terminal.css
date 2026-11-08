@@ -1,0 +1,116 @@
+.terminal-window {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--term);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.terminal-titlebar {
+  height: 38px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  background: var(--raised);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font: 13px var(--font-mono);
+}
+.terminal-titlebar > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terminal-status { display: flex; flex: none; align-items: center; gap: 8px; color: var(--prompt-color); }
+.terminal-status i { width: 8px; height: 8px; border-radius: var(--r-pill); background: var(--prompt-color); }
+.terminal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px;
+  position: relative;
+  color: var(--text-2);
+  font: 19px/1.55 var(--font-mono);
+}
+.terminal-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--focus) 2%, transparent) 0 1px, transparent 1px 3px);
+}
+.terminal-prompt { color: var(--prompt-color, var(--pc-hq)); font-weight: 700; }
+.command-bar { flex: none; min-width: 0; border-top: 1px solid var(--line); background: var(--term-input); padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.command-row { display: flex; align-items: center; gap: 12px; min-width: 0; font: 20px var(--font-mono); }
+.command-row > .terminal-prompt { flex: none; max-width: 40%; overflow-wrap: anywhere; }
+.prompt-short { display: none; }
+.command-field { flex: 1; position: relative; min-width: 0; overflow: hidden; }
+.command-field:focus-within { outline: 3px solid var(--focus); outline-offset: 3px; }
+.command-preview { position: absolute; inset: 0; display: flex; align-items: center; white-space: pre; pointer-events: none; }
+.command-preview > span { flex: none; }
+.command-preview > span:first-child { color: transparent; }
+.command-ghost { color: var(--ghost); }
+.command-row input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  box-shadow: none;
+}
+.terminal-cursor { flex: none; width: .6em; height: 1.15em; background: var(--prompt-color, var(--pc-hq)); }
+.command-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.command-chips .command-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 10px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  color: var(--text);
+  font: 700 17px var(--font-mono);
+  white-space: nowrap;
+}
+.command-chip small { font: 500 13px var(--font-sans); color: var(--muted); }
+.command-chips .command-chip:hover { border-color: var(--text-2); }
+.command-row .command-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-bottom-width: 3px;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  color: var(--text);
+  font: 700 14px var(--font-mono);
+}
+.command-row .command-enter { background: var(--go); border-color: var(--go); color: var(--ink-go); }
+.command-options { color: var(--info); font: 15px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 599px) {
+  .terminal-body { padding: 12px 14px; font-size: 15.5px; }
+  .command-bar { padding: 10px 12px; gap: 10px; }
+  .command-row { gap: 8px; min-height: 52px; font-size: 16px; }
+  .command-row > .terminal-prompt { max-width: 20%; }
+  .prompt-full { display: none; }
+  .prompt-short { display: inline; }
+  .command-chips { order: -1; flex-wrap: nowrap; overflow-x: auto; padding: 4px; }
+  .command-row .command-enter { width: 64px; padding: 0; }
+}

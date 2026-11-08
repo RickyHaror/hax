@@ -5,12 +5,12 @@
   height: auto;
   max-height: 42vh;
   min-height: 210px;
-  color: var(--green);
-  font-family: var(--font-code);
-  font-size: calc(22px * var(--player-scale));
-  line-height: 1.35;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-term);
+  line-height: 1.55;
 }
-.terminal-folders, .terminal-panel {
+.terminal-folders {
   min-width: 0;
   min-height: 0;
   border: 1px solid var(--muted);
@@ -32,40 +32,21 @@
   color: var(--text);
   font-weight: bold;
 }
-.terminal-panel { display: flex; flex-direction: column; }
-.terminal-output { flex: 1; padding: 6px 10px; }
-.terminal-widget > .reading-frame > .reading-box { display: flex; }
-.terminal-widget .reading-content { display: flex; flex: 1; }
-.terminal-widget .terminal-reading { flex: 1; }
+.terminal-output { flex: 1; min-width: 0; }
+.terminal-body > .reading-frame { display: flex; flex: 1; max-height: none; }
+.terminal-body .reading-box { display: flex; }
+.terminal-body .reading-content { display: flex; flex: 1; }
+.terminal-body .terminal-reading { flex: 1; }
 .terminal-line { display: flex; align-items: center; gap: 6px; }
-.terminal-line .speech-line { width: 100%; margin: 0; font-family: inherit; }
+.terminal-line .speech-line { width: 100%; margin: 0; font: inherit; }
 .terminal-line .speech-line > span { white-space: pre-wrap; overflow-wrap: anywhere; }
-.terminal-err { color: #ffe4b5; }
-.terminal-hint { color: var(--muted); }
+.terminal-err, .terminal-hint { color: var(--careful); }
+.terminal-folder { color: var(--info); }
 .terminal-sidekick { font-size: 22px; }
-.terminal-controls { flex: 0 0 auto; padding: 4px 8px; }
-.terminal-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.terminal-widget button { margin: 0; min-width: calc(48px * var(--player-scale)); min-height: calc(48px * var(--player-scale)); padding: 4px 10px; }
-.terminal-widget .speech-line button { font-size: 18px; }
-.terminal-solution .speech-line { margin: 0; font-family: var(--font-story); }
-.terminal-command { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-.terminal-input-line { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-.terminal-input-line > span:first-child { flex-shrink: 0; }
-.terminal-input-line input {
-  width: 0;
-  flex: 1;
-  min-width: 48px;
-  padding: 2px;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  color: var(--green);
-  font: inherit;
-  caret-color: var(--green);
-}
-.terminal-cursor { width: 12px; height: 26px; background: var(--green); animation: terminal-blink 1s steps(1) infinite; }
-@keyframes terminal-blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .terminal-cursor { animation: none; } }
+.terminal-widget .speech-line button { margin: 0; padding: 0; }
+.terminal-solution { padding: 8px 16px; border-top: 1px solid var(--line); }
+.terminal-solution .speech-line { margin: 0; font: 16px/1.4 var(--font-sans); }
+.terminal-solution > button { margin: 0; min-height: 44px; font: 700 17px var(--font-mono); }
 .panel:has(> section > .terminal-widget) {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -109,7 +90,6 @@
 .panel > section:has(> .terminal-widget) > .bubble { grid-area: story; }
 .panel > section:has(> .terminal-widget) > .terminal-widget { grid-area: terminal; }
 .panel > section:has(> .terminal-widget) > section[aria-label='Hints'] { grid-area: hints; }
-.terminal-input-line > span:first-child { max-width: 65%; overflow-wrap: anywhere; }
 @media (min-width: 1000px) {
   .step-work > .terminal-widget { flex: 1 1 auto; height: auto; max-height: none; min-height: 0; }
 }
