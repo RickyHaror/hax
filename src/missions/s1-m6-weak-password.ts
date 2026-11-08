@@ -13,7 +13,7 @@ export const s1m6WeakPassword: Mission = {
   minutes: 10,
   title: 'The Back Door Clue',
   blurb: 'Use Sam’s clues to test his back door lock.',
-  badge: { id: 's1-m6-weak-password', name: 'Lock Scout', art: 'badge-s1' },
+  badge: { id: 's1-m6-weak-password', name: 'Lock Scout', art: 'badge-s1-m6' },
   contract: {
     client: { name: 'Sam', role: 'Corner Shop owner and toy train chief' },
     problem: { text: 'My back door password may be easy to guess.' },

@@ -5,7 +5,7 @@ export const s1m3HiddenFolder: Mission = {
   requires: ['s1-m2-sticky-note'], xp: 20, minutes: 10,
   title: 'Hidden Folder',
   blurb: 'Help Mo find a flag in the arcade computer.',
-  badge: { id: 's1-m3-hidden-folder', name: 'Dot Scout', art: 'badge-s1' },
+  badge: { id: 's1-m3-hidden-folder', name: 'Dot Scout', art: 'badge-s1-m3' },
   contract: {
     client: { name: 'Mo', role: 'Corner Town Arcade owner' },
     problem: { text: 'I hid a flag. Can you still find it?' },

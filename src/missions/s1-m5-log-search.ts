@@ -23,7 +23,7 @@ export const s1m5LogSearch: Mission = {
   minutes: 10,
   title: 'The Long Log',
   blurb: 'Search a long log for one small clue.',
-  badge: { id: 's1-m5-log-search', name: 'Log Scout', art: 'badge-s1' },
+  badge: { id: 's1-m5-log-search', name: 'Log Scout', art: 'badge-s1-m5' },
   contract: {
     client: { name: 'Mr Pages', role: 'Corner Town Library book cart captain' },
     problem: { text: 'My flag is lost in a long log.' },

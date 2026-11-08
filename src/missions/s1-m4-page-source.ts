@@ -13,7 +13,7 @@ export const s1m4PageSource: Mission = {
   minutes: 10,
   title: 'The Bakery Page',
   blurb: 'Find a secret in the bakery page source.',
-  badge: { id: 's1-m4-page-source', name: 'Source Star', art: 'badge-s1' },
+  badge: { id: 's1-m4-page-source', name: 'Source Star', art: 'badge-s1-m4' },
   contract: {
     client: { name: 'Bea', role: 'Sunny Bakery owner and bun taster' },
     problem: { text: 'My web page may show a secret.' },

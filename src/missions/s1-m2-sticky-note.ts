@@ -5,7 +5,7 @@ export const s1m2StickyNote: Mission = {
   requires: ['s1-m1-toy-shop'], xp: 20, minutes: 10,
   title: 'Password in a Note',
   blurb: 'Find a note and help Sam keep the till safe.',
-  badge: { id: 's1-m2-sticky-note', name: 'Note Scout', art: 'badge-s1' },
+  badge: { id: 's1-m2-sticky-note', name: 'Note Scout', art: 'badge-s1-m2' },
   contract: {
     client: { name: 'Sam', role: 'Corner Shop owner' },
     problem: { text: 'I left a password on my desk.' },

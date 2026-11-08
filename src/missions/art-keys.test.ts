@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { art } from '../art';
 import { missions } from './index';
 import { playground } from './playground';
+import { season1Missions } from './season1';
 import { sidekicks } from './sidekicks';
 
 const PLAYGROUND_ART_KEYS = ['playground-door', 'badge-egg'];
@@ -35,10 +36,11 @@ describe('art registry', () => {
     expect(collectArt({ art: null, label: 'test-key' }, 'mission')).toEqual([]);
   });
 
-  it('registers every art key used by sidekicks and missions', () => {
+  it('registers every art key used by sidekicks, missions and Season 1', () => {
     const references = [
       ...sidekicks.flatMap((sidekick) => collectArt(sidekick, `sidekicks[${sidekick.id}]`)),
       ...missions.flatMap((mission) => collectArt(mission, `missions[${mission.id}]`)),
+      ...season1Missions.flatMap((mission) => collectArt(mission, `season1Missions[${mission.id}]`)),
     ];
     for (const { key, path } of references) {
       expect(Object.hasOwn(art, key), `Missing art key "${key}" at ${path}`).toBe(true);

@@ -5,7 +5,7 @@ export const s1m1ToyShop: Mission = {
   requires: [], xp: 20, minutes: 10,
   title: 'Toy Shop Computer',
   blurb: 'Help Sam check an old toy shop computer.',
-  badge: { id: 's1-m1-toy-shop', name: 'Toy Scout', art: 'badge-s1' },
+  badge: { id: 's1-m1-toy-shop', name: 'Toy Scout', art: 'badge-s1-m1' },
   contract: {
     client: { name: 'Sam', role: 'Corner Shop owner' },
     problem: { text: 'My old toy shop computer has a weak password.' },
