@@ -29,3 +29,10 @@
   `--e2e` gate passes. Pushing `main` deploys. No founder go-ahead is needed for any Phase 1 or Phase 2
   batch, polish, or fix until all launch work in the backlog is done.
 - Founder input is still needed for credentials, registrar or account actions, and product decisions.
+
+## 2026-11-08, owner: E3 build choices
+
+- Playground eggs stay under their own localStorage key `hax.v1.playground` for launch. The parent
+  reset clears it. Folding it into the main progress object is optional later work.
+- ID card avatars are emoji tiles drawn by the game for launch. Real avatar art is optional content work.
+- The parent panel keeps plain adult wording; early-reader copy rules apply to kid-facing screens.

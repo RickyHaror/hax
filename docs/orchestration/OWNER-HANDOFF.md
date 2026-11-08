@@ -7,8 +7,8 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 ## Current state
 
 - Phase 0 (owner): repo scaffold, workflow files, CI with deploy and smoke, placeholder page.
-- Current owner session: rotation id `20261107-190700-manual` (started 7:07 PM Toronto, registered in
-  ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
+- Current owner session: hax-fb, rotation id `20261108-030000` (started 3:00 AM Toronto 2026-11-08,
+  registered in ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
 
 ## Founder context
 
@@ -28,6 +28,14 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 - The owner's safety checks blocked editing registrar nameservers directly; the founder does registrar edits.
 
 ## Next action
+
+Updated about 4:15 AM Toronto, 2026-11-08, owner hax-fb (rotation 20261108-030000; old owner
+20261108-000001 stood down, done marker written). E3 BUILD checkpointed at engine/e3 1136059 (all six
+items built, unit 1282 pass, Edge and full --e2e not yet run). Owner decided: keep `hax.v1.playground`
+key, emoji avatars, adult wording in the parent panel (docs/DECISIONS.md). E3 VERIFY run launched about
+4:15 AM (hard stop about 6:15 AM): fresh review of 6690253..1136059, fix the decoder `Help me` placement,
+full gate --e2e, screenshot review, report. Under standing authorization: when clean, accept and have it
+integrate, confirm CI and the live site. Hourly lane check cron at :46.
 
 Final handoff from owner 20261108-000001 to hax-fb (rotation 20261108-030000), 3:00 AM Toronto
 2026-11-08 (earlier "3:15 AM" timestamps below were estimates; E3 launched just before 3 AM).
