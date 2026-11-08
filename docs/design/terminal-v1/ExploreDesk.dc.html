@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hax exploring files</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#06090B}
+a{color:#3CDCF5}
+.hx{font-family:'Inter','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;color:#E6EDF0;background:#06090B;position:relative;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column}
+.hx *,.hx *::before,.hx *::after{box-sizing:border-box}
+.mono{font-family:'JetBrains Mono','Cascadia Mono',Consolas,'Courier New',monospace}
+.top{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;border-bottom:1px solid #1E2C32;background:#080D10}
+.brand{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:19px;font-weight:800;letter-spacing:0.14em;color:#39F28A}
+.crumb{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;color:#8DA1A8;letter-spacing:0.04em}
+.crumb b{color:#E6EDF0;font-weight:700}
+.agent{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid #1E2C32;border-radius:999px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;color:#B7C6CC}
+.agent b{color:#E6EDF0}
+.rk{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:0.1em;color:#04140B;background:#39F28A;border-radius:4px;padding:3px 7px}
+.btn{font-family:inherit;font-size:16px;font-weight:700;min-height:44px;padding:0 18px;border-radius:8px;border:1.5px solid #39F28A;background:#39F28A;color:#04140B;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn.ghost{background:transparent;color:#39F28A}
+.btn.help{background:transparent;color:#FFC24A;border-color:#FFC24A}
+.btn.stop{background:#FF6B6B;border-color:#FF6B6B;color:#1A0505}
+.btn.lg{min-height:52px;font-size:18px;padding:0 24px}
+.focus{outline:3px solid #F5F9FA !important;outline-offset:3px}
+.hx :focus-visible{outline:3px solid #F5F9FA;outline-offset:3px}
+.rail{width:320px;flex:none;display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:#0E161A;border:1px solid #1E2C32;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#8DA1A8}
+.mt{font-size:18px;font-weight:700;line-height:1.25}
+.step{display:flex;align-items:center;gap:10px;font-size:15px;color:#B7C6CC;min-height:24px}
+.step.done{color:#8DA1A8}
+.step.now{color:#E6EDF0;font-weight:600}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid #3D5A64;flex:none;display:flex;align-items:center;justify-content:center}
+.step.done .dot{border-color:#39F28A;background:#39F28A;color:#04140B}
+.step.now .dot{border-color:#3CDCF5;box-shadow:0 0 0 3px rgba(60,220,245,0.2)}
+.rule{border:1.5px solid #FFC24A;border-radius:8px;padding:10px 12px;background:rgba(255,194,74,0.07);display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4;color:#E6EDF0}
+.rule b{color:#FFC24A}
+.clue{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:13px;padding:9px 10px;border-radius:6px;border:1px dashed #3D5A64;color:#8DA1A8;line-height:1.4;word-break:break-all}
+.clue.got{border:1px solid #39F28A;color:#39F28A;background:rgba(57,242,138,0.07)}
+.who{display:flex;align-items:center;gap:12px}
+.who b{font-size:16px}
+.who span{font-size:13px;color:#8DA1A8}
+.av{width:44px;height:44px;border-radius:50%;border:1.5px solid #3CDCF5;display:flex;align-items:center;justify-content:center;color:#3CDCF5;background:#0A1A1F;flex:none}
+.bub{display:flex;gap:10px;align-items:center;padding:8px 12px 8px 8px;border-radius:4px 12px 12px 12px;background:#101A1F;border:1px solid #1E2C32;font-size:16px;line-height:1.35;color:#B7C6CC}
+.bub p{margin:0;flex:1}
+.bub.now{border-color:#3CDCF5;background:rgba(60,220,245,0.08);color:#E6EDF0;font-weight:600}
+.say{width:44px;height:44px;flex:none;border-radius:8px;border:1px solid #2D434B;background:#0A0F12;color:#3CDCF5;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.term{flex:1;min-width:0;min-height:0;background:#0A0F12;border:1px solid #2D434B;border-radius:10px;display:flex;flex-direction:column;overflow:hidden;position:relative;box-shadow:0 24px 70px -36px rgba(57,242,138,0.4)}
+.tbar{height:38px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;background:#0F181C;border-bottom:1px solid #1E2C32;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:13px;color:#8DA1A8}
+.tbar .live{display:flex;align-items:center;gap:8px;color:#39F28A}
+.tbar .live i{width:8px;height:8px;border-radius:50%;background:#39F28A;display:block}
+.tbody{flex:1;min-height:0;padding:16px 20px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:19px;line-height:1.55;color:#B7C6CC;overflow:hidden;position:relative}
+.tbody pre{margin:0;font:inherit;white-space:pre-wrap}
+.scan::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.022) 0px,rgba(255,255,255,0.022) 1px,transparent 1px,transparent 3px)}
+.p-hq{color:#39F28A;font-weight:700}.p-shop{color:#3CDCF5;font-weight:700}.p-bak{color:#FF9E5E;font-weight:700}.p-lib{color:#B49CFF;font-weight:700}
+.ok{color:#39F28A}.info{color:#3CDCF5}.warn{color:#FFC24A}.stp{color:#FF7A7A}.dim{color:#8DA1A8}.hi{color:#E6EDF0;font-weight:700}.dir{color:#3CDCF5;font-weight:700}
+.ghost{color:#7A8F96}
+@keyframes blink{50%{opacity:0}}
+.cur{display:inline-block;width:0.6em;height:1.15em;background:#39F28A;vertical-align:-0.22em;animation:blink 1.1s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.cur{animation:none}}
+.inbox{flex:none;border-top:1px solid #1E2C32;background:#0C1317;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+.inrow{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:20px;color:#E6EDF0}
+.inrow .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.chips{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:17px;font-weight:700;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid #2D434B;background:#101A1F;color:#E6EDF0;display:inline-flex;align-items:center;gap:10px;cursor:pointer;white-space:nowrap}
+.chip small{font-family:'Inter','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;font-size:13px;font-weight:500;color:#8DA1A8}
+.chip.go{border-color:#39F28A;color:#39F28A}
+.chip.stopc{border-color:#FF7A7A;color:#FF7A7A}
+.kbd{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:700;min-width:44px;height:44px;padding:0 12px;border-radius:8px;border:1px solid #3D5A64;border-bottom-width:3px;background:#132026;color:#E6EDF0;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none}
+.kbd.enter{background:#39F28A;color:#04140B;border-color:#22B866}
+.hint{font-size:13px;color:#8DA1A8}
+.shade{position:absolute;inset:0;background:rgba(3,6,8,0.72);z-index:5}
+.win{background:#0E161A;border:1px solid #3D5A64;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:0.1em;border-radius:4px;padding:3px 7px}
+.t-ok{color:#04140B;background:#39F28A}.t-stop{color:#1A0505;background:#FF7A7A}.t-warn{color:#1A1000;background:#FFC24A}.t-info{color:#03181C;background:#3CDCF5}
+.lad{display:flex;gap:12px}
+.lad .n{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;font-weight:800;border:1.5px solid #3D5A64;color:#8DA1A8}
+.lad.open .n{background:#FFC24A;border-color:#FFC24A;color:#1A1000}
+.lad.ready .n{border-color:#FFC24A;color:#FFC24A}
+.ph .top{height:56px;padding:0 12px 0 16px}
+.ph .tbody{font-size:15.5px;line-height:1.5;padding:12px 14px}
+.cbar{flex:none;background:#0C1317;border-top:1px solid #2D434B;padding:10px 12px 26px;display:flex;flex-direction:column;gap:10px}
+.cbar .chips{flex-wrap:nowrap;overflow:hidden}
+.cbar .chip{font-size:16px;padding:0 13px}
+.pin{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 6px 0 12px;border-radius:10px;border:1.5px solid #22B866;background:#0A0F12;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:16px}
+.pin .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;color:#E6EDF0}
+.pside{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1E2C32;background:#0B1216}
+.pside .av{width:40px;height:40px}
+.pside p{margin:0;flex:1;font-size:16px;font-weight:600;line-height:1.3}
+</style>
+</helmet>
+<div class="hx" style="width: 1366px; height: 768px">
+<header class="top">
+  <div style="display: flex; align-items: center; gap: 18px"><span class="brand">&gt;_HAX</span><span style="width: 1px; height: 24px; background: #2D434B"></span><span class="crumb">S1 · <b>M03 Corner Shop</b> · shop-pc</span></div>
+  <div style="display: flex; align-items: center; gap: 12px"><div class="agent"><b>cosmic-pickle</b><span class="rk">ROOKIE</span></div><button class="btn help"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.7"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>Help me</button></div>
+</header>
+<main style="flex: 1; min-height: 0; display: flex; gap: 20px; padding: 18px 24px 20px; position: relative">
+  <div class="rail"><section class="card" aria-label="Mission">
+  <div class="lbl">S1 · MISSION 03</div><div class="mt">Corner Shop</div>
+  <div style="display: flex; flex-direction: column; gap: 6px"><div class="step done"><span class="dot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Connect to shop-pc</div><div class="step done"><span class="dot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Look around with ls</div><div class="step done"><span class="dot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span>Read the clue file</div><div class="step now"><span class="dot"></span>Unlock the shop safe</div></div>
+  <div class="rule"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFC24A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none;margin-top:1px"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span><b>Rule:</b> only touch what you are allowed to.</span></div><div class="lbl">Clue</div><div class="clue got">CLUE{old-passwords-are-easy-to-guess}</div>
+</section><section class="card" aria-label="Echo, your crew tech" style="flex: 1; min-height: 0; gap: 10px">
+  <div class="who"><span class="av"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4"/><path d="M8 7v10"/><path d="M12 4v16"/><path d="M16 8v8"/><path d="M20 11v2"/></svg></span><div style="display: flex; flex-direction: column"><b>Echo</b><span>Crew tech · on comms</span></div></div>
+  <div style="display: flex; flex-direction: column; gap: 8px"><div class="bub"><button class="say" aria-label="Read aloud"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><p>You're in! Now find the clue file.</p></div><div class="bub"><button class="say" aria-label="Read aloud"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><p>Type ls to see the files.</p></div><div class="bub now"><button class="say" aria-label="Read aloud"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg></button><p>Got it! What do you think it means?</p></div></div>
+  
+</section></div>
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; position: relative"><section class="term" aria-label="Terminal">
+  <div class="tbar"><span>admin@shop-pc · ~ · ssh from hq</span><span class="live"><i></i>SHOP-PC</span></div>
+  <div class="tbody scan" style=""><pre><span class="p-shop">admin@shop-pc:~$</span> ls
+notes.txt   prices.txt   clue.txt
+<span class="p-shop">admin@shop-pc:~$</span> cat clu.txt
+<span class="warn">Hmm, there is no file called clu.txt.</span>
+<span class="warn">Did you mean </span><span class="hi">clue.txt</span><span class="warn">? Press Tab to finish names.</span>
+<span class="p-shop">admin@shop-pc:~$</span> cat clue.txt
+<span class="ok" style="font-weight: 700">CLUE{old-passwords-are-easy-to-guess}</span>
+</pre></div>
+  <div class="inbox">
+    <div class="inrow"><span class="p-shop">admin@shop-pc:~$</span><span class="tx"><span class="cur"></span></span><span class="kbd">Tab ⇥</span><span class="kbd enter">Enter ⏎</span></div>
+    <div class="chips"><button class="chip focus">ls<small>list files</small></button><button class="chip">cd<small>change folder</small></button><button class="chip">cat<small>read a file</small></button><button class="chip">help</button><span class="hint" style="margin-left: auto">Tab finishes names</span></div>
+  </div>
+</section></div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":768}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

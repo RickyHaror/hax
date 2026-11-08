@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hax Design system · Foundations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#06090B}
+a{color:#3CDCF5}
+.hx{font-family:'Inter','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;color:#E6EDF0;background:#06090B;position:relative;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column}
+.hx *,.hx *::before,.hx *::after{box-sizing:border-box}
+.mono{font-family:'JetBrains Mono','Cascadia Mono',Consolas,'Courier New',monospace}
+.top{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;border-bottom:1px solid #1E2C32;background:#080D10}
+.brand{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:19px;font-weight:800;letter-spacing:0.14em;color:#39F28A}
+.crumb{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;color:#8DA1A8;letter-spacing:0.04em}
+.crumb b{color:#E6EDF0;font-weight:700}
+.agent{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid #1E2C32;border-radius:999px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;color:#B7C6CC}
+.agent b{color:#E6EDF0}
+.rk{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:0.1em;color:#04140B;background:#39F28A;border-radius:4px;padding:3px 7px}
+.btn{font-family:inherit;font-size:16px;font-weight:700;min-height:44px;padding:0 18px;border-radius:8px;border:1.5px solid #39F28A;background:#39F28A;color:#04140B;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn.ghost{background:transparent;color:#39F28A}
+.btn.help{background:transparent;color:#FFC24A;border-color:#FFC24A}
+.btn.stop{background:#FF6B6B;border-color:#FF6B6B;color:#1A0505}
+.btn.lg{min-height:52px;font-size:18px;padding:0 24px}
+.focus{outline:3px solid #F5F9FA !important;outline-offset:3px}
+.hx :focus-visible{outline:3px solid #F5F9FA;outline-offset:3px}
+.rail{width:320px;flex:none;display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:#0E161A;border:1px solid #1E2C32;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.lbl{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#8DA1A8}
+.mt{font-size:18px;font-weight:700;line-height:1.25}
+.step{display:flex;align-items:center;gap:10px;font-size:15px;color:#B7C6CC;min-height:24px}
+.step.done{color:#8DA1A8}
+.step.now{color:#E6EDF0;font-weight:600}
+.dot{width:18px;height:18px;border-radius:50%;border:2px solid #3D5A64;flex:none;display:flex;align-items:center;justify-content:center}
+.step.done .dot{border-color:#39F28A;background:#39F28A;color:#04140B}
+.step.now .dot{border-color:#3CDCF5;box-shadow:0 0 0 3px rgba(60,220,245,0.2)}
+.rule{border:1.5px solid #FFC24A;border-radius:8px;padding:10px 12px;background:rgba(255,194,74,0.07);display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4;color:#E6EDF0}
+.rule b{color:#FFC24A}
+.clue{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:13px;padding:9px 10px;border-radius:6px;border:1px dashed #3D5A64;color:#8DA1A8;line-height:1.4;word-break:break-all}
+.clue.got{border:1px solid #39F28A;color:#39F28A;background:rgba(57,242,138,0.07)}
+.who{display:flex;align-items:center;gap:12px}
+.who b{font-size:16px}
+.who span{font-size:13px;color:#8DA1A8}
+.av{width:44px;height:44px;border-radius:50%;border:1.5px solid #3CDCF5;display:flex;align-items:center;justify-content:center;color:#3CDCF5;background:#0A1A1F;flex:none}
+.bub{display:flex;gap:10px;align-items:center;padding:8px 12px 8px 8px;border-radius:4px 12px 12px 12px;background:#101A1F;border:1px solid #1E2C32;font-size:16px;line-height:1.35;color:#B7C6CC}
+.bub p{margin:0;flex:1}
+.bub.now{border-color:#3CDCF5;background:rgba(60,220,245,0.08);color:#E6EDF0;font-weight:600}
+.say{width:44px;height:44px;flex:none;border-radius:8px;border:1px solid #2D434B;background:#0A0F12;color:#3CDCF5;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.term{flex:1;min-width:0;min-height:0;background:#0A0F12;border:1px solid #2D434B;border-radius:10px;display:flex;flex-direction:column;overflow:hidden;position:relative;box-shadow:0 24px 70px -36px rgba(57,242,138,0.4)}
+.tbar{height:38px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 14px;background:#0F181C;border-bottom:1px solid #1E2C32;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:13px;color:#8DA1A8}
+.tbar .live{display:flex;align-items:center;gap:8px;color:#39F28A}
+.tbar .live i{width:8px;height:8px;border-radius:50%;background:#39F28A;display:block}
+.tbody{flex:1;min-height:0;padding:16px 20px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:19px;line-height:1.55;color:#B7C6CC;overflow:hidden;position:relative}
+.tbody pre{margin:0;font:inherit;white-space:pre-wrap}
+.scan::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,0.022) 0px,rgba(255,255,255,0.022) 1px,transparent 1px,transparent 3px)}
+.p-hq{color:#39F28A;font-weight:700}.p-shop{color:#3CDCF5;font-weight:700}.p-bak{color:#FF9E5E;font-weight:700}.p-lib{color:#B49CFF;font-weight:700}
+.ok{color:#39F28A}.info{color:#3CDCF5}.warn{color:#FFC24A}.stp{color:#FF7A7A}.dim{color:#8DA1A8}.hi{color:#E6EDF0;font-weight:700}.dir{color:#3CDCF5;font-weight:700}
+.ghost{color:#7A8F96}
+@keyframes blink{50%{opacity:0}}
+.cur{display:inline-block;width:0.6em;height:1.15em;background:#39F28A;vertical-align:-0.22em;animation:blink 1.1s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.cur{animation:none}}
+.inbox{flex:none;border-top:1px solid #1E2C32;background:#0C1317;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+.inrow{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:20px;color:#E6EDF0}
+.inrow .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.chips{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:17px;font-weight:700;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid #2D434B;background:#101A1F;color:#E6EDF0;display:inline-flex;align-items:center;gap:10px;cursor:pointer;white-space:nowrap}
+.chip small{font-family:'Inter','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;font-size:13px;font-weight:500;color:#8DA1A8}
+.chip.go{border-color:#39F28A;color:#39F28A}
+.chip.stopc{border-color:#FF7A7A;color:#FF7A7A}
+.kbd{font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:14px;font-weight:700;min-width:44px;height:44px;padding:0 12px;border-radius:8px;border:1px solid #3D5A64;border-bottom-width:3px;background:#132026;color:#E6EDF0;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none}
+.kbd.enter{background:#39F28A;color:#04140B;border-color:#22B866}
+.hint{font-size:13px;color:#8DA1A8}
+.shade{position:absolute;inset:0;background:rgba(3,6,8,0.72);z-index:5}
+.win{background:#0E161A;border:1px solid #3D5A64;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:12px;font-weight:800;letter-spacing:0.1em;border-radius:4px;padding:3px 7px}
+.t-ok{color:#04140B;background:#39F28A}.t-stop{color:#1A0505;background:#FF7A7A}.t-warn{color:#1A1000;background:#FFC24A}.t-info{color:#03181C;background:#3CDCF5}
+.lad{display:flex;gap:12px}
+.lad .n{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;font-weight:800;border:1.5px solid #3D5A64;color:#8DA1A8}
+.lad.open .n{background:#FFC24A;border-color:#FFC24A;color:#1A1000}
+.lad.ready .n{border-color:#FFC24A;color:#FFC24A}
+.ph .top{height:56px;padding:0 12px 0 16px}
+.ph .tbody{font-size:15.5px;line-height:1.5;padding:12px 14px}
+.cbar{flex:none;background:#0C1317;border-top:1px solid #2D434B;padding:10px 12px 26px;display:flex;flex-direction:column;gap:10px}
+.cbar .chips{flex-wrap:nowrap;overflow:hidden}
+.cbar .chip{font-size:16px;padding:0 13px}
+.pin{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 6px 0 12px;border-radius:10px;border:1.5px solid #22B866;background:#0A0F12;font-family:'JetBrains Mono','Cascadia Mono',Consolas,monospace;font-size:16px}
+.pin .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;color:#E6EDF0}
+.pside{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #1E2C32;background:#0B1216}
+.pside .av{width:40px;height:40px}
+.pside p{margin:0;flex:1;font-size:16px;font-weight:600;line-height:1.3}
+
+.sw{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid #141F24}
+.sw i{width:48px;height:32px;border-radius:6px;display:block;border:1px solid #2D434B}
+.sw .n{font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;color:#E6EDF0}
+.sw .r{font-size:13px;color:#8DA1A8}
+.sw .c{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;color:#B7C6CC;text-align:right}
+.ts{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;align-items:baseline;padding:8px 0;border-bottom:1px solid #141F24}
+.ts .m{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;color:#8DA1A8;line-height:1.45}
+.an{font-family:'JetBrains Mono',Consolas,monospace;font-size:12px;color:#FFC24A}
+.sp{font-size:14px;line-height:1.55;color:#B7C6CC}
+.sp b{color:#E6EDF0}
+.h2{margin:0;font-size:20px;font-weight:700}
+</style>
+</helmet>
+<div class="hx" style="width: 1366px; height: 1100px">
+<div style="padding: 32px 40px; display: flex; flex-direction: column; gap: 20px; height: 100%">
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="brand" style="font-size: 26px">&gt;_HAX</span><h1 style="margin: 0; font-size: 28px; font-weight: 700">Design system · Foundations</h1><span class="hint" style="margin-left: auto">Handoff spec · all values in CSS px</span></div>
+<section class="card" style="gap: 6px; padding: 18px 20px"><h2 class="h2">Color tokens</h2><span class="hint">Contrast is measured on --term #0A0F12</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 24px">
+<div><div class="lbl" style="margin-top: 8px">Surfaces</div>
+<div class="sw"><i style="background: #06090B"></i><div><div class="n">--bg #06090B</div><div class="r">App ground, near black</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #080D10"></i><div><div class="n">--bar #080D10</div><div class="r">Top bar, nav</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #0A0F12"></i><div><div class="n">--term #0A0F12</div><div class="r">Terminal body</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #0C1317"></i><div><div class="n">--term-input #0C1317</div><div class="r">Prompt area, command bar</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #0E161A"></i><div><div class="n">--panel #0E161A</div><div class="r">Mission card, windows</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #101A1F"></i><div><div class="n">--raised #101A1F</div><div class="r">Chips, bubbles</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #1E2C32"></i><div><div class="n">--line #1E2C32</div><div class="r">Dividers</div></div><span class="c"></span></div>
+<div class="sw"><i style="background: #2D434B"></i><div><div class="n">--line-2 #2D434B</div><div class="r">Frames, chip borders</div></div><span class="c"></span></div></div>
+<div><div class="lbl" style="margin-top: 8px">Text</div>
+<div class="sw"><i style="background: #E6EDF0"></i><div><div class="n">--text #E6EDF0</div><div class="r">Commands, titles</div></div><span class="c">16.3:1</span></div>
+<div class="sw"><i style="background: #B7C6CC"></i><div><div class="n">--text-2 #B7C6CC</div><div class="r">Output, body</div></div><span class="c">11.0:1</span></div>
+<div class="sw"><i style="background: #8DA1A8"></i><div><div class="n">--muted #8DA1A8</div><div class="r">Labels, hints</div></div><span class="c">7.2:1</span></div>
+<div class="sw"><i style="background: #7A8F96"></i><div><div class="n">--ghost #7A8F96</div><div class="r">Tab suggestion only</div></div><span class="c">5.7:1</span></div>
+<div class="lbl" style="margin-top: 12px">Meaning (never swap)</div>
+<div class="sw"><i style="background: #39F28A"></i><div><div class="n">--go #39F28A</div><div class="r">Prompt at HQ, success, allowed</div></div><span class="c">13.1:1</span></div>
+<div class="sw"><i style="background: #3CDCF5"></i><div><div class="n">--info #3CDCF5</div><div class="r">Sidekick, next, folders</div></div><span class="c">11.7:1</span></div>
+<div class="sw"><i style="background: #FFC24A"></i><div><div class="n">--careful #FFC24A</div><div class="r">Rules, hints, warnings</div></div><span class="c">12.0:1</span></div>
+<div class="sw"><i style="background: #FF7A7A"></i><div><div class="n">--stop #FF7A7A</div><div class="r">Not yours, fake, weak</div></div><span class="c">7.6:1</span></div></div>
+<div><div class="lbl" style="margin-top: 8px">Prompt colors per computer</div>
+<div class="sw"><i style="background: #39F28A"></i><div><div class="n">--pc-hq #39F28A</div><div class="r">agent@hq</div></div><span class="c">13.1:1</span></div>
+<div class="sw"><i style="background: #3CDCF5"></i><div><div class="n">--pc-shop #3CDCF5</div><div class="r">admin@shop-pc</div></div><span class="c">11.7:1</span></div>
+<div class="sw"><i style="background: #FF9E5E"></i><div><div class="n">--pc-bakery #FF9E5E</div><div class="r">baker@bakery-pc</div></div><span class="c">9.5:1</span></div>
+<div class="sw"><i style="background: #B49CFF"></i><div><div class="n">--pc-library #B49CFF</div><div class="r">guest@library-pc</div></div><span class="c">8.4:1</span></div>
+<div class="lbl" style="margin-top: 12px">On-color ink</div>
+<div class="sw"><i style="background: #04140B"></i><div><div class="n">--ink-go #04140B</div><div class="r">Text on green buttons</div></div><span class="c">12.8:1 on go</span></div>
+<div class="sw"><i style="background: #1A1000"></i><div><div class="n">--ink-careful #1A1000</div><div class="r">Text on amber tags</div></div><span class="c">11.7:1 on careful</span></div>
+<div class="sw"><i style="background: #F5F9FA"></i><div><div class="n">--focus #F5F9FA</div><div class="r">Focus ring, 3px + 3px gap</div></div><span class="c">18.2:1</span></div></div>
+</div></section>
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; flex: 1"><section class="card" style="gap: 6px; padding: 18px 20px"><h2 class="h2">Type</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 6px 0">
+<div style="padding: 12px 14px; border-radius: 8px; background: #0A0F12; border: 1px solid #1E2C32"><span class="lbl" style="color: #39F28A">Mono · terminal, commands, labels</span><div class="mono" style="font-size: 24px; font-weight: 800; margin: 4px 0">JetBrains Mono</div><span class="sp">SIL Open Font License. Self-host woff2 at 400, 700, 800. Fallback: Cascadia Mono, Consolas.</span></div>
+<div style="padding: 12px 14px; border-radius: 8px; background: #0A0F12; border: 1px solid #1E2C32"><span class="lbl" style="color: #3CDCF5">Sans · sidekick, mission text</span><div style="font-size: 24px; font-weight: 800; margin: 4px 0">Inter</div><span class="sp">SIL Open Font License. Self-host woff2 at 400, 600, 700, 800. Fallback: Segoe UI Variable, system-ui.</span></div>
+</div>
+<div class="ts"><div class="m">--t-hero<br>72 / 1.0 mono 800 · phone 52</div><div class="mono" style="font-size: 56px; font-weight: 800; color: #39F28A; line-height: 1">UNLOCKED</div></div>
+<div class="ts"><div class="m">--t-term<br>19 / 1.55 mono 400 · phone 15.5</div><div class="mono" style="font-size: 19px; line-height: 1.55"><span class="p-shop">admin@shop-pc:~$</span> cat clue.txt</div></div>
+<div class="ts"><div class="m">--t-input<br>20 mono 400 · phone 16</div><div class="mono" style="font-size: 20px">connect sh<span class="ghost">op-pc</span></div></div>
+<div class="ts"><div class="m">--t-title<br>22 / 1.25 sans 700</div><div style="font-size: 22px; font-weight: 700">Sam, owner of Corner Shop</div></div>
+<div class="ts"><div class="m">--t-say<br>16 / 1.35 sans 600</div><div style="font-size: 16px; font-weight: 600">Type ls to see the files.</div></div>
+<div class="ts"><div class="m">--t-chip<br>17 mono 700 · phone 16</div><div class="mono" style="font-size: 17px; font-weight: 700">ls  cd  cat</div></div>
+<div class="ts" style="border-bottom: none"><div class="m">--t-label<br>12 mono 700 caps +0.14em</div><div class="lbl">Rule · Clue · Daily mission</div></div>
+<span class="sp" style="margin-top: 6px">Sidekick lines: one idea, 10 words or fewer. Never put instructions in caps or in labels under 14 px.</span>
+</section><section class="card" style="gap: 10px; padding: 18px 20px"><h2 class="h2">Spacing · radius · size</h2><div style="display: flex; gap: 14px; align-items: flex-end"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 4px; height: 4px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">4</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 8px; height: 8px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">8</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 12px; height: 12px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">12</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 16px; height: 16px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">16</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 20px; height: 20px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">20</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 24px; height: 24px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">24</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 32px; height: 32px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">32</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><i style="display: block; width: 48px; height: 48px; background: #3CDCF5; border-radius: 2px"></i><span class="mono" style="font-size: 12px; color: #8DA1A8">48</span></div></div><div class="sp"><b>Radius</b> 4 tags · 8 chips, buttons · 10 terminal, cards · 12 bubbles, windows · 999 pills<br>
+<b>Targets</b> 44 min everywhere · 52 primary · Enter key 64 wide on phone<br>
+<b>Desktop</b> 1366 × 768 · top bar 56 · rail 320 · gutter 20 · side padding 24<br>
+<b>Phone</b> 390 × 844 · top bar 56 · sidekick strip 64 · command bar 132 + 26 home area</div></section></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1366,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
