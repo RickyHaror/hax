@@ -41,8 +41,8 @@ describe('widget registry', () => {
   });
 
   it('shows the placeholder and Next for an unregistered kind', async () => {
-    expect(Object.hasOwn(widgets, 'key-find')).toBe(false);
-    const { container, onComplete } = await mountWidget({ kind: 'key-find', keys: ['a'] });
+    expect(Object.hasOwn(widgets, 'not-built-yet')).toBe(false);
+    const { container, onComplete } = await mountWidget({ kind: 'not-built-yet' } as unknown as StepConfig);
     expect(container.textContent).toContain('This part is still being built.');
     expect(onComplete).not.toHaveBeenCalled();
     await click(container, 'Next'); await click(container, 'Next');

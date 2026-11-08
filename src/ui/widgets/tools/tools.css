@@ -1,0 +1,29 @@
+.mission-tool { max-height: 62vh; overflow: auto; padding: 8px; }
+.tool-browser { border: 2px solid var(--muted); border-radius: 12px; overflow: hidden; background: var(--bg); }
+.tool-tab { padding: 0 12px; border-bottom: 1px solid var(--muted); }
+.tool-address { margin: 8px 12px; padding: 4px 12px; border: 1px solid var(--muted); border-radius: 8px; font-family: var(--font-code); }
+.tool-page { padding: 8px 16px; max-height: 30vh; overflow: auto; }
+.tool-page h3 .speech-line { font-size: 28px; }
+.tool-source { margin: 8px; padding: 12px; font: 24px/1.5 var(--font-code); max-height: 30vh; overflow: auto; background: var(--bg); }
+.source-line { display: block; min-height: 1.5em; }
+.source-tag { color: var(--green); }
+.source-attribute { color: #b8dcff; }
+.source-string { color: #fff3a1; }
+.source-comment { color: #ffc8eb; }
+.tool-source mark { color: inherit; background: #244d35; box-shadow: 0 0 12px var(--green); border-radius: 4px; }
+.wheel-layout { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.wheel-control { min-width: 48px; min-height: 48px; border-radius: 50%; flex: 0 1 300px; }
+.wheel-control svg { display: block; width: 100%; height: auto; font: 18px var(--font-code); fill: var(--text); }
+.wheel-control circle { fill: var(--bg); stroke: var(--green); stroke-width: 2px; }
+.wheel-control .wheel-inner circle { fill: var(--panel); }
+.wheel-inner { transform-origin: 170px 170px; transition: transform 350ms ease; }
+.wheel-control .wheel-pointer { fill: #fff3a1; }
+.wheel-actions { flex: 1 1 240px; }
+.secret-message, .decoded-preview { font-family: var(--font-code); overflow-wrap: anywhere; }
+.secret-message .speech-line { font-size: 28px; }
+.decoder-overlay { position: fixed; inset: 0; z-index: 10; background: #071410ed; display: grid; place-items: center; padding: 24px; }
+.decoder-dialog { width: min(900px, 100%); max-height: 92vh; overflow: auto; background: var(--panel); border: 2px solid var(--green); border-radius: 16px; padding: 20px; }
+.decoder-dialog h2 { margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .wheel-inner { transition: none; }
+}
