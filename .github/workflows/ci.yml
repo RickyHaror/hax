@@ -1,0 +1,148 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  PAGES_PROJECT: hax
+  CUSTOM_DOMAIN: hax.huxton.ca
+
+jobs:
+  checks:
+    name: Lint, types, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  e2e:
+    name: Browser tests (${{ matrix.browser }})
+    needs: checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            install: chromium
+            projects: --project=chromium-1366 --project=chromium-1920
+          - browser: edge
+            install: msedge
+            projects: --project=edge-1366 --project=edge-1920
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - run: npx playwright install --with-deps ${{ matrix.install }}
+      - run: npx playwright test ${{ matrix.projects }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            playwright-report
+            test-results
+            screenshots
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: [checks, e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      production_url: ${{ steps.project.outputs.production_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Ensure the Pages project exists
+        id: project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects"
+          status=$(curl -s -o project.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$api/$PAGES_PROJECT")
+          if [ "$status" = "404" ]; then
+            npx wrangler pages project create "$PAGES_PROJECT" --production-branch main
+            curl -s -o project.json -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$api/$PAGES_PROJECT"
+          fi
+          subdomain=$(node -e 'const p=require("./project.json"); if(!p.success){console.error(JSON.stringify(p.errors)); process.exit(1)} console.log(p.result.subdomain)')
+          echo "production_url=https://$subdomain" >> "$GITHUB_OUTPUT"
+          rm -f project.json
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler pages deploy dist --project-name "$PAGES_PROJECT" --branch main --commit-hash "$GITHUB_SHA" --commit-dirty=true
+
+  smoke:
+    name: Smoke test the live site
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Wait for the new deployment to serve
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf "${{ needs.deploy.outputs.production_url }}/" -o /dev/null; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Smoke test pages.dev
+        env:
+          SMOKE_URL: ${{ needs.deploy.outputs.production_url }}
+        run: npm run e2e:smoke
+      - name: Smoke test the custom domain when it is live
+        run: |
+          if curl -sf "https://$CUSTOM_DOMAIN/" -o /dev/null; then
+            SMOKE_URL="https://$CUSTOM_DOMAIN" npm run e2e:smoke
+          else
+            echo "::warning::https://$CUSTOM_DOMAIN is not serving yet; skipped"
+          fi
