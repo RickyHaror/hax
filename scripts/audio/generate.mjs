@@ -120,7 +120,7 @@ async function main() {
     console.log(`lines: ${jobs.length} total, ${missing.length} to generate, about ${chars} characters`);
     if (!dryRun) {
       let done = 0;
-      await runPool(missing, 3, async (job) => {
+      await runPool(missing, 2, async (job) => {
         try {
           const url = `https://api.elevenlabs.io/v1/text-to-speech/${job.voice}?output_format=${cast.format}`;
           writeFileSync(join(outLines, fileFor(job)), await post(url, key, { text: job.spoken, model_id: cast.model, voice_settings: cast.settings }));

@@ -187,3 +187,15 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 - **AU-4 Music playback (engine):** a separate `Music on`/`Music off` toggle (default on, low volume),
   ducks to near silence while a voice line plays, fades between screens, never plays during the typing
   game or key finding if it distracts, respects the global mute, precached for offline.
+
+### Audio controls (founder 2026-11-07, part of AU-4)
+
+- Three independent channels, each with its own big on/off switch and a three-step volume (quiet, medium,
+  loud) using icons plus words, not a fiddly slider: **Voices** (read aloud), **Sounds** (effects),
+  **Music**. Plus the existing **Read everything to me** auto-read switch.
+- A small speaker button on the toolbar opens these controls from any screen; the full set also lives in
+  Settings. Turning music off never affects voices or sounds, and the reverse.
+- Defaults: voices on medium, sounds on medium, music on quiet. All saved in progress (localStorage).
+- The parent panel can set defaults and lock music off if it distracts.
+- Tests: each channel toggles alone; volumes persist across reload; music ducks under voices; muting all
+  three silences everything.
