@@ -10,6 +10,8 @@ import type { StorageLike } from './engine/progress';
 import { buildRegistry } from './ui/registry';
 import { createStore } from './ui/store';
 import { App } from './ui/App';
+import { registerSW } from 'virtual:pwa-register';
+import { startUpdates } from './ui/pwa/register';
 
 function storage(): StorageLike | null {
   try { return window.localStorage; } catch { return null; }
@@ -21,3 +23,4 @@ const store = createStore({ registry: buildRegistry(), storage: storage(), voice
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 const root = document.getElementById('app');
 if (root) render(<App store={store} />, root);
+startUpdates({ store, registerSW });

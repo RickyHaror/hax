@@ -16,4 +16,5 @@ test('live site ships a manifest and service worker', async ({ request, baseURL 
   expect((await manifest.json()).name).toBe('Hax');
   const sw = await request.get(new URL('/sw.js', baseURL).toString());
   expect(sw.status()).toBe(200);
+  expect(sw.headers()['cache-control']).toContain('no-cache');
 });

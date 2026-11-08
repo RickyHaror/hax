@@ -7,7 +7,7 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'script',
+      injectRegister: false,
       includeAssets: ['icons/*.png', 'icons/*.svg'],
       manifest: {
         name: 'Hax',
@@ -31,6 +31,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
     }),
   ],

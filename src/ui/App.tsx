@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { StoreContext, type AppStore, useStore } from './store';
 import { Toolbar } from './components/Toolbar';
+import { SpeechLine } from './components/SpeechLine';
 import { Start } from './screens/Start';
 import { Onboarding } from './screens/Onboarding';
 import { Map } from './screens/Map';
@@ -29,6 +30,8 @@ function Shell() {
   const position = store.position.value;
   useEffect(() => { panel.current?.focus(); panel.current?.scrollTo?.(0, 0); }, [screen, position]);
   return <div class="app-shell">{screen.name !== 'settings' && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
+    <div role="status" aria-live="polite">{store.updatePending.value &&
+      <SpeechLine line={{ text: 'New missions arrived!' }} />}</div>
     <ScreenView key={screen.name} />
   </main></div>;
 }

@@ -1,4 +1,4 @@
-import { signal, type Signal } from '@preact/signals';
+import { computed, signal, type Signal } from '@preact/signals';
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
 import {
@@ -10,6 +10,7 @@ import type { Voice } from '../engine/voice';
 import type { SoundPlayer } from '../engine/sound';
 import type { Registry } from './registry';
 import type { Mission } from '../engine/types';
+import { isSafeMoment } from './pwa/safe';
 
 export interface StoreDeps {
   registry: Registry; storage: StorageLike | null; voice: Voice; sound: SoundPlayer; now?: () => Date;
@@ -88,6 +89,9 @@ export function createStore(deps: StoreDeps) {
   const now = () => (deps.now ?? (() => new Date()))();
   return {
     ...store,
+    updateReady: signal(false),
+    updatePending: signal(false),
+    safeMoment: computed(() => isSafeMoment(store.screen.value, store.position.value)),
     identify(firstWord: number, secondWord: number, sidekick: number) {
       save(setIdentity(progress.value, { firstWord, secondWord, sidekick })); go({ name: 'map' });
     },
