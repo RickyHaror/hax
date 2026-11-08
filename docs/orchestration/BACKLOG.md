@@ -206,3 +206,13 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 - `generate.mjs` refuses a run above `--max-chars` (default 3000). Tell the founder the estimate before
   any run above about 5,000 characters. The plan allows 2 concurrent requests.
 - Remaining planned spend: M4 to M7 voices (about 16,000) and the Agent Playground (about 8,000).
+
+## Batch E3 (engine, after E2): finish the experience
+
+- E2-4 Agent ID card (moved from E2).
+- AU-4 music playback and the three-channel audio controls (see Audio sections above).
+- E3-1 Agent Playground screen.
+- Parent panel and session timer (Phase 2 list above).
+- Visual polish pass: richer hacker look (scanlines, glow, subtle grid), sidekick art everywhere a sidekick
+  speaks, celebratory Done screen, mission map as a fun HQ wall of client logos, and a screenshot review of
+  every mission and Done screen at both sizes.
