@@ -142,3 +142,18 @@ Mission files in `src/missions/<id>.ts`, each exporting one `Mission` and regist
 - Content C2: M4 Cupcake Castle (bit 12, weak pet password), M5 Moon Base Museum (bit 13, log file
   detective), M6 Super Sock Shop (bit 14, phishing email), M7 Agent Graduation (bit 15, capstone).
 - Polish: fresh-eyes kid review pass and fixes, parent setup guide (install as app, kiosk shortcut).
+
+## Audio (founder 2026-11-07: ElevenLabs subscription, key in D:/Dev/hax/.env.local, never committed)
+
+- **AU-1 Generation script (owner):** `scripts/audio/generate.mjs` reads every Line from the registered
+  missions and sidekicks, generates speech with ElevenLabs at build time, writes
+  `public/audio/lines/<hash>.mp3` (hash of voice id plus spoken text) and `public/audio/manifest.json`.
+  Sidekick lines are generated in each of the three sidekick voices; client lines in a voice per client;
+  narrator lines in one narrator voice. Skips files that already exist. Never prints the key. Also
+  generates sound effects into `public/audio/sfx/` (click, success, hint, key press, mission fanfare,
+  gentle try-again, packet catch, lock click, door open). The game never calls ElevenLabs at runtime.
+- **AU-2 Playback (engine lane):** `voice.ts` plays the pre-generated clip for a line when the manifest has
+  it and falls back to Web Speech; `sound.ts` plays the sfx files with the synthesized sounds as fallback.
+  The service worker precaches audio so it works offline.
+- Voice casting draft: Bit = Liam, Pixel = Jessica, Hoot = George, narrator = Matilda; clients get distinct voices.
+- Blocked on 2026-11-07: the key's credit limit was 0; founder to raise it.
