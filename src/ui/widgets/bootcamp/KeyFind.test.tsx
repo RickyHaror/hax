@@ -43,7 +43,7 @@ describe('key quest', () => {
   it('keeps Read aloud reachable with Space while blocking page scroll', async () => {
     const { root, complete, deps } = await mountWidget({ kind: 'key-find', keys: ['c'] }, true);
     await activate(root, 'Read aloud', ' ');
-    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Find the letter C.' });
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Find the letter C.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
     expect(complete).not.toHaveBeenCalled(); expect(deps.sound.play).not.toHaveBeenCalled();
   });
   it('clears key flashes and listeners when removed', async () => {

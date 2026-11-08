@@ -3,7 +3,7 @@ import { act } from 'preact/test-utils';
 import { loadProgress } from '../../engine/progress';
 import { createStore } from '../store';
 import { client } from '../test/fixtures';
-import { fakeDeps, identityStore, mount, unmount } from '../test/helpers';
+import { click, fakeDeps, identityStore, mount, unmount } from '../test/helpers';
 import { reloadWhenSafe } from './reload';
 
 beforeEach(() => vi.useFakeTimers());
@@ -67,9 +67,9 @@ describe('safe reloads', () => {
   });
 
   it('shows the polite update line with a working read aloud button only at safe moments', async () => {
-    const store = identityStore(); store.openMission(client.id);
+    const deps = fakeDeps(); const store = identityStore(deps); store.openMission(client.id);
     store.phase(client.id, { phase: 'step', index: 1 });
-    const root = await mount(store);
+    const root = await mount(store); await click(root, 'Tap to begin, Agent!');
     const reload = vi.fn(); const stop = reloadWhenSafe(store, reload);
     try {
       await act(() => { store.updateReady.value = true; });
@@ -79,7 +79,7 @@ describe('safe reloads', () => {
       expect(status.getAttribute('aria-live')).toBe('polite');
       expect(status.textContent).toContain('New missions arrived!');
       await act(() => { status.querySelector<HTMLButtonElement>('[aria-label="Read aloud"]')!.click(); });
-      expect(store.voice.speak).toHaveBeenCalledWith({ text: 'New missions arrived!' });
+      expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'New missions arrived!' }, expect.objectContaining({ onEnd: expect.any(Function) }));
       await act(() => { vi.advanceTimersByTime(1500); });
       expect(reload).toHaveBeenCalledOnce();
     } finally { stop(); await unmount(root); }

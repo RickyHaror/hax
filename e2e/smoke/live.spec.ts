@@ -7,6 +7,7 @@ test('live site serves the game with security headers', async ({ page, request, 
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("connect-src 'self'");
   await page.goto('/');
+  await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'AGENT HQ' })).toBeVisible();
 });
 

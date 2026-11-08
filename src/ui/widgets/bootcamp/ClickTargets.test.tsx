@@ -22,7 +22,7 @@ describe('click targets', () => {
     expect(complete).not.toHaveBeenCalled(); expect(deps.sound.play).toHaveBeenCalledWith('tryAgain');
     for (const label of ['Star', 'Moon', 'Moon']) await act(() => { button(root, label).dispatchEvent(new MouseEvent('dblclick', { bubbles: true })); });
     expect(complete).toHaveBeenCalledTimes(1);
-    await click(root, 'Read aloud'); expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Click two times, fast!' });
+    await click(root, 'Read aloud'); expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Click two times, fast!' }, expect.objectContaining({ onEnd: expect.any(Function) }));
   });
   it('supports Enter and Space even for double click tasks', async () => {
     const { root, complete } = await mountWidget({ ...config, action: 'double-click' });

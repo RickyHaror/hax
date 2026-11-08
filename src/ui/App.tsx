@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { BigButton } from './components/BigButton';
 import { StoreContext, type AppStore, useStore } from './store';
 import { Toolbar } from './components/Toolbar';
 import { SpeechLine } from './components/SpeechLine';
@@ -36,5 +37,15 @@ function Shell() {
   </main></div>;
 }
 export function App({ store }: { store: AppStore }) {
-  return <StoreContext.Provider value={store}><Shell /></StoreContext.Provider>;
+  const [begun, setBegun] = useState(false);
+  const begin = () => {
+    store.sound.play('click');
+    store.voice.cancel();
+    setBegun(true);
+  };
+  return <StoreContext.Provider value={store}>{begun ? <Shell />
+    : <div class="app-shell"><main class="panel begin-panel">
+      <h1 class="glow">AGENT HQ</h1>
+      <BigButton class="begin-button" onClick={begin}>Tap to begin, Agent!</BigButton>
+    </main></div>}</StoreContext.Provider>;
 }

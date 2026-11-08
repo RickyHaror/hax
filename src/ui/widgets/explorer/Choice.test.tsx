@@ -23,7 +23,7 @@ describe('choice', () => {
     await click(mounted.root, 'File');
     const readers = mounted.root.querySelectorAll<HTMLButtonElement>('[aria-label="Read aloud"]');
     readers[readers.length - 1]!.click();
-    expect(mounted.deps.voice.speak).toHaveBeenCalledWith(config.options[0]!.feedback);
+    expect(mounted.deps.voice.speak).toHaveBeenCalledWith(config.options[0]!.feedback, expect.objectContaining({ onEnd: expect.any(Function) }));
     await activate(mounted.root, 'Folder');
     await click(mounted.root, 'Folder');
     expect(mounted.onComplete).toHaveBeenCalledTimes(1);

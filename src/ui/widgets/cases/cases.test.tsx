@@ -128,7 +128,7 @@ describe('PhishSpot', () => {
     expect(root.textContent).toContain('Keep your password to yourself.');
     expect(onComplete).not.toHaveBeenCalled();
     await click(root.querySelector('.case-found li') as HTMLElement, 'Read aloud');
-    expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: 'Keep your password to yourself.' });
+    expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: 'Keep your password to yourself.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
     await act(() => { clue(root, 'Hurry now!').click(); clue(root, 'Claim a prize').click(); });
     expect(root.textContent).toContain('Found 2 of 2');
     expect(onComplete).toHaveBeenCalledTimes(1);
@@ -166,7 +166,11 @@ describe('PhishSpot', () => {
     expect(root.querySelectorAll('a, [href]')).toHaveLength(0);
     const read = root.querySelector('.case-pretend-link button') as HTMLButtonElement;
     await act(() => { read.click(); });
-    expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: 'Claim a prize' });
+    expect(deps.voice.speak).toHaveBeenLastCalledWith({ text: 'Claim a prize' }, expect.objectContaining({ onEnd: expect.any(Function) }));
+    expect(read.getAttribute('aria-pressed')).toBe('true');
+    expect(read.textContent).toBe('Reading...');
+    await act(() => { read.click(); });
+    expect(read.getAttribute('aria-pressed')).toBe('false');
   });
   it('finds from, subject and missing clues, preserving the matched case', async () => {
     const config = { ...phishConfig, needed: 3, email: { from: 'PRIZE Club', subject: 'Free pizza!', body: [] },

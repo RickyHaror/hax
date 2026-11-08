@@ -3,11 +3,20 @@ import { useStore } from '../store';
 import { DecoderWheel } from '../widgets/tools';
 import { BigButton } from './BigButton';
 import { SpeechLine } from './SpeechLine';
+import { SpeakerIcon } from './SpeakerIcon';
 export function Toggles() {
   const store = useStore();
   const { autoRead, muted } = store.progress.value.settings;
   return <>
-    <BigButton aria-pressed={autoRead} onClick={() => store.settings({ autoRead: !autoRead })}>Read everything to me</BigButton>
+    <div class="reading-toggle">
+      <BigButton aria-label="Read everything to me" aria-pressed={autoRead}
+        onClick={() => store.settings({ autoRead: !autoRead })}>
+        <SpeakerIcon off={!autoRead} />Read everything to me
+      </BigButton>
+      <span class={`reading-badge ${autoRead ? 'reading-on' : 'reading-off'}`}>
+        <SpeakerIcon off={!autoRead} />Reading to me: {autoRead ? 'ON' : 'OFF'}
+      </span>
+    </div>
     <BigButton aria-pressed={!muted} onClick={() => store.settings({ muted: !muted })}>{muted ? 'Sound off' : 'Sound on'}</BigButton>
   </>;
 }

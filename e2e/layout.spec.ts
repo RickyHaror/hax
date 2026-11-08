@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test('onboarding fits with Next visible and no sideways scroll', async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto('/');
+  await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
   const start = page.getByRole('button', { name: 'Start', exact: true });
   const help = page.getByRole('button', { name: 'Help me', exact: true });
   await expect(start.or(help)).toBeVisible();

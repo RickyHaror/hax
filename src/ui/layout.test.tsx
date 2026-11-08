@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { client, fixtureRegistry } from './test/fixtures';
-import { fakeDeps, identityStore, mount, unmount } from './test/helpers';
+import { click, fakeDeps, identityStore, mount, unmount } from './test/helpers';
 
 let root: HTMLElement;
 afterEach(async () => { if (root) await unmount(root); });
@@ -8,7 +8,7 @@ afterEach(async () => { if (root) await unmount(root); });
 describe('map chapters', () => {
   it('shows the coming soon message without empty chapter sections', async () => {
     const deps = fakeDeps(); deps.registry = fixtureRegistry([]);
-    root = await mount(identityStore(deps));
+    root = await mount(identityStore(deps)); await click(root, 'Tap to begin, Agent!');
     expect(root.textContent).toContain('Missions coming soon');
     expect(root.querySelectorAll('h2')).toHaveLength(0);
     expect(root.querySelectorAll('section[aria-label]')).toHaveLength(0);
@@ -19,7 +19,7 @@ describe('map chapters', () => {
     ['terminal', 'Terminal Training'], ['missions', 'Missions'],
   ] as const)('shows only the populated %s chapter', async (chapter, title) => {
     const deps = fakeDeps(); deps.registry = fixtureRegistry([{ ...client, chapter }]);
-    root = await mount(identityStore(deps));
+    root = await mount(identityStore(deps)); await click(root, 'Tap to begin, Agent!');
     expect([...root.querySelectorAll('h2')].map((heading) => heading.textContent)).toEqual([title]);
     const sections = root.querySelectorAll('section[aria-label]');
     expect(sections).toHaveLength(1);

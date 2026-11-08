@@ -95,7 +95,7 @@ describe('terminal input', () => {
     await act(() => output().click());
     expect(document.activeElement).toBe(field());
     await click(root, 'Read aloud');
-    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Type a command, or click a chip.' });
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'Type a command, or click a chip.' }, expect.objectContaining({ onEnd: expect.any(Function) }));
   });
 
   it('keeps the latest output in view after each command', async () => {

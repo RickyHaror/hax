@@ -8,7 +8,7 @@ import { button, click, fakeDeps, fill, identityStore, mount, unmount } from '..
 async function setup() {
   const deps = { ...fakeDeps(), registry: fixtureRegistry([m3Zoo]) };
   const store = identityStore(deps);
-  const root = await mount(store); root.dataset.testToolbar = 'true';
+  const root = await mount(store); await click(root, 'Tap to begin, Agent!'); root.dataset.testToolbar = 'true';
   return { root, store };
 }
 afterEach(async () => {
@@ -29,7 +29,7 @@ describe('toolbar decoder wheel', () => {
     expect(button(root, 'Open decoder wheel')).not.toBeNull();
   });
   it('keeps the wheel hidden after a mission without decoder steps', async () => {
-    const store = identityStore(); const root = await mount(store); root.dataset.testToolbar = 'true';
+    const store = identityStore(); const root = await mount(store); await click(root, 'Tap to begin, Agent!'); root.dataset.testToolbar = 'true';
     await act(() => { store.complete('client'); });
     expect(root.textContent).not.toContain('Open decoder wheel');
   });

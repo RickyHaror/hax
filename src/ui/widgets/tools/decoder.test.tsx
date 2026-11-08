@@ -65,6 +65,6 @@ describe('decoder mission', () => {
     const { root, deps } = await mountTool({ ...decoderConfig, clue: undefined });
     const decoded = root.querySelector<HTMLElement>('[aria-label="Decoded message"]')!;
     await click(decoded, 'Read aloud');
-    expect(deps.voice.speak).toHaveBeenCalledWith({ text: decoderConfig.message });
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: decoderConfig.message }, expect.objectContaining({ onEnd: expect.any(Function) }));
   });
 });

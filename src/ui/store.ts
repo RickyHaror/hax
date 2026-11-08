@@ -9,7 +9,7 @@ import {
 import type { Voice } from '../engine/voice';
 import type { SoundPlayer } from '../engine/sound';
 import type { Registry } from './registry';
-import type { Mission } from '../engine/types';
+import type { Line, Mission } from '../engine/types';
 import { isSafeMoment } from './pwa/safe';
 
 export interface StoreDeps {
@@ -30,7 +30,41 @@ function resumePosition(mission: Mission, value: string | null): Position {
   const index = mission.steps.findIndex((step) => step.id === value);
   return index >= 0 ? { phase: 'step', index } : { phase: 'intro', index: 0 };
 }
+function readingStore(source: Voice) {
+  const reading = signal<symbol | null>(null);
+  let revision = 0;
+  const clear = () => { revision++; reading.value = null; };
+  const cancel = () => { clear(); source.cancel(); };
+  const voice: Voice = {
+    get supported() { return source.supported; },
+    setManifest: (manifest) => source.setManifest(manifest),
+    setContext: (context) => source.setContext(context),
+    isSpeaking: () => source.isSpeaking(), cancel,
+    speak(line, options) { clear(); source.speak(line, options); },
+    speakAll(lines, options) {
+      clear();
+      if (options === undefined) source.speakAll(lines);
+      else source.speakAll(lines, options);
+    },
+  };
+  function readLine(owner: symbol, line: Line, sidekick?: string, unavailable?: () => void) {
+    if (reading.value === owner) { cancel(); return; }
+    cancel();
+    const token = revision;
+    reading.value = owner;
+    let starting = true;
+    const onEnd = () => {
+      if (reading.value !== owner || token !== revision) return;
+      reading.value = null;
+      if (starting || !source.supported) unavailable?.();
+    };
+    source.speak(line, { onEnd, ...(sidekick === undefined ? {} : { sidekick }) });
+    starting = false;
+  }
+  return { voice, reading, readLine };
+}
 function coreStore(deps: StoreDeps) {
+  const playback = readingStore(deps.voice);
   const loaded = loadProgress(deps.storage);
   const progress = signal(reconcileExtraBits(loaded, deps.registry.missions, (deps.now ?? (() => new Date()))()));
   const saved = signal(false);
@@ -52,7 +86,7 @@ function coreStore(deps: StoreDeps) {
       missionId: screen.value.name === 'player' ? screen.value.missionId : null,
     });
   }
-  function go(next: Screen) { deps.voice.cancel(); screen.value = next; syncVoice(); }
+  function go(next: Screen) { playback.voice.cancel(); screen.value = next; syncVoice(); }
   function phase(missionId: string, next: Position) {
     position.value = next;
     save(setCurrent(progress.value, { missionId, stepId: JSON.stringify([next.phase, next.index]) }));
@@ -66,7 +100,7 @@ function coreStore(deps: StoreDeps) {
     go({ name: 'player', missionId });
   }
   return {
-    ...deps, progress, saved, revealCount, screen, position, notice, save, go, syncVoice, phase, openMission,
+    ...deps, ...playback, progress, saved, revealCount, screen, position, notice, save, go, syncVoice, phase, openMission,
     visit(next: Screen) { returnScreen = screen.value; go(next); },
     back() { go(returnScreen); },
   };
@@ -97,7 +131,7 @@ export function createStore(deps: StoreDeps) {
     },
     settings(patch: Partial<Settings>) {
       save(updateSettings(progress.value, patch));
-      if (patch.autoRead === false) deps.voice.cancel();
+      if (patch.autoRead === false) store.voice.cancel();
     },
     hint(missionId: string, stepId: string, rung: number) {
       save(recordHint(progress.value, missionId, stepId, rung)); deps.sound.play('hint');

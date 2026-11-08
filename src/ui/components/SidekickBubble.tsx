@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useLayoutEffect } from 'preact/hooks';
 import type { Line } from '../../engine/types';
 import { useStore } from '../store';
 import { Art } from './Art';
@@ -10,7 +10,7 @@ export function SidekickBubble({ lines, sidekickIndex }: { lines: readonly Line[
   const autoRead = store.progress.value.settings.autoRead;
   const voiceSidekick = sidekickIndex === undefined ? undefined : sidekick.id;
   const signature = JSON.stringify(lines);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (autoRead) {
       const spoken = JSON.parse(signature) as Line[];
       if (voiceSidekick === undefined) store.voice.speakAll(spoken);

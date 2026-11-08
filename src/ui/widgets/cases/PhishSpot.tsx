@@ -1,7 +1,6 @@
 import { useRef, useState } from 'preact/hooks';
 import type { PhishSpotConfig } from '../../../engine/types';
-import { BigButton } from '../../components/BigButton';
-import { SpeechLine } from '../../components/SpeechLine';
+import { ReadAloudButton, SpeechLine } from '../../components/SpeechLine';
 import { useStore } from '../../store';
 import type { WidgetProps } from '../Widget';
 import { splitClueText, type CluePart } from './clueText';
@@ -21,11 +20,10 @@ function ClueSpan({ part, found, showMe, choose }: { part: CluePart } & ClueActi
 }
 
 function EmailLine({ parts, prefix = '', ...actions }: { parts: CluePart[]; prefix?: string } & ClueActions) {
-  const store = useStore();
   const text = prefix + parts.map((part) => part.text).join('');
   return <div class="case-email-line"><div>{prefix}{parts.map((part, index) =>
     <ClueSpan key={index} part={part} {...actions} />)}</div>
-    <BigButton aria-label="Read aloud" onClick={() => store.voice.speak({ text })}>Read aloud</BigButton>
+    <ReadAloudButton line={{ text }} />
   </div>;
 }
 
@@ -55,7 +53,7 @@ export function PhishSpot({ config, showMe, onComplete }: WidgetProps<PhishSpotC
     </div>
     {split.fallback.map((part) => <div class="case-email-line" key={part.clueId}>
       <ClueSpan part={part} {...actions} />
-      <BigButton aria-label="Read aloud" onClick={() => store.voice.speak({ text: part.text })}>Read aloud</BigButton>
+      <ReadAloudButton line={{ text: part.text }} />
     </div>)}
     <div class="case-found" aria-live="polite">
       <SpeechLine line={{ text: `Found ${found.length} of ${config.needed}` }} />

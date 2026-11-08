@@ -3,7 +3,7 @@ import type { Mission } from '../../engine/types';
 import { hackerName, useStore } from '../store';
 import { Art } from '../components/Art';
 import { BigButton } from '../components/BigButton';
-import { SpeechLine } from '../components/SpeechLine';
+import { ReadAloudButton, SpeechLine } from '../components/SpeechLine';
 function MissionCard({ mission }: { mission: Mission }) {
   const store = useStore();
   const progress = store.progress.value;
@@ -15,7 +15,7 @@ function MissionCard({ mission }: { mission: Mission }) {
       <span>{Object.hasOwn(progress.completed, mission.id) ? '✓ ' : !unlocked ? '🔒 ' : ''}{mission.title}</span>
       <span>{mission.blurb}</span><span>{mission.minutes} minutes</span>
     </BigButton>
-    <BigButton aria-label="Read aloud" onClick={() => store.voice.speak({ text: mission.blurb })}>Read aloud</BigButton>
+    <ReadAloudButton line={{ text: mission.blurb }} />
     {!unlocked && <SpeechLine line={{ text: `Finish ${title} first` }} />}
   </section>;
 }
