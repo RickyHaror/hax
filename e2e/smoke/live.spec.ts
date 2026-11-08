@@ -7,7 +7,7 @@ test('live site serves the game with security headers', async ({ page, request, 
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("connect-src 'self'");
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'HAX' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AGENT HQ' })).toBeVisible();
 });
 
 test('live site ships a manifest and service worker', async ({ request, baseURL }) => {

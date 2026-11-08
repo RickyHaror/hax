@@ -1,0 +1,59 @@
+import { describe, expect, it } from 'vitest';
+import { createProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked } from '../engine/progress';
+import { createStore } from './store';
+import { client, dependent } from './test/fixtures';
+import { fakeDeps } from './test/helpers';
+describe('app store', () => {
+  it('starts fresh or on the map when identity is saved', () => {
+    const deps = fakeDeps();
+    expect(createStore(deps).screen.value).toEqual({ name: 'start' });
+    const store = createStore(deps); store.identify(1, 2, 1);
+    expect(createStore(deps).screen.value).toEqual({ name: 'map' });
+    expect(deps.storage.setItem).toHaveBeenCalled();
+  });
+  it('saves and resumes every player phase, including success and outro', () => {
+    const deps = fakeDeps(); const store = createStore(deps); store.identify(0, 0, 0);
+    store.openMission(client.id);
+    for (const phase of ['intro', 'permission', 'step', 'success', 'outro'] as const) {
+      store.phase(client.id, { phase, index: 1 });
+      const resumed = createStore(deps);
+      expect(resumed.screen.value).toEqual({ name: 'player', missionId: client.id });
+      expect(resumed.position.value).toEqual({ phase, index: 1 });
+    }
+    store.hint(client.id, 'answer', 3);
+    expect(createStore(deps).progress.value.hints.client?.answer).toEqual({ rung: 3, count: 1 });
+    store.complete(client.id);
+    expect(createStore(deps).screen.value.name).toBe('map');
+    expect(isUnlocked(createStore(deps).progress.value, dependent)).toBe(true);
+    expect(deps.sound.play).toHaveBeenCalledWith('fanfare');
+  });
+  it('ignores missing, locked, completed, and invalid resume points safely', () => {
+    const deps = fakeDeps();
+    const progress = setIdentity(createProgress(), { firstWord: 0, secondWord: 0, sidekick: 0 });
+    for (const missionId of ['missing', dependent.id]) {
+      saveProgress(deps.storage, setCurrent(progress, { missionId, stepId: 'answer' }));
+      const store = createStore(deps); expect(store.screen.value.name).toBe('map');
+      store.openMission(dependent.id); expect(store.screen.value.name).toBe('map');
+    }
+    saveProgress(deps.storage, setCurrent(progress, { missionId: client.id, stepId: 'answer' }));
+    expect(createStore(deps).position.value).toEqual({ phase: 'step', index: 1 });
+    saveProgress(deps.storage, setCurrent(progress, { missionId: client.id, stepId: 'garbage' }));
+    expect(createStore(deps).position.value.phase).toBe('intro');
+    saveProgress(deps.storage, { ...progress, completed: { client: '2026-11-07T12:00:00Z' }, current: { missionId: client.id, stepId: 'answer' } });
+    expect(createStore(deps).screen.value.name).toBe('map');
+  });
+  it('corrupt storage starts fresh and throwing storage is safe', () => {
+    const deps = fakeDeps(); deps.storage.setItem(STORAGE_KEY, '{broken');
+    expect(createStore(deps).screen.value.name).toBe('start');
+    const store = createStore({ ...deps, storage: { getItem() { throw Error(); }, setItem() { throw Error(); }, removeItem() {} } });
+    expect(() => store.identify(0, 0, 0)).not.toThrow();
+  });
+  it('persists settings and feeds the initial and changed mute to sound', () => {
+    const deps = fakeDeps(); const store = createStore(deps);
+    expect(deps.sound.setMuted).toHaveBeenCalledWith(false);
+    store.settings({ muted: true, autoRead: false });
+    expect(deps.sound.setMuted).toHaveBeenLastCalledWith(true);
+    expect(createStore(deps).progress.value.settings).toMatchObject({ muted: true, autoRead: false });
+    expect(deps.voice.cancel).toHaveBeenCalled();
+  });
+});
