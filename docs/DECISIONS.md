@@ -36,3 +36,13 @@
   reset clears it. Folding it into the main progress object is optional later work.
 - ID card avatars are emoji tiles drawn by the game for launch. Real avatar art is optional content work.
 - The parent panel keeps plain adult wording; early-reader copy rules apply to kid-facing screens.
+
+## 2026-11-08, founder: terminal first direction
+
+- The game becomes terminal first: every mission is a hired break in on a fake target machine, with a
+  contract, a flag and an ACCESS GRANTED moment. Plan in `docs/TERMINAL-PLAN.md`.
+- Drop the decoder wheel, matching and drag games, and the cartoon mission themes.
+- Keep Boot Camp, restyled as agent training.
+- Support phones as well as the Windows laptop in Edge.
+- Make it a long, ongoing game: seasons, ranks, daily contracts, a sandbox.
+- Visual redesign waits for the founder's design mockups.
