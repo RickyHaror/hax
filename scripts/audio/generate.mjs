@@ -150,6 +150,28 @@ async function main() {
   }
   for (const [name] of sfx) if (existsSync(join(outSfx, `${name}.mp3`))) manifest.sfx[name] = `${name}.mp3`;
 
+  // Background music: one style (founder choice 2026-11-07: playful sneaky cartoon spy), a few variations.
+  const outMusic = join(root, 'public/audio/music');
+  mkdirSync(outMusic, { recursive: true });
+  const music = Object.entries(cast.music?.tracks ?? {});
+  const missingMusic = music.filter(([name]) => !existsSync(join(outMusic, `${name}.mp3`)));
+  console.log(`music: ${music.length} total, ${missingMusic.length} to generate`);
+  if (!dryRun) {
+    for (const [name, { prompt, seconds }] of missingMusic) {
+      try {
+        const url = `https://api.elevenlabs.io/v1/music?output_format=${cast.music.format}`;
+        const body = { prompt: `${cast.music.style} ${prompt}`, music_length_ms: seconds * 1000, force_instrumental: true };
+        writeFileSync(join(outMusic, `${name}.mp3`), await post(url, key, body));
+        console.log(`  music ${name} done`);
+      } catch (e) {
+        failures++;
+        console.log(`  FAILED music ${name}: ${e.message}`);
+      }
+    }
+  }
+  manifest.music = {};
+  for (const [name] of music) if (existsSync(join(outMusic, `${name}.mp3`))) manifest.music[name] = `${name}.mp3`;
+
   if (!dryRun) {
     if (sfxOnly && existsSync(manifestPath)) manifest.lines = JSON.parse(readFileSync(manifestPath, 'utf8')).lines ?? {};
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 1) + '\n');
