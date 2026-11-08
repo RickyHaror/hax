@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+screenshots/
+build-logs/*
+!build-logs/.gitkeep
+.wrangler/
+.env
+.env.*
+*.log
+.DS_Store
