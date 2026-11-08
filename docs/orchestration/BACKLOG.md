@@ -164,7 +164,7 @@ A free-play pretend terminal, unlocked after T3 Agent Tools, reachable from the 
 "Agent Playground" door. No goals, no failing: he explores folders and finds secrets. Contract:
 `Playground`, `PlaygroundEgg`, `PlaygroundCommand` in `src/engine/types.ts`; data in `src/missions/playground.ts`.
 
-- **E3-1 Playground screen (engine):** reuses the terminal widget and folder tree in free mode. All learned
+- **E3-1 Playground screen (engine; art keys by convention: `playground-door` for the map door, `badge-egg` for found eggs; replace the token {name} in command output with the hacker name):** reuses the terminal widget and folder tree in free mode. All learned
   commands work (ls, ls -a, cd, cd .., pwd, cat, help, clear, lock). Secret commands from the data appear in
   `help` only after he has run them once. Effects registry with at least `matrix` (green code rain for a few
   seconds, respects reduced motion). Eggs are detected from their triggers, recorded in progress
