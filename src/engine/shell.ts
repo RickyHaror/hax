@@ -84,7 +84,7 @@ export function editDistance(a: string, b: string): number {
 }
 
 type Effect = Exclude<ShellEvent, { type: 'run' }>;
-interface Outcome extends RunResult { ok: boolean; event?: Effect }
+export interface Outcome extends RunResult { ok: boolean; event?: Effect }
 type Handler = (fs: VirtualFs, command: ParsedCommand, names: readonly string[]) => Outcome;
 
 function lines(text: string | string[], kind: OutLine['kind'] = 'out'): OutLine[] {
@@ -156,7 +156,7 @@ const descriptions: Readonly<Record<string, string>> = Object.freeze({
   rm: 'Remove a file.',
 });
 
-const handlers: Readonly<Record<string, Handler>> = Object.freeze({
+export const handlers: Readonly<Record<string, Handler>> = Object.freeze({
   ls: list,
   cd,
   cat,

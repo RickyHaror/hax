@@ -16,6 +16,7 @@ export interface FsEntry {
   type: 'file' | 'dir';
   hidden: boolean;
   locked: boolean;
+  mode?: string;
 }
 
 export interface FsTreeNode extends FsEntry {
@@ -35,6 +36,7 @@ function entry(name: string, node: FsNode): FsEntry {
     type: node.type,
     hidden: name.startsWith('.'),
     locked: node.type === 'file' && node.locked === true,
+    ...(node.type === 'file' && node.mode !== undefined ? { mode: node.mode } : {}),
   };
 }
 
@@ -53,9 +55,9 @@ export class VirtualFs {
   private readonly root: FsDir;
   private current = '/';
 
-  constructor(root: FsDir, cwd?: string) {
+  constructor(root: FsDir, cwd?: string, private readonly home = HOME) {
     this.root = structuredClone(root);
-    const fallback = this.isDir(HOME) ? HOME : '/';
+    const fallback = this.isDir(this.home) ? this.home : '/';
     this.current = cwd !== undefined && this.isDir(cwd) ? this.resolve(cwd) : fallback;
   }
 
@@ -64,7 +66,7 @@ export class VirtualFs {
   }
 
   resolve(path: string): string {
-    const expanded = path === '~' || path.startsWith('~/') ? HOME + path.slice(1) : path;
+    const expanded = path === '~' || path.startsWith('~/') ? this.home + path.slice(1) : path;
     const parts = (expanded.startsWith('/') ? expanded : `${this.current}/${expanded}`).split('/');
     const resolved: string[] = [];
     for (const part of parts) {
@@ -74,7 +76,7 @@ export class VirtualFs {
     return `/${resolved.join('/')}`;
   }
 
-  cd(path = HOME): FsResult<string> {
+  cd(path = this.home): FsResult<string> {
     const result = this.find(path);
     if (!result.ok) return result;
     if (result.value.type !== 'dir') return failure('not-a-dir', this.resolve(path));
@@ -100,6 +102,21 @@ export class VirtualFs {
     const result = this.file(path);
     if (!result.ok) return result;
     result.value.locked = true;
+    return { ok: true, value: undefined };
+  }
+
+  unlock(path: string): FsResult<void> {
+    const result = this.file(path);
+    if (!result.ok) return result;
+    result.value.locked = false;
+    return { ok: true, value: undefined };
+  }
+
+  chmod(path: string, mode: string): FsResult<void> {
+    const result = this.file(path);
+    if (!result.ok) return result;
+    if (!/^[0-7]{3}$/u.test(mode)) return failure('bad-path', this.resolve(path));
+    result.value.mode = mode;
     return { ok: true, value: undefined };
   }
 

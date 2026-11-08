@@ -434,3 +434,44 @@ describe('unusual string inputs', () => {
       [name, { type: 'file', content: name }]))));
   });
 });
+
+describe('machine homes, modes and unlocking', () => {
+  it('resolves a custom home without changing the default home', () => {
+    const fs = new VirtualFs(mission(), '/tmp', '/home/agent/docs');
+    expect(fs.resolve('~/note.txt')).toBe('/home/agent/docs/note.txt');
+    expect(fs.cd()).toEqual({ ok: true, value: '/home/agent/docs' });
+    expect(new VirtualFs(mission()).resolve('~')).toBe(HOME);
+  });
+
+  it('sets modes and unlocks files without changing source data or copies', () => {
+    const root = mission();
+    const original = structuredClone(root);
+    const fs = new VirtualFs(root);
+    expect(fs.chmod('locked.txt', '600')).toEqual({ ok: true, value: undefined });
+    expect(fs.list()).toMatchObject({ ok: true, value: expect.arrayContaining([
+      expect.objectContaining({ name: 'locked.txt', locked: true, mode: '600' }),
+    ]) });
+    expect(fs.unlock('locked.txt')).toEqual({ ok: true, value: undefined });
+    expect(fs.read('locked.txt')).toEqual({ ok: true, value: 'Secret' });
+    const copy = new VirtualFs(fs.snapshot());
+    expect(copy.list()).toMatchObject({ ok: true, value: expect.arrayContaining([
+      expect.objectContaining({ name: 'locked.txt', locked: false, mode: '600' }),
+    ]) });
+    fs.chmod('locked.txt', '644');
+    expect(root).toEqual(original);
+    expect(new VirtualFs(root).isLocked('locked.txt')).toBe(true);
+  });
+
+  it('rejects invalid modes, missing paths and directories without changes', () => {
+    const fs = new VirtualFs(mission());
+    const original = fs.snapshot();
+    for (const mode of ['', '60', '6000', '888', 'abc']) {
+      expect(fs.chmod('alpha.txt', mode).ok).toBe(false);
+    }
+    for (const path of ['', 'missing', 'docs', 'alpha.txt/child']) {
+      expect(fs.chmod(path, '600').ok).toBe(false);
+      expect(fs.unlock(path).ok).toBe(false);
+    }
+    expect(fs.snapshot()).toEqual(original);
+  });
+});

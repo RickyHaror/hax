@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { complete } from './complete';
 import { VirtualFs } from './fs';
 import { tokenize } from './shell';
+import { HACK_COMMANDS } from './hack';
 import type { FsDir } from './types';
 
 const tree: FsDir = { type: 'dir', children: {
@@ -83,5 +84,17 @@ describe('complete', () => {
     expect(folder.value).toBe('cat "note');
     expect(complete('cat "notes', ctx).value).toBe('cat "notes/');
     expect(complete('cat "notes/m', ctx).value).toBe('cat "notes/menu.txt" ');
+  });
+
+  it.each(HACK_COMMANDS)('completes the new command list including %s', (command) => {
+    const ctx = { ...context(), commands: HACK_COMMANDS };
+    expect(complete(command, ctx).options).toContain(command);
+  });
+
+  it('keeps host completion shell safe and respects the supplied allowlist', () => {
+    const ctx = { ...context(), commands: HACK_COMMANDS, hosts: ['shop-pc', 'bakery-pc'] };
+    expect(complete('connect "sh', ctx).value).toBe('connect "shop-pc" ');
+    expect(complete('scan hq', ctx).options).toEqual([]);
+    expect(complete('view-s', ctx).value).toBe('view-source ');
   });
 });
