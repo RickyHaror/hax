@@ -2,7 +2,10 @@ import { createElement, render, type FunctionComponent } from 'preact';
 import { describe, expect, it } from 'vitest';
 import { art } from '../art';
 import { missions } from './index';
+import { playground } from './playground';
 import { sidekicks } from './sidekicks';
+
+const PLAYGROUND_ART_KEYS = ['playground-door', 'badge-egg'];
 
 interface ArtReference {
   key: string;
@@ -39,6 +42,17 @@ describe('art registry', () => {
     ];
     for (const { key, path } of references) {
       expect(Object.hasOwn(art, key), `Missing art key "${key}" at ${path}`).toBe(true);
+    }
+  });
+
+  it('registers the fixed playground keys and any art used by playground data', () => {
+    for (const key of PLAYGROUND_ART_KEYS) {
+      expect(Object.hasOwn(art, key), `Missing playground art key "${key}"`).toBe(true);
+    }
+    if (playground !== null) {
+      for (const { key, path } of collectArt(playground, 'playground')) {
+        expect(Object.hasOwn(art, key), `Missing art key "${key}" at ${path}`).toBe(true);
+      }
     }
   });
 
