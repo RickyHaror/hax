@@ -42,6 +42,24 @@ describe('start and onboarding', () => {
 });
 
 describe('mission journey', () => {
+  it('shows a readable save failure with the secret key and Next', async () => {
+    const deps = fakeDeps();
+    deps.storage.setItem = () => { throw new Error('Storage unavailable'); };
+    const store = identityStore(deps); root = await mount(store);
+    await act(() => store.complete(client.id));
+    const message = 'Write your secret key in your notebook. This computer could not save.';
+    expect(root.querySelector('h1')?.textContent).toBe('Great work, Agent!');
+    expect(root.textContent).not.toContain('Mission saved.');
+    expect(root.textContent).toContain(message);
+    expect(root.querySelector('output')?.textContent).toBe(toSaveCode(store.progress.value, deps.registry.missions));
+    const read = [...root.querySelectorAll('button')].find((b) =>
+      b.getAttribute('aria-label') === 'Read aloud' && b.parentElement?.textContent?.includes(message));
+    expect(read).toBeTruthy();
+    await act(() => read!.click());
+    expect(deps.voice.speak).toHaveBeenCalledWith({ text: message });
+    await click(root, 'Next'); expect(store.screen.value.name).toBe('map');
+  });
+
   it('plays every phase, saves hints and completion, and unlocks the next mission without dialogs', async () => {
     const dialogs = [vi.spyOn(window, 'alert'), vi.spyOn(window, 'confirm'), vi.spyOn(window, 'prompt')];
     const deps = fakeDeps(); const store = identityStore(deps); root = await mount(store);
@@ -129,6 +147,27 @@ describe('keys and controls', () => {
 });
 
 describe('answer submission', () => {
+  it.each(['login', 'player'])('refills an erased answer on each top-rung Help me press in %s', async (screen) => {
+    const store = screen === 'login' ? createStore(fakeDeps()) : identityStore();
+    if (screen === 'player') {
+      store.openMission(client.id); store.phase(client.id, { phase: 'step', index: 1 });
+    }
+    root = await mount(store);
+    const label = screen === 'login' ? 'Password' : 'Answer';
+    const answer = screen === 'login' ? 'Blue Star' : 'Blue Box';
+    await click(root, 'Help me'); await click(root, 'Help me'); await click(root, 'Help me');
+    expect(input(root, label).value).toBe(answer);
+    for (const value of ['', 'My try']) {
+      await fill(root, label, value);
+      expect(input(root, label).value).toBe(value);
+      await click(root, 'Help me');
+      expect(input(root, label).value).toBe(answer);
+    }
+    const missionId = screen === 'login' ? login.id : client.id;
+    const stepId = screen === 'login' ? 'password' : 'answer';
+    expect(store.progress.value.hints[missionId]?.[stepId]).toEqual({ rung: 3, count: 5 });
+  });
+
   it.each(['login', 'player'])('rejects blank input and blank accepted answers in %s', async (screen) => {
     const source = screen === 'login' ? login : client;
     const step = { ...login.steps[0]!, config: {

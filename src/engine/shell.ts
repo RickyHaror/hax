@@ -233,6 +233,11 @@ export class Shell {
     if (flags.some((flag) => name !== 'ls' || !['a', 'l'].includes(flag))) {
       return error('That flag does not work here. Try help.');
     }
+    const maxArgs = ['help', 'clear', 'pwd'].includes(name) ? 0 : 1;
+    if (command.args.length > maxArgs) {
+      return error(maxArgs === 0
+        ? 'Try that command on its own.' : 'Try one path at a time.');
+    }
     return handlers[name]!(this.fs, command, this.names);
   }
 }

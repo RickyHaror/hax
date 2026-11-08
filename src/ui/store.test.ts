@@ -1,9 +1,47 @@
 import { describe, expect, it } from 'vitest';
-import { createProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked } from '../engine/progress';
+import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, type StorageLike } from '../engine/progress';
 import { createStore } from './store';
-import { client, dependent } from './test/fixtures';
+import { client, dependent, fixtureRegistry } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 describe('app store', () => {
+  it('tracks failed saves and recovers when storage works again', () => {
+    const deps = fakeDeps();
+    const storage: StorageLike = { ...deps.storage, setItem() { throw new Error('Storage unavailable'); } };
+    const store = createStore({ ...deps, storage });
+    store.identify(0, 0, 0);
+    expect(store.saved.value).toBe(false);
+    store.complete(client.id);
+    expect(store.progress.value.completed.client).toBeTruthy();
+    expect(store.saved.value).toBe(false);
+    storage.setItem = deps.storage.setItem;
+    store.settings({ muted: true });
+    expect(store.saved.value).toBe(true);
+    expect(loadProgress(storage)).toEqual(store.progress.value);
+    const missing = createStore({ ...deps, storage: null });
+    missing.complete(client.id);
+    expect(missing.saved.value).toBe(false);
+  });
+
+  it('reconciles newly registered bits before resume, unlocks dependents, and saves the result', () => {
+    const deps = fakeDeps();
+    const added = { ...client, bit: 5 };
+    deps.registry = fixtureRegistry([added, dependent]);
+    const progress = setIdentity(createProgress(), { firstWord: 0, secondWord: 0, sidekick: 0 });
+    saveProgress(deps.storage, { ...progress, extraBits: (1 << 5) | (1 << 23),
+      current: { missionId: added.id, stepId: 'answer' } });
+    const store = createStore(deps);
+    expect(store.progress.value.completed).toEqual({ client: deps.now().toISOString() });
+    expect(store.progress.value.extraBits).toBe(1 << 23);
+    expect(store.progress.value.current).toBeNull();
+    expect(store.screen.value.name).toBe('map');
+    expect(isUnlocked(store.progress.value, dependent)).toBe(true);
+    expect(store.saved.value).toBe(true);
+    expect(loadProgress(deps.storage)).toEqual(store.progress.value);
+    store.openMission(dependent.id);
+    expect(store.screen.value).toEqual({ name: 'player', missionId: dependent.id });
+    expect(createStore(deps).progress.value.completed).toEqual(store.progress.value.completed);
+  });
+
   it('starts fresh or on the map when identity is saved', () => {
     const deps = fakeDeps();
     expect(createStore(deps).screen.value).toEqual({ name: 'start' });

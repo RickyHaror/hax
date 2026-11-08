@@ -202,22 +202,27 @@ export function toSaveCode(p: Progress, missions: readonly Mission[]): string {
 
 export type ApplyResult = { ok: true; progress: Progress } | { ok: false; error: SaveCodeError };
 
+export function reconcileExtraBits(p: Progress, missions: readonly Mission[], now: Date): Progress {
+  let registeredBits = 0;
+  let progress = { ...p };
+  for (const mission of missions) {
+    if (!inRange(mission.bit, 23)) continue;
+    const bit = 1 << mission.bit;
+    registeredBits |= bit;
+    if ((p.extraBits & bit) !== 0) progress = completeMission(progress, mission.id, now);
+  }
+  return { ...progress, extraBits: p.extraBits & ~registeredBits };
+}
+
 export function applySaveCode(
   p: Progress, code: string, missions: readonly Mission[], now: Date,
 ): ApplyResult {
   const result = decodeSaveCode(code);
   if (!result.ok) return result;
   const { missionBits, firstWord, secondWord, sidekick } = result.data;
-  const mergedBits = missionBits | p.extraBits;
-  let registeredBits = 0;
-  let progress: Progress = { ...p, firstWord, secondWord, sidekick };
-  for (const mission of missions) {
-    if (!inRange(mission.bit, 23)) continue;
-    const bit = 1 << mission.bit;
-    registeredBits |= bit;
-    if ((mergedBits & bit) !== 0) progress = completeMission(progress, mission.id, now);
-  }
-  return { ok: true, progress: { ...progress, extraBits: mergedBits & ~registeredBits } };
+  return { ok: true, progress: reconcileExtraBits({
+    ...p, firstWord, secondWord, sidekick, extraBits: missionBits | p.extraBits,
+  }, missions, now) };
 }
 
 function hex(bytes: Uint8Array): string {

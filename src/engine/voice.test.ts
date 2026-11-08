@@ -17,10 +17,10 @@ function voice(lang: string, localService = true): SpeechSynthesisVoice {
 
 function setup() {
   const utterances: TestUtterance[] = [];
-  const synth = {
-    cancel: vi.fn(), getVoices: vi.fn((): SpeechSynthesisVoice[] => []),
+  const synth = Object.assign(new EventTarget(), {
+    cancel: vi.fn(), getVoices: vi.fn((): SpeechSynthesisVoice[] => [voice('en-US')]),
     speak: vi.fn((utterance: TestUtterance) => { utterances.push(utterance); }),
-  };
+  });
   const deps = {
     synth: synth as unknown as SpeechSynthesis,
     Utterance: TestUtterance as unknown as typeof SpeechSynthesisUtterance,
@@ -40,7 +40,7 @@ describe('voice selection', () => {
     expect(pickVoice([remote, french, other, gb, us])).toBe(us);
     expect(pickVoice([remote, french, other, gb])).toBe(gb);
     expect(pickVoice([remote, french, other])).toBe(other);
-    expect(pickVoice([french, remote])).toBe(remote);
+    expect(pickVoice([french, remote])).toBeNull();
     expect(pickVoice([french])).toBeNull();
     expect(pickVoice([])).toBeNull();
   });
@@ -58,7 +58,7 @@ describe('speech playback', () => {
     expect(synth.cancel).toHaveBeenCalledTimes(2);
     expect(synth.cancel.mock.invocationCallOrder[1])
       .toBeLessThan(synth.speak.mock.invocationCallOrder[1]!);
-    expect(utterances[1]).toMatchObject({ text: 'L S', rate: 0.9, lang: 'en-US', voice: null });
+    expect(utterances[1]).toMatchObject({ text: 'L S', rate: 0.9, lang: 'en-US', voice: voice('en-US') });
     expect(SPEECH_RATE).toBe(0.9);
     previous.onend?.();
     previous.onerror?.();
@@ -68,14 +68,38 @@ describe('speech playback', () => {
     expect(player.isSpeaking()).toBe(false);
   });
 
-  it('selects voices at playback time, including voices loaded between lines', () => {
+  it('recognizes late local voices and reselects after voiceschanged', () => {
     const { player, synth, utterances } = setup();
+    synth.getVoices.mockReturnValue([]);
+    expect(player.supported).toBe(false);
+    const onEnd = vi.fn();
+    player.speak({ text: 'Wait.' }, { onEnd });
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onEnd).toHaveBeenCalledOnce();
+    const first = voice('en-AU');
+    synth.getVoices.mockReturnValue([first]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    expect(player.supported).toBe(true);
     player.speakAll([{ text: 'One.' }, { text: 'Two.' }]);
-    expect(utterances[0]!.voice).toBeNull();
+    expect(utterances[0]!.voice).toBe(first);
     const loaded = voice('en-GB');
     synth.getVoices.mockReturnValue([loaded]);
+    synth.dispatchEvent(new Event('voiceschanged'));
     utterances[0]!.onend?.();
     expect(utterances[1]).toMatchObject({ voice: loaded, lang: 'en-GB', rate: SPEECH_RATE });
+  });
+
+  it('finishes a queue safely when its local voices disappear', () => {
+    const { player, synth, utterances } = setup();
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'One.' }, { text: 'Two.' }], { onEnd });
+    synth.getVoices.mockReturnValue([voice('en-US', false)]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    utterances[0]!.onend?.();
+    expect(player.supported).toBe(false);
+    expect(player.isSpeaking()).toBe(false);
+    expect(synth.speak).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledOnce();
   });
 
   it('advances only on end or error and completes once after the last line', () => {
@@ -132,6 +156,29 @@ describe('speech playback', () => {
 });
 
 describe('speech availability and failures', () => {
+  it.each([{ voices: [] }, { voices: [voice('en-US', false)] }, { voices: [voice('fr-FR')] }])(
+    'never uses a default or remote voice without local English: $voices', ({ voices }) => {
+      const { player, synth } = setup();
+      synth.getVoices.mockReturnValue(voices);
+      const onEnd = vi.fn();
+      expect(player.supported).toBe(false);
+      player.speak({ text: 'Hello.' }, { onEnd });
+      player.speakAll([{ text: 'One.' }, { text: 'Two.' }], { onEnd });
+      expect(synth.speak).not.toHaveBeenCalled();
+      expect(player.isSpeaking()).toBe(false);
+      expect(onEnd).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('speaks with the local voice from a mixed list', () => {
+    const { player, synth, utterances } = setup();
+    const local = voice('en-GB');
+    synth.getVoices.mockReturnValue([voice('en-US', false), local]);
+    player.speak({ text: 'Hello.' });
+    expect(player.supported).toBe(true);
+    expect(utterances[0]!.voice).toBe(local);
+  });
+
   it('uses browser globals by default', () => {
     const { deps, synth } = setup();
     vi.stubGlobal('speechSynthesis', deps.synth);

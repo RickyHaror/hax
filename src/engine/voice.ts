@@ -12,7 +12,7 @@ export function pickVoice(voices: readonly SpeechSynthesisVoice[]): SpeechSynthe
   const local = english.filter((voice) => voice.localService);
   return local.find((voice) => voice.lang.toLowerCase() === 'en-us')
     ?? local.find((voice) => voice.lang.toLowerCase() === 'en-gb')
-    ?? local[0] ?? english[0] ?? null;
+    ?? local[0] ?? null;
 }
 
 export interface Voice {
@@ -34,6 +34,11 @@ function resolveDeps(deps: VoiceDeps): VoiceDeps {
   }
 }
 
+function localVoice(synth: SpeechSynthesis | null | undefined): SpeechSynthesisVoice | null {
+  // Read the live list so late voices and voice changes take effect.
+  try { return synth ? pickVoice(synth.getVoices()) : null; } catch { return null; }
+}
+
 function playLines(
   synth: SpeechSynthesis, Utterance: typeof SpeechSynthesisUtterance,
   texts: readonly string[], current: () => boolean, finish: () => void,
@@ -45,11 +50,12 @@ function playLines(
     if (text === undefined) { finish(); return; }
     let failed = false;
     try {
+      const voice = localVoice(synth);
+      if (!voice) { finish(); return; }
       const utterance = new Utterance(text);
-      const voice = pickVoice(synth.getVoices());
       utterance.rate = SPEECH_RATE;
       utterance.voice = voice;
-      utterance.lang = voice?.lang || 'en-US';
+      utterance.lang = voice.lang;
       let ended = false;
       const advance = () => {
         if (ended || !current()) return;
@@ -69,14 +75,14 @@ function playLines(
 
 export function createVoice(deps: VoiceDeps = {}): Voice {
   const { synth, Utterance } = resolveDeps(deps);
-  const supported = Boolean(synth && Utterance);
+  const available = Boolean(synth && Utterance);
   let revision = 0;
   let speaking = false;
 
   function stop(): boolean {
     revision++;
     speaking = false;
-    if (!supported) return true;
+    if (!available) return true;
     try { synth?.cancel(); return true; } catch { return false; }
   }
 
@@ -96,7 +102,8 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
   }
 
   return {
-    supported, cancel: () => { stop(); }, speakAll,
+    get supported() { return available && localVoice(synth) !== null; },
+    cancel: () => { stop(); }, speakAll,
     speak: (line, opts) => speakAll([line], opts),
     isSpeaking: () => speaking,
   };

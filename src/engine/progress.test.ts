@@ -8,7 +8,7 @@ import {
 import {
   RANKS, SCHEMA_VERSION, STORAGE_KEY, applySaveCode, badgesEarned, checkPin,
   completeMission, createProgress, hashPin, hasIdentity, isUnlocked, loadProgress,
-  rank, recordHint, saveProgress, setCurrent, setIdentity, setPin, toSaveCode,
+  rank, reconcileExtraBits, recordHint, saveProgress, setCurrent, setIdentity, setPin, toSaveCode,
   updateSettings, type Progress, type StorageLike,
 } from './progress';
 
@@ -290,6 +290,29 @@ describe('pure progress updates', () => {
 });
 
 describe('progress save codes', () => {
+  it('converts newly registered extra bits without changing dates or other progress', () => {
+    const p = freeze({ ...populated(), extraBits: (1 << 22) | (1 << 23) | (1 << 5) | 1 });
+    const next = reconcileExtraBits(p, missions, now);
+    expect(next).toEqual({
+      ...p, extraBits: 1 << 22, current: null,
+      completed: { first: earlier, middle: now.toISOString(), last: now.toISOString() },
+    });
+    expect(reconcileExtraBits(freeze(next), missions, new Date('2026-12-01T00:00:00Z'))).toEqual(next);
+    expect(p.extraBits).toBe((1 << 22) | (1 << 23) | (1 << 5) | 1);
+    expect(p.completed).toEqual({ first: earlier });
+    expect(p.current).toEqual({ missionId: 'middle', stepId: 'step' });
+    expect(reconcileExtraBits(p, [], now)).toEqual(p);
+  });
+
+  it('keeps unknown bits and ignores invalid mission bits during reconciliation', () => {
+    const p = freeze({ ...createProgress(), extraBits: (1 << 5) | (1 << 23) });
+    const registry = [-1, 24, 32, 0.5, Number.NaN, Infinity].map((bit, i) => mission(`bad${i}`, bit));
+    expect(reconcileExtraBits(p, registry, now)).toEqual(p);
+    expect(reconcileExtraBits(p, [mission('new', 5)], now)).toEqual({
+      ...p, extraBits: 1 << 23, completed: { new: now.toISOString() },
+    });
+  });
+
   it('round trips identity and completed missions onto fresh progress', () => {
     const source = freeze(completeMission(setIdentity(createProgress(), identity), 'last', now));
     const target = freeze(createProgress());

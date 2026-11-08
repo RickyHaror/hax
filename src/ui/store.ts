@@ -3,7 +3,7 @@ import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
 import {
   loadProgress, saveProgress, setIdentity, hasIdentity, setCurrent, completeMission,
-  recordHint, updateSettings, isUnlocked, applySaveCode,
+  recordHint, updateSettings, isUnlocked, applySaveCode, reconcileExtraBits,
   type StorageLike, type Progress, type Settings,
 } from '../engine/progress';
 import type { Voice } from '../engine/voice';
@@ -30,16 +30,20 @@ function resumePosition(mission: Mission, value: string | null): Position {
   return index >= 0 ? { phase: 'step', index } : { phase: 'intro', index: 0 };
 }
 function coreStore(deps: StoreDeps) {
-  const progress = signal(loadProgress(deps.storage));
+  const loaded = loadProgress(deps.storage);
+  const progress = signal(reconcileExtraBits(loaded, deps.registry.missions, (deps.now ?? (() => new Date()))()));
+  const saved = signal(false);
+  const revealCount = signal(0);
   const screen = signal<Screen>({ name: hasIdentity(progress.value) ? 'map' : 'start' });
   const position = signal<Position>({ phase: 'intro', index: 0 });
   const notice = signal('');
   let returnScreen: Screen = screen.value;
   function save(next: Progress) {
     progress.value = next;
-    saveProgress(deps.storage, next);
+    saved.value = saveProgress(deps.storage, next);
     deps.sound.setMuted(next.settings.muted);
   }
+  if (progress.value.extraBits !== loaded.extraBits) save(progress.value);
   function go(next: Screen) { deps.voice.cancel(); screen.value = next; }
   function phase(missionId: string, next: Position) {
     position.value = next;
@@ -54,7 +58,7 @@ function coreStore(deps: StoreDeps) {
     go({ name: 'player', missionId });
   }
   return {
-    ...deps, progress, screen, position, notice, save, go, phase, openMission,
+    ...deps, progress, saved, revealCount, screen, position, notice, save, go, phase, openMission,
     visit(next: Screen) { returnScreen = screen.value; go(next); },
     back() { go(returnScreen); },
   };
@@ -85,6 +89,7 @@ export function createStore(deps: StoreDeps) {
     },
     hint(missionId: string, stepId: string, rung: number) {
       save(recordHint(progress.value, missionId, stepId, rung)); deps.sound.play('hint');
+      if (rung >= 3) store.revealCount.value += 1;
     },
     complete(missionId: string, login = false) {
       save(completeMission(progress.value, missionId, now()));

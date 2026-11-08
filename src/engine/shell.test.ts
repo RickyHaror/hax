@@ -170,6 +170,42 @@ describe('command permissions', () => {
   });
 });
 
+describe('positional argument limits', () => {
+  it.each([
+    ['cd', ['docs', 'empty']], ['ls', ['docs', 'empty']],
+    ['cat', ['note.txt', 'blank']], ['lock', ['note.txt', 'blank']],
+    ['rm', ['note.txt', 'blank']], ['help', ['note.txt']],
+    ['clear', ['note.txt']], ['pwd', ['note.txt']],
+  ] as const)('rejects extra arguments for %s before any effects', (name, args) => {
+    const sh = shell();
+    const before = sh.fs.snapshot();
+    expect(sh.run(`${name} ${args.join(' ')}`)).toEqual({
+      clear: false, lines: [{ kind: 'err', text: args.length > 1
+        ? 'Try one path at a time.' : 'Try that command on its own.' }],
+    });
+    expect(sh.events).toEqual([runEvent(name, [...args], [], false)]);
+    expect(sh.fs.snapshot()).toEqual(before);
+    expect(sh.fs.cwd()).toBe(HOME);
+    expect(goalMet({ type: 'run', command: name }, sh.state)).toBe(false);
+  });
+
+  it('never awards read or run evidence for an ignored extra path', () => {
+    const root = mission();
+    const agent = (root.children.home as FsDir).children.agent as FsDir;
+    agent.children['secret.txt'] = { type: 'file', content: 'Secret note' };
+    const sh = new Shell(new VirtualFs(root), ['cat']);
+    const goal: TerminalGoal = { type: 'run', command: 'cat', args: ['/home/agent/secret.txt'] };
+    sh.run('cat note.txt /home/agent/secret.txt');
+    expect(goalMet(goal, sh.state)).toBe(false);
+    expect(goalMet({ type: 'read', path: '~/note.txt' }, sh.state)).toBe(false);
+    expect(goalMet({ type: 'read', path: '~/secret.txt' }, sh.state)).toBe(false);
+    sh.run('cat note.txt');
+    expect(goalMet(goal, sh.state)).toBe(false);
+    sh.run('cat secret.txt');
+    expect(goalMet(goal, sh.state)).toBe(true);
+  });
+});
+
 describe('typo help', () => {
   it.each([
     ['sl', 'ls'], ['cta', 'cat'], ['SL', 'ls'], ['hepl', 'help'], ['lxx', 'ls'],

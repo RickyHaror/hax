@@ -8,10 +8,11 @@ import { BigButton } from '../components/BigButton';
 import { SpeechLine } from '../components/SpeechLine';
 export function Answer({ config, showMe, onComplete, password = false }: WidgetProps<AnswerConfig> & { password?: boolean }) {
   const store = useStore();
+  const revealCount = store.revealCount.value;
   const [value, setValue] = useState('');
   const [wrong, setWrong] = useState(false);
   const completed = useRef(false);
-  useEffect(() => { if (showMe) setValue(config.answer); }, [showMe, config.answer]);
+  useEffect(() => { if (showMe) setValue(config.answer); }, [showMe, config.answer, revealCount]);
   function check(event: Event) {
     event.preventDefault();
     if (completed.current) return;
