@@ -15,6 +15,7 @@ const missionTable = [
   ['m1-pizza', 'missions'],
   ['m2-toys', 'missions'],
   ['m3-zoo', 'missions'],
+  ['m4-cupcake', 'missions'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
@@ -147,6 +148,11 @@ function checkSolvable(config: StepConfig): void {
       break;
     case 'passphrase':
       expect(config.words.length).toBeGreaterThanOrEqual(config.count);
+      break;
+    case 'password-guess':
+      expect(config.username.trim()).not.toBe('');
+      expect(config.password.trim()).not.toBe('');
+      for (const entry of config.accept ?? []) expect(entry.trim()).not.toBe('');
       break;
     case 'decoder':
       expect(config.answer).toBe(decodeCaesar(config.message, config.shift));

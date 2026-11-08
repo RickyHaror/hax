@@ -11,9 +11,10 @@ import { t3Tools } from './t3-tools';
 import { m1Pizza } from './m1-pizza';
 import { m2Toys } from './m2-toys';
 import { m3Zoo } from './m3-zoo';
+import { m4Cupcake } from './m4-cupcake';
 
 /**
  * Mission registry. The content lane adds each mission file here.
  * Order in the game comes from Mission.order, not from this list.
  */
-export const missions: Mission[] = [login, b1Mouse, b2Keys, b3Typing, b4Files, b5Passwords, t1Hello, t2Move, t3Tools, m1Pizza, m2Toys, m3Zoo];
+export const missions: Mission[] = [login, b1Mouse, b2Keys, b3Typing, b4Files, b5Passwords, t1Hello, t2Move, t3Tools, m1Pizza, m2Toys, m3Zoo, m4Cupcake];
