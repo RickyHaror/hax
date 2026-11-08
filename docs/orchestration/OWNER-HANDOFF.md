@@ -38,7 +38,12 @@ checkpointed at engine/e5 6434896 (pushed): m7-graduation names fixed, hint ladd
 clipping raised; none proven in a browser yet. The screen text catalog worker (E5-F3) was left to finish;
 its edits are uncommitted in D:/Dev/hax-engine. Monday: review that diff (no wording changes, in scope,
 generate.mjs dry run never calls the voice service), commit it, then after 5:15 PM run its tests, the dry
-run (character total for the founder) and the Chromium and Edge layout specs, then E5 VERIFY. Content C4 checkpointed at 9fe935f.
+run (character total for the founder) and the Chromium and Edge layout specs, then E5 VERIFY. Catalog worker finished incomplete (its checks never ran; 41 files uncommitted). Owner
+confirms: screen text plays only from recorded clips (its voice.ts change matches the decision, review it).
+Player.tsx spoken lines still to route into the catalog. Preliminary dry run: 27,110 characters for the
+1,719 catalog lines, 159,487 characters overall (7,171 jobs, all three sidekick voices, 5,127 clips
+missing). Far above the 40k monthly plan: get a final total and give the founder options (fewer voices,
+spread over months, bigger plan) before any recording. Content C4 checkpointed at 9fe935f.
 
 Updated about 1:50 PM Toronto, 2026-11-08, owner hax-03. E5 BUILD run 3 checkpointed at engine/e5
 c2ba7b3 (pushed): E5-5 season map, E5-6 Boot Camp and parent panel restyle, clip check, layout check at all
