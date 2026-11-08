@@ -1,9 +1,48 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createVoice } from '../engine/voice';
 import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, toSaveCode, type StorageLike } from '../engine/progress';
 import { createStore } from './store';
 import { client, dependent, fixtureRegistry } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 describe('app store', () => {
+  it('reports an asynchronous clip failure once even while the manifest is supported', async () => {
+    let reject!: (reason: Error) => void;
+    const pending = new Promise<void>((_, fail) => { reject = fail; });
+    class FailedAudio {
+      onended = null; onerror = null;
+      play = () => pending;
+      pause = vi.fn();
+    }
+    const voice = createVoice({ synth: null, Utterance: null,
+      Audio: FailedAudio as unknown as typeof Audio });
+    voice.setManifest({ lines: { 'Bit|Hello': 'hello.mp3' }, sfx: {} });
+    const store = createStore({ ...fakeDeps(), voice });
+    const owner = Symbol('reader'), unavailable = vi.fn();
+    store.readLine(owner, { text: 'Hello' }, undefined, unavailable);
+    expect(store.reading.value).toBe(owner);
+    reject(Error('Unavailable'));
+    await pending.catch(() => {});
+    expect(voice.supported).toBe(true);
+    expect(unavailable).toHaveBeenCalledOnce();
+    expect(store.reading.value).toBeNull();
+    expect(voice.isSpeaking()).toBe(false);
+  });
+
+  it('deduplicates unavailable callbacks and ignores callbacks from canceled reading', () => {
+    const deps = fakeDeps(), store = createStore(deps);
+    const unavailable = vi.fn(), owner = Symbol('reader');
+    store.readLine(owner, { text: 'Hello' }, undefined, unavailable);
+    const first = vi.mocked(deps.voice.speak).mock.calls[0]![1]!;
+    first.onUnavailable!(); first.onUnavailable!(); first.onEnd!(); first.onUnavailable!();
+    expect(unavailable).toHaveBeenCalledOnce();
+    expect(store.reading.value).toBeNull();
+    store.readLine(owner, { text: 'Hello' }, undefined, unavailable);
+    const second = vi.mocked(deps.voice.speak).mock.calls[1]![1]!;
+    store.voice.cancel(); second.onUnavailable!(); second.onEnd!();
+    expect(unavailable).toHaveBeenCalledOnce();
+    expect(store.reading.value).toBeNull();
+  });
+
   it('sets voice context at creation, identity, mission, screen and restore changes', () => {
     const deps = fakeDeps();
     const store = createStore(deps);

@@ -3,6 +3,7 @@ import type { KeyFindConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
 import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
+import { isEditingOrInDialog } from '../../components/keyboard';
 import { useStore } from '../../store';
 import { useCompletion, useKeyboard } from './hooks';
 import { keyLayout, keyName, keyPrompt, sameKey } from './helpers';
@@ -23,6 +24,7 @@ function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>)
     if (index.current === config.keys.length) { store.sound.play('success'); finish(); }
   }
   useKeyboard((event) => {
+    if (isEditingOrInDialog(event)) return;
     if (event.key === ' ' || event.key === 'Backspace') event.preventDefault();
     if (event.key === 'Tab' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
     const button = event.target instanceof HTMLButtonElement ? event.target : null;

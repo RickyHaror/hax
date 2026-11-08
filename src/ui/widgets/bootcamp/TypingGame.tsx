@@ -3,6 +3,7 @@ import type { TypingGameConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
 import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
+import { isEditingOrInDialog } from '../../components/keyboard';
 import { useStore } from '../../store';
 import { useCompletion, useKeyboard, useReducedMotion } from './hooks';
 import { fall, keyName, sameKey, typingSpeed } from './helpers';
@@ -19,6 +20,7 @@ function usePackets({ config, showMe, onComplete }: WidgetProps<TypingGameConfig
     if (model.current.caught >= config.goal) finish();
   }
   useKeyboard((event) => {
+    if (isEditingOrInDialog(event)) return;
     if (showMe && event.target instanceof HTMLButtonElement && event.key === ' ') return;
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.key.length !== 1 || model.current.caught >= config.goal) return;
     const currentWord = config.words[model.current.caught % config.words.length] ?? '';

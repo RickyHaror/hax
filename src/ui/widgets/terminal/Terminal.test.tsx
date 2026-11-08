@@ -2,12 +2,12 @@
 import { render } from 'preact';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { TerminalConfig, TerminalGoal } from '../../../engine/types';
+import type { Mission, TerminalConfig, TerminalGoal } from '../../../engine/types';
 import { VirtualFs } from '../../../engine/fs';
 import { Shell } from '../../../engine/shell';
 import { StoreContext, createStore } from '../../store';
-import { fakeDeps, click, button, submit, unmount } from '../../test/helpers';
-import { login } from '../../test/fixtures';
+import { fakeDeps, click, button, mount, submit, unmount } from '../../test/helpers';
+import { fixtureRegistry, login } from '../../test/fixtures';
 import { Terminal } from './Terminal';
 import { TerminalView } from './TerminalView';
 import { terminalWidgets } from './index';
@@ -41,6 +41,32 @@ async function key(key: string) {
 async function run(value: string) { await type(value); await key('Enter'); }
 
 describe('terminal input', () => {
+  it('keeps Command focused inside the app and restores panel focus on other screens', async () => {
+    const mission: Mission = { ...login, id: 'terminal', chapter: 'bootcamp',
+      steps: [{ ...login.steps[0]!, config: terminalConfig() }] };
+    const store = createStore({ ...fakeDeps(), registry: fixtureRegistry([mission]) });
+    store.identify(0, 0, 0); store.openMission(mission.id);
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    expect(document.activeElement).toBe(root.querySelector('main'));
+    await click(root, 'Start mission');
+    expect(document.activeElement).toBe(field());
+    await act(() => {
+      const focused = document.activeElement as HTMLInputElement;
+      focused.value = 'ls'; focused.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(output().textContent).toContain('agent@hax:~$ ls');
+    expect(output().textContent).toContain('notes.txt');
+    await click(root, 'Back');
+    expect(document.activeElement).toBe(root.querySelector('main'));
+    await click(root, 'Settings');
+    expect(document.activeElement).toBe(root.querySelector('main'));
+  });
+
   it('registers the widget, focuses Command and runs Enter with a prompt echo', async () => {
     const { complete, deps } = await setup();
     expect(terminalWidgets.terminal).toBe(Terminal);

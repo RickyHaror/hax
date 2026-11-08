@@ -52,14 +52,17 @@ function readingStore(source: Voice) {
     cancel();
     const token = revision;
     reading.value = owner;
-    let starting = true;
+    let reported = false;
+    const onUnavailable = () => {
+      if (reading.value !== owner || token !== revision || reported) return;
+      reported = true;
+      unavailable?.();
+    };
     const onEnd = () => {
       if (reading.value !== owner || token !== revision) return;
       reading.value = null;
-      if (starting || !source.supported) unavailable?.();
     };
-    source.speak(line, { onEnd, ...(sidekick === undefined ? {} : { sidekick }) });
-    starting = false;
+    source.speak(line, { onEnd, onUnavailable, ...(sidekick === undefined ? {} : { sidekick }) });
   }
   return { voice, reading, readLine };
 }
@@ -140,6 +143,7 @@ export function createStore(deps: StoreDeps) {
     complete(missionId: string, login = false) {
       save(completeMission(progress.value, missionId, now()));
       deps.sound.play(login ? 'success' : 'fanfare');
+      if (login) store.position.value = { phase: 'success', index: store.position.value.index };
       if (!login) go({ name: 'done', missionId });
     },
     restore(code: string) {

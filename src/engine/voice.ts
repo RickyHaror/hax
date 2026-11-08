@@ -10,7 +10,7 @@ export interface VoiceDeps {
 export const SPEECH_RATE = 0.9;
 
 export function pickVoice(voices: readonly SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-  const english = voices.filter((voice) => /^en(?:-|$)/i.test(voice.lang));
+  const english = voices.filter((voice) => voice.localService && /^en(?:-|$)/i.test(voice.lang));
   const rank = (voice: SpeechSynthesisVoice) => [
     voice.localService ? 0 : 1,
     /^en-(us|ca)$/i.test(voice.lang) ? 0 : 1,
@@ -24,7 +24,7 @@ export function pickVoice(voices: readonly SpeechSynthesisVoice[]): SpeechSynthe
   })[0] ?? null;
 }
 
-interface SpeakOptions { onEnd?: () => void; sidekick?: string }
+interface SpeakOptions { onEnd?: () => void; onUnavailable?: () => void; sidekick?: string }
 export interface Voice {
   readonly supported: boolean;
   setManifest(m: AudioManifest | null): void;
@@ -94,7 +94,7 @@ function createVoiceSelection(synth: VoiceDeps['synth']) {
 
 function speakText(
   deps: VoiceDeps, voice: SpeechSynthesisVoice | null, text: string,
-  current: () => boolean, next: () => void, fail: () => void,
+  current: () => boolean, next: (played?: boolean) => void, fail: () => void,
 ): void {
   const { synth, Utterance } = deps;
   if (!synth || !Utterance || !voice) { next(); return; }
@@ -104,13 +104,13 @@ function speakText(
     utterance.voice = voice;
     utterance.lang = voice.lang;
     let ended = false;
-    const advance = () => {
+    const advance = (played: boolean) => {
       if (ended || !current()) return;
       ended = true;
-      next();
+      next(played);
     };
-    utterance.onend = advance;
-    utterance.onerror = advance;
+    utterance.onend = () => advance(true);
+    utterance.onerror = () => advance(false);
     synth.speak(utterance);
   } catch { if (current()) fail(); }
 }
@@ -151,26 +151,28 @@ function stopPlayback(state: PlaybackState, { synth, Utterance }: VoiceDeps): bo
 function playLines(lines: readonly Line[], playback: {
   state: PlaybackState; deps: VoiceDeps; fileFor: (line: Line) => string | undefined;
   selection: ReturnType<typeof createVoiceSelection>;
-  current: () => boolean; finish: () => void;
+  current: () => boolean; finish: (played?: boolean) => void;
 }): void {
   const { state, deps, current, finish, fileFor, selection } = playback;
   let index = 0;
-  function next(): void {
+  let heard = false;
+  function next(played = false): void {
     if (!current()) return;
+    heard ||= played;
     state.clip = undefined;
     const line = lines[index++];
-    if (!line) { finish(); return; }
+    if (!line) { finish(heard); return; }
     const fallback = () => {
       if (!deps.synth || !deps.Utterance) { next(); return; }
       selection.get((voice) => {
-        if (current()) speakText(deps, voice, line.say ?? line.text, current, next, finish);
+        if (current()) speakText(deps, voice, line.say ?? line.text, current, next, () => finish(heard));
       });
     };
     const file = fileFor(line);
     if (!file || !deps.Audio) { fallback(); return; }
     try { state.clip = new deps.Audio(`/audio/lines/${file}`); }
     catch { fallback(); return; }
-    playClip(state.clip, current, next, fallback);
+    playClip(state.clip, current, () => next(true), fallback);
   }
   next();
 }
@@ -190,11 +192,12 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
     const current = () => state.revision === token;
     const ctx = { ...context, sidekick: opts?.sidekick ?? context.sidekick };
     const queue = lines.filter((line) => (line.say ?? line.text).trim());
-    const finish = () => {
+    const finish = (played = false) => {
       if (!current()) return;
       state.revision++;
       state.speaking = false;
       state.clip = undefined;
+      if (!played) opts?.onUnavailable?.();
       opts?.onEnd?.();
     };
     if (!stopped) { finish(); return; }

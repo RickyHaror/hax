@@ -29,7 +29,10 @@ function Shell() {
   const panel = useRef<HTMLElement>(null);
   const screen = store.screen.value;
   const position = store.position.value;
-  useEffect(() => { panel.current?.focus(); panel.current?.scrollTo?.(0, 0); }, [screen, position]);
+  useEffect(() => {
+    if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
+    panel.current?.scrollTo?.(0, 0);
+  }, [screen, position]);
   return <div class="app-shell">{screen.name !== 'settings' && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
     <div role="status" aria-live="polite">{store.updatePending.value &&
       <SpeechLine line={{ text: 'New missions arrived!' }} />}</div>
@@ -41,6 +44,12 @@ export function App({ store }: { store: AppStore }) {
   const begin = () => {
     store.sound.play('click');
     store.voice.cancel();
+    if (store.screen.value.name === 'start') {
+      const mission = store.registry.missions.find((m) => m.chapter === 'login'
+        && !Object.hasOwn(store.progress.value.completed, m.id));
+      const index = mission?.steps.findIndex((step) => step.config.kind === 'answer') ?? -1;
+      if (index >= 0) store.position.value = { phase: 'step', index };
+    }
     setBegun(true);
   };
   return <StoreContext.Provider value={store}>{begun ? <Shell />

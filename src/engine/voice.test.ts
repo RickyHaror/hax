@@ -31,7 +31,7 @@ function setup() {
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('voice selection', () => {
-  it('prefers local English, then US or CA, with remote English as a fallback', () => {
+  it('only picks local English, preferring US or CA', () => {
     const remote = voice('en-US', false);
     const other = voice('en-AU');
     const gb = voice('EN-gb');
@@ -43,7 +43,7 @@ describe('voice selection', () => {
     expect(pickVoice([remote, french, other, gb, ca, us])).toBe(us);
     expect(pickVoice([remote, french, other, gb])).toBe(gb);
     expect(pickVoice([remote, french, other])).toBe(other);
-    expect(pickVoice([french, remote])).toBe(remote);
+    expect(pickVoice([french, remote])).toBeNull();
     expect(pickVoice([french])).toBeNull();
     expect(pickVoice([])).toBeNull();
   });
@@ -65,12 +65,12 @@ describe('voice selection', () => {
     expect(input).toEqual([beta, alpha, natural, otherNatural, remoteNatural]);
   });
 
-  it('does not favor remote Natural names over name or locale order', () => {
+  it('rejects every remote voice regardless of name or locale order', () => {
     const alpha = voice('en-US', false, 'Alpha');
     const natural = voice('en-CA', false, 'Zed Natural');
     const other = voice('en-GB', false, 'A Natural');
-    expect(pickVoice([natural, other, alpha])).toBe(alpha);
-    expect(pickVoice([alpha, other, natural].reverse())).toBe(alpha);
+    expect(pickVoice([natural, other, alpha])).toBeNull();
+    expect(pickVoice([alpha, other, natural].reverse())).toBeNull();
     expect(pickVoice([voice('enochian'), voice('fr-FR')])).toBeNull();
   });
 });
@@ -275,14 +275,16 @@ describe('speech availability and failures', () => {
     },
   );
 
-  it('uses remote English only when no local English voice exists', () => {
-    const { player, synth, utterances } = setup();
+  it('reports unavailable without ever using remote English', () => {
+    const { player, synth } = setup();
     const remote = voice('en-CA', false);
     synth.getVoices.mockReturnValue([voice('fr-FR'), remote]);
-    expect(player.supported).toBe(true);
-    player.speak({ text: 'Hello.' });
-    expect(utterances[0]!.voice).toBe(remote);
-    utterances[0]!.onend?.();
+    const onUnavailable = vi.fn(), onEnd = vi.fn();
+    expect(player.supported).toBe(false);
+    player.speak({ text: 'Hello.' }, { onUnavailable, onEnd });
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onUnavailable).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledOnce();
     expect(player.isSpeaking()).toBe(false);
   });
 
@@ -377,6 +379,41 @@ function recordedSetup() {
 }
 
 describe('recorded voice playback', () => {
+  it('plays clips with remote-only speech but never uses that speech for missing clips', () => {
+    const { player, clips, synth } = recordedSetup();
+    synth.getVoices.mockReturnValue([voice('en-US', false)]);
+    const onUnavailable = vi.fn(), onEnd = vi.fn();
+    player.speak({ text: 'Hello' }, { onUnavailable, onEnd });
+    clips[0]!.onended?.();
+    expect(onUnavailable).not.toHaveBeenCalled();
+    expect(onEnd).toHaveBeenCalledOnce();
+    player.speak({ text: 'Missing' }, { onUnavailable, onEnd });
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onUnavailable).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledTimes(2);
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it.each(['error', 'reject', 'throw'] as const)('reports unavailable once after clip %s without speech', async (failure) => {
+    const { Audio, clips } = recordedSetup();
+    class FailedAudio extends Audio {
+      override play = (): Promise<void> => {
+        if (failure === 'throw') throw Error('Unavailable');
+        return failure === 'reject' ? Promise.reject(Error('Unavailable')) : Promise.resolve();
+      };
+    }
+    const player = createVoice({ Audio: FailedAudio, synth: null, Utterance: null });
+    player.setManifest({ lines: { 'bit|Hello': 'hello.mp3' }, sfx: {} });
+    const onUnavailable = vi.fn(), onEnd = vi.fn();
+    player.speakAll([{ text: 'Hello' }, { text: 'Missing' }], { onUnavailable, onEnd });
+    const error = clips[0]!.onerror;
+    if (failure === 'error') { error?.(); error?.(); }
+    await Promise.resolve();
+    expect(onUnavailable).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+  });
+
   it('plays default, selected, client, narrator and player voices', () => {
     const { player, clips, synth } = recordedSetup();
     synth.getVoices.mockImplementation(() => { throw Error('Clips need no speech voices'); });

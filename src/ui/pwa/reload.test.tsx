@@ -3,13 +3,38 @@ import { act } from 'preact/test-utils';
 import { loadProgress } from '../../engine/progress';
 import { createStore } from '../store';
 import { client } from '../test/fixtures';
-import { click, fakeDeps, identityStore, mount, unmount } from '../test/helpers';
+import { click, fakeDeps, fill, identityStore, input, mount, unmount } from '../test/helpers';
 import { reloadWhenSafe } from './reload';
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 
 describe('safe reloads', () => {
+  it('defers an update throughout login, then reloads after the answer succeeds', async () => {
+    const store = createStore(fakeDeps());
+    const root = await mount(store);
+    const reload = vi.fn(), stop = reloadWhenSafe(store, reload);
+    try {
+      expect(store.safeMoment.value).toBe(true);
+      await act(() => { store.updateReady.value = true; });
+      await click(root, 'Tap to begin, Agent!');
+      await fill(root, 'Password', 'Blue');
+      expect(store.screen.value.name).toBe('start');
+      expect(store.position.value.phase).toBe('step');
+      expect(store.safeMoment.value).toBe(false);
+      expect(store.updatePending.value).toBe(false);
+      await act(() => { vi.advanceTimersByTime(3000); });
+      expect(reload).not.toHaveBeenCalled();
+      expect(input(root, 'Password').value).toBe('Blue');
+      await fill(root, 'Password', 'Blue Star'); await click(root, 'Check');
+      expect(store.position.value.phase).toBe('success');
+      expect(store.safeMoment.value).toBe(true);
+      expect(store.updatePending.value).toBe(true);
+      await act(() => { vi.advanceTimersByTime(1500); });
+      expect(reload).toHaveBeenCalledOnce();
+    } finally { stop(); await unmount(root); }
+  });
+
   it('checks an already ready update immediately and reloads only once after 1.5 seconds', () => {
     const store = identityStore();
     store.updateReady.value = true;

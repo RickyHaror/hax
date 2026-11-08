@@ -92,7 +92,7 @@ describe('line read aloud feedback', () => {
     expect(pressed(first)).toBe('true'); expect(first.querySelector('.visually-hidden')?.textContent).toBe('Reading...');
     expect(first.classList.contains('line-reading')).toBe(true);
     expect(deps.voice.speak).toHaveBeenCalledWith({ text: 'First line.' },
-      { sidekick: 'Pixel', onEnd: expect.any(Function) });
+      { sidekick: 'Pixel', onEnd: expect.any(Function), onUnavailable: expect.any(Function) });
     const oldEnd = vi.mocked(deps.voice.speak).mock.calls[0]![1]!.onEnd!;
     await act(() => first.click());
     expect(pressed(first)).toBe('false'); expect(first.textContent).toBe('Read aloud');
@@ -109,7 +109,10 @@ describe('line read aloud feedback', () => {
     await act(() => readers[0]!.click());
     await act(() => readers[1]!.click());
     expect(pressed(readers[0]!)).toBe('false'); expect(pressed(readers[1]!)).toBe('true');
-    await act(vi.mocked(deps.voice.speak).mock.calls[0]![1]!.onEnd!);
+    await act(() => {
+      const options = vi.mocked(deps.voice.speak).mock.calls[0]![1]!;
+      options.onUnavailable!(); options.onEnd!();
+    });
     expect(pressed(readers[1]!)).toBe('true');
     await act(() => store.voice.speakAll([{ text: 'New story.' }]));
     expect(pressed(readers[1]!)).toBe('false');
@@ -135,7 +138,37 @@ describe('line read aloud feedback', () => {
     const { readers } = await lines(deps);
     await act(() => readers[0]!.click());
     expect(pressed(readers[0]!)).toBe('true');
-    await act(vi.mocked(deps.voice.speak).mock.calls[0]![1]!.onEnd!);
+    await act(() => {
+      const options = vi.mocked(deps.voice.speak).mock.calls[0]![1]!;
+      options.onUnavailable!(); options.onEnd!();
+    });
+    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
+    expect(pressed(readers[0]!)).toBe('false');
+  });
+
+  it('shows unavailable feedback when a recorded clip rejects without speech', async () => {
+    const clip = document.createElement('audio');
+    clip.play = vi.fn(() => Promise.reject(Error('Unavailable'))); clip.pause = vi.fn();
+    const AudioStub = vi.fn(function () { return clip; }) as unknown as typeof Audio;
+    const voice = createVoice({ synth: null, Utterance: null, Audio: AudioStub });
+    voice.setManifest({ lines: { 'Pixel|First line.': 'first.mp3' }, sfx: {} });
+    const { readers, store } = await lines({ ...fakeDeps(), voice });
+    await act(async () => { readers[0]!.click(); await Promise.resolve(); });
+    expect(voice.supported).toBe(true);
+    expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
+    expect(pressed(readers[0]!)).toBe('false');
+    expect(store.reading.value).toBeNull();
+  });
+
+  it('shows unavailable feedback when only remote English speech exists', async () => {
+    const speak = vi.fn();
+    const voice = createVoice({ Audio: null, Utterance: class {} as typeof SpeechSynthesisUtterance,
+      synth: { cancel: vi.fn(), speak, getVoices: () => [
+        { lang: 'en-US', localService: false, name: 'Remote' } as SpeechSynthesisVoice,
+      ] } as unknown as SpeechSynthesis });
+    const { readers } = await lines({ ...fakeDeps(), voice });
+    await act(() => readers[0]!.click());
+    expect(speak).not.toHaveBeenCalled();
     expect(root.querySelector('[role="status"]')?.textContent).toContain('This computer cannot talk.');
     expect(pressed(readers[0]!)).toBe('false');
   });
