@@ -1,14 +1,69 @@
 // @vitest-environment jsdom
+import { render } from 'preact';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { caesarDecode } from '../../../engine/cipher';
+import { m3Zoo } from '../../../missions/m3-zoo';
 import { button, click, fill, input, submit } from '../../test/helpers';
+import { fixtureRegistry } from '../../test/fixtures';
+import { Toolbar } from '../../components/Toolbar';
+import { createStore, StoreContext } from '../../store';
 import { decoderConfig, mountTool, removeTools } from './test-helpers';
 
 afterEach(removeTools);
 function shift(root: HTMLElement) { return Number(root.querySelector('[role="slider"]')!.getAttribute('aria-valuenow')); }
 function preview(root: HTMLElement) { return root.querySelector('[aria-label="Decoded message"] .speech-line > span')!.textContent; }
+function letterCenter(letter: HTMLElement, diameter: number) {
+  const x = (parseFloat(letter.style.left) / 100 - .5) * diameter;
+  const y = (parseFloat(letter.style.top) / 100 - .5) * diameter;
+  const angle = parseFloat(letter.parentElement!.style.transform.slice(7)) * Math.PI / 180 || 0;
+  return { x: x * Math.cos(angle) - y * Math.sin(angle), y: x * Math.sin(angle) + y * Math.cos(angle) };
+}
 describe('decoder mission', () => {
+  it.each([{ diameter: 340, font: 24 }, { diameter: 510, font: 36 }])(
+    'spaces both alphabets apart at $diameter pixels through every shift', async ({ diameter, font }) => {
+      const { root } = await mountTool(decoderConfig);
+      const letters = [...root.querySelectorAll<HTMLElement>('.wheel-letter')];
+      expect(letters).toHaveLength(52);
+      for (const ring of [letters.slice(0, 26), letters.slice(26)]) {
+        expect(ring.map((letter) => letter.textContent).join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        const points = ring.map((letter) => letterCenter(letter, diameter));
+        const radius = Math.hypot(points[0]!.x, points[0]!.y);
+        for (const [index, point] of points.entries()) {
+          expect(Math.hypot(point.x, point.y)).toBeCloseTo(radius);
+          const next = points[(index + 1) % 26]!;
+          expect(Math.hypot(point.x - next.x, point.y - next.y)).toBeCloseTo(2 * radius * Math.sin(Math.PI / 26));
+        }
+      }
+      // A circle around each monospace letter also covers its rotated corners.
+      const letterDiagonal = Math.hypot(font * .61, font);
+      for (let turn = 0; turn < 26; turn++) {
+        const points = letters.map((letter) => letterCenter(letter, diameter));
+        let gap = Infinity;
+        for (let a = 0; a < points.length; a++) for (let b = a + 1; b < points.length; b++) {
+          gap = Math.min(gap, Math.hypot(points[a]!.x - points[b]!.x, points[a]!.y - points[b]!.y));
+        }
+        expect(gap).toBeGreaterThan(letterDiagonal);
+        await click(root, 'Turn right');
+      }
+    });
+  it('keeps the toolbar dialog preview, turns and close control working', async () => {
+    const { root, deps } = await mountTool(decoderConfig);
+    const store = createStore({ ...deps, registry: fixtureRegistry([m3Zoo]) });
+    store.progress.value = { ...store.progress.value, completed: { [m3Zoo.id]: '2026-11-08T12:00:00.000Z' } };
+    await act(() => { render(<StoreContext.Provider value={store}><Toolbar /></StoreContext.Provider>, root); });
+    await click(root, 'Open decoder wheel');
+    const dialog = root.querySelector<HTMLElement>('[role="dialog"][aria-label="Decoder wheel"]')!;
+    await fill(dialog, 'Secret message', decoderConfig.message);
+    await click(dialog, 'Turn right');
+    expect(shift(dialog)).toBe(1);
+    expect(preview(dialog)).toBe(caesarDecode(decoderConfig.message, 1));
+    await click(dialog, 'Turn left');
+    expect(preview(dialog)).toBe(decoderConfig.message);
+    await click(dialog, 'Close');
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.activeElement).toBe(button(root, 'Open decoder wheel'));
+  });
   it('shares one coded line and read button at zero shift', async () => {
     const { root, deps } = await mountTool(decoderConfig);
     const codedLines = () => [...root.querySelectorAll('.speech-line > span')]

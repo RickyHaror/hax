@@ -4,10 +4,11 @@ import { ALPHABET, caesarDecode, normalizeShift } from '../../../engine/cipher';
 import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
 import { useStore } from '../../store';
+import { ReadingBox } from './ReadingBox';
 
 export interface DecoderWheelProps {
   message?: string; shift: number; onShift: (shift: number) => void;
-  children?: ComponentChildren; secretMessage?: ComponentChildren;
+  children?: ComponentChildren; secretMessage?: ComponentChildren; footer?: ComponentChildren;
 }
 function Ring({ radius }: { radius: number }) {
   return <>{[...ALPHABET].map((letter, index) => {
@@ -20,16 +21,16 @@ function Ring({ radius }: { radius: number }) {
 }
 function WheelFace({ current }: { current: number }) {
   return <>
-    <svg viewBox="0 0 340 340" width="300" height="300" aria-hidden="true">
+    <svg viewBox="0 0 340 340" width="340" height="340" aria-hidden="true">
       <circle cx="170" cy="170" r="164" class="wheel-outer" />
       <g class="wheel-inner" style={{ transform: `rotate(${current * 360 / 26}deg)` }}>
-        <circle cx="170" cy="170" r="125" />
+        <circle cx="170" cy="170" r="134" />
       </g>
-      <path d="M170 8 L164 22 L176 22 Z" class="wheel-pointer" />
+      <path d="M170 66 L164 80 L176 80 Z" class="wheel-pointer" />
     </svg>
-    <div class="wheel-letters" aria-hidden="true"><Ring radius={146} />
+    <div class="wheel-letters" aria-hidden="true"><Ring radius={149} />
       <div class="wheel-inner" style={{ transform: `rotate(${current * 360 / 26}deg)` }}>
-        <Ring radius={105} />
+        <Ring radius={119} />
       </div>
     </div>
   </>;
@@ -66,7 +67,7 @@ function useWheelDrag(current: number, onShift: (shift: number) => void) {
     onLostPointerCapture() { drag.current = null; },
   };
 }
-export function DecoderWheel({ message, shift, onShift, children, secretMessage }: DecoderWheelProps) {
+export function DecoderWheel({ message, shift, onShift, children, secretMessage, footer }: DecoderWheelProps) {
   const store = useStore();
   const current = normalizeShift(shift);
   const drag = useWheelDrag(current, onShift);
@@ -77,12 +78,6 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage 
     if (event.key === 'ArrowRight' || event.key === 'ArrowUp') { event.preventDefault(); turn(1); }
   }
   return <section class="decoder-wheel">
-    <div class="decoder-messages">
-      {!sharedMessage && secretMessage}
-      {message !== undefined && <div class="decoded-preview" aria-label="Decoded message" aria-live="polite">
-        {sharedMessage || <SpeechLine line={{ text: caesarDecode(message, current) }} />}
-      </div>}
-    </div>
     <div class="wheel-layout">
       <div class="wheel-control" role="slider" tabIndex={0} aria-label="Decoder wheel"
         aria-valuemin={0} aria-valuemax={25} aria-valuenow={current} aria-valuetext={`Shift: ${current}`}
@@ -90,12 +85,21 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage 
         <WheelFace current={current} />
       </div>
       <div class="wheel-actions">
-        {children}
+        <ReadingBox>
+          <div class="decoder-messages">
+            {!sharedMessage && secretMessage}
+            {message !== undefined && <div class="decoded-preview" aria-label="Decoded message" aria-live="polite">
+              {sharedMessage || <SpeechLine line={{ text: caesarDecode(message, current) }} />}
+            </div>}
+          </div>
+          {children}
+        </ReadingBox>
         <div class="wheel-turns">
           <BigButton onClick={() => turn(-1)}>Turn left</BigButton>
           <BigButton onClick={() => turn(1)}>Turn right</BigButton>
         </div>
         <div aria-live="polite"><SpeechLine line={{ text: `Shift: ${current}` }} /></div>
+        {footer}
       </div>
     </div>
   </section>;

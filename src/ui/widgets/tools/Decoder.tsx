@@ -13,10 +13,10 @@ export function Decoder({ step, config, showMe, onComplete }: WidgetProps<Decode
   useEffect(() => { if (showMe) setShift(normalizeShift(config.shift)); }, [showMe, config.shift, revealCount]);
   return <section class="mission-tool decoder-tool">
     <DecoderWheel message={config.message} shift={shift} onShift={setShift}
+      footer={<Answer config={{ kind: 'answer', question: { text: 'What does the note say?' }, answer: config.answer }}
+        step={step} showMe={showMe} onComplete={onComplete} />}
       secretMessage={<div class="secret-message" aria-label="Secret message"><SpeechLine line={{ text: config.message }} /></div>}>
       {config.clue && <SpeechLine line={config.clue} />}
     </DecoderWheel>
-    <Answer config={{ kind: 'answer', question: { text: 'What does the note say?' }, answer: config.answer }}
-      step={step} showMe={showMe} onComplete={onComplete} />
   </section>;
 }
