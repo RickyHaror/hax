@@ -5,6 +5,7 @@ export const m3Zoo: Mission = {
   bit: 11,
   order: 11,
   chapter: 'missions',
+  retired: true,
   requires: ['m2-toys'],
   minutes: 10,
   title: 'The Zany Zoo Code',

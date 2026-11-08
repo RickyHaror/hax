@@ -44,6 +44,7 @@ export const m6Socks: Mission = {
   bit: 14,
   order: 14,
   chapter: 'missions',
+  retired: true,
   requires: ['m5-moon'],
   minutes: 12,
   title: 'The Super Sock Shop Trick',

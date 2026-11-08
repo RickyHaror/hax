@@ -26,6 +26,7 @@ export const m7Graduation: Mission = {
   bit: 15,
   order: 15,
   chapter: 'missions',
+  retired: true,
   requires: ['m6-socks'],
   minutes: 12,
   title: 'Agent Graduation Day',

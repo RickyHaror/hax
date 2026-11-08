@@ -30,6 +30,7 @@ export const m4Cupcake: Mission = {
   bit: 12,
   order: 12,
   chapter: 'missions',
+  retired: true,
   requires: ['m3-zoo'],
   minutes: 14,
   title: 'The Cupcake Castle Password',

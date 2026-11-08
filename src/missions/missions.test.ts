@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FsDir, FsNode, Line, Mission, StepConfig, TerminalConfig, TerminalGoal } from '../engine/types';
-import { missions } from './index';
+import { missions, seasons } from './index';
+import { season1 } from './season1';
 
 const missionTable = [
   ['login', 'login'],
@@ -19,6 +20,12 @@ const missionTable = [
   ['m5-moon', 'missions'],
   ['m6-socks', 'missions'],
   ['m7-graduation', 'missions'],
+  ['s1-m1-toy-shop', 'season'],
+  ['s1-m2-sticky-note', 'season'],
+  ['s1-m3-hidden-folder', 'season'],
+  ['s1-m4-page-source', 'season'],
+  ['s1-m5-log-search', 'season'],
+  ['s1-m6-weak-password', 'season'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
@@ -45,6 +52,7 @@ function missionLines(mission: Mission): Line[] {
     ...mission.outro,
     ...(mission.client?.allowed ?? []),
     ...(mission.client?.notAllowed ?? []),
+    ...(mission.contract ? [mission.contract.problem, mission.contract.goal] : []),
     ...mission.steps.flatMap((step) => [
       ...step.lines, ...step.hints, ...step.success, ...configLines(step.config),
     ]),
@@ -186,32 +194,70 @@ function checkSolvable(config: StepConfig): void {
     case 'terminal':
       checkTerminal(config);
       break;
+    case 'hack':
+      expect(config.showMe.trim()).not.toBe('');
+      expect(config.commands).toContain(config.showMe.trim().split(/\s+/)[0]);
+      break;
   }
 }
 
 describe('registered mission data', () => {
   it('keeps ids, bits and orders unique', () => {
-    expect(missions.some((mission) => mission.id === 'login')).toBe(true);
+    expect(missions.map((mission) => mission.id)).toEqual(missionTable.map(([id]) => id));
     for (const field of ['id', 'bit', 'order'] as const) {
       expect(new Set(missions.map((mission) => mission[field])).size).toBe(missions.length);
     }
   });
 
+  it('retires only the seven old missions and keeps them out of seasons', () => {
+    const retiredIds = missions.filter((mission) => mission.retired).map((mission) => mission.id);
+    expect(retiredIds).toEqual(missionTable.slice(9, 16).map(([id]) => id));
+    for (const season of seasons) {
+      for (const id of retiredIds) expect(season.missions).not.toContain(id);
+    }
+  });
+
+  it('registers exactly Season 1 with matching live season missions', () => {
+    expect(seasons).toEqual([season1]);
+    expect(seasons[0]).toBe(season1);
+    for (const season of seasons) {
+      for (const id of season.missions) {
+        const registered = missions.filter((mission) => mission.id === id);
+        expect(registered, id).toHaveLength(1);
+        expect(registered[0]).toMatchObject({ chapter: 'season', season: season.id });
+        expect(registered[0]!.retired, id).not.toBe(true);
+      }
+    }
+  });
+
+  it('lists every registered season mission exactly once across seasons', () => {
+    const seasonMissionIds = seasons.flatMap((season) => season.missions);
+    for (const mission of missions.filter((entry) => entry.chapter === 'season')) {
+      expect(seasonMissionIds.filter((id) => id === mission.id), mission.id).toHaveLength(1);
+    }
+  });
+
   for (const mission of missions) {
     describe(mission.id, () => {
-      it('matches the permanent table and requires its previous mission', () => {
+      it('matches the permanent table', () => {
         const index = missionTable.findIndex(([id]) => id === mission.id);
+        expect(index).toBeGreaterThanOrEqual(0);
         expect(mission.order).toBe(mission.bit);
-        if (index >= 0) {
-          expect(mission.bit).toBe(index);
-          expect(mission.chapter).toBe(missionTable[index]![1]);
-          expect(mission.requires).toEqual(index === 0 ? [] : [missionTable[index - 1]![0]]);
-        }
-        if (mission.id === 'login') expect(mission.requires).toEqual([]);
-        else {
-          const previous = missions.filter((entry) => entry.order === mission.order - 1);
-          expect(previous).toHaveLength(1);
-          expect(mission.requires).toEqual([previous[0]!.id]);
+        expect(mission.bit).toBe(index);
+        expect(mission.chapter).toBe(missionTable[index]![1]);
+      });
+
+      it('keeps the retired chain or requires the previous live mission', () => {
+        if (mission.retired) {
+          const index = missionTable.findIndex(([id]) => id === mission.id);
+          expect(mission.requires).toEqual([missionTable[index - 1]![0]]);
+        } else if (mission.id === 's1-m1-toy-shop') {
+          expect(mission.requires).toEqual(['t3-tools']);
+        } else {
+          const liveMissions = missions.filter((entry) => !entry.retired)
+            .sort((left, right) => left.order - right.order);
+          const index = liveMissions.indexOf(mission);
+          expect(mission.requires).toEqual(index === 0 ? [] : [liveMissions[index - 1]!.id]);
         }
       });
 

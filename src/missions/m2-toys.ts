@@ -5,6 +5,7 @@ export const m2Toys: Mission = {
   bit: 10,
   order: 10,
   chapter: 'missions',
+  retired: true,
   requires: ['m1-pizza'],
   minutes: 10,
   title: 'The Wobbly Web Secret',

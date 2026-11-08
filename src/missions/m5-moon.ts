@@ -39,6 +39,7 @@ export const m5Moon: Mission = {
   bit: 13,
   order: 13,
   chapter: 'missions',
+  retired: true,
   requires: ['m4-cupcake'],
   minutes: 14,
   title: 'The Moon Base Museum Mystery',

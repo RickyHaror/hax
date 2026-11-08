@@ -1,4 +1,4 @@
-import type { Mission } from '../engine/types';
+import type { Mission, Season } from '../engine/types';
 import { login } from './login';
 import { b1Mouse } from './b1-mouse';
 import { b2Keys } from './b2-keys';
@@ -15,9 +15,16 @@ import { m4Cupcake } from './m4-cupcake';
 import { m5Moon } from './m5-moon';
 import { m6Socks } from './m6-socks';
 import { m7Graduation } from './m7-graduation';
+import { season1, season1Missions } from './season1';
 
 /**
  * Mission registry. The content lane adds each mission file here.
  * Order in the game comes from Mission.order, not from this list.
  */
-export const missions: Mission[] = [login, b1Mouse, b2Keys, b3Typing, b4Files, b5Passwords, t1Hello, t2Move, t3Tools, m1Pizza, m2Toys, m3Zoo, m4Cupcake, m5Moon, m6Socks, m7Graduation];
+export const missions: Mission[] = [
+  login, b1Mouse, b2Keys, b3Typing, b4Files, b5Passwords, t1Hello, t2Move, t3Tools,
+  m1Pizza, m2Toys, m3Zoo, m4Cupcake, m5Moon, m6Socks, m7Graduation,
+  ...season1Missions,
+];
+
+export const seasons: Season[] = [season1];

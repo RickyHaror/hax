@@ -25,6 +25,7 @@ export const m1Pizza: Mission = {
   bit: 9,
   order: 9,
   chapter: 'missions',
+  retired: true,
   requires: ['t3-tools'],
   minutes: 12,
   title: 'The Secret Sauce',

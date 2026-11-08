@@ -2,7 +2,7 @@ import type { Mission } from '../engine/types';
 
 export const s1m1ToyShop: Mission = {
   id: 's1-m1-toy-shop', bit: 16, order: 16, chapter: 'season', season: 's1',
-  requires: [], xp: 20, minutes: 10,
+  requires: ['t3-tools'], xp: 20, minutes: 10,
   title: 'Toy Shop Computer',
   blurb: 'Help Sam check an old toy shop computer.',
   badge: { id: 's1-m1-toy-shop', name: 'Toy Scout', art: 'badge-s1-m1' },

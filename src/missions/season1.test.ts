@@ -200,8 +200,11 @@ describe('Corner Town season data', () => {
     expect(season1.missions).toEqual(plannedIds);
     expect(season1Missions.map((mission) => mission.id)).toEqual(season1.missions);
     for (const field of ['id', 'bit', 'order'] as const) {
-      const values = [...missions, ...season1Missions].map((mission) => mission[field]);
+      const values = missions.map((mission) => mission[field]);
       expect(new Set(values).size, field).toBe(values.length);
+    }
+    for (const mission of season1Missions) {
+      expect(missions.filter((entry) => entry.id === mission.id)).toEqual([mission]);
     }
   });
 
@@ -212,7 +215,7 @@ describe('Corner Town season data', () => {
         expect(index).toBeGreaterThanOrEqual(0);
         expect(mission).toMatchObject({
           chapter: 'season', season: 's1', bit: 16 + index, order: 16 + index, xp: 20, minutes: 10,
-          requires: index === 0 ? [] : [season1.missions[index - 1]],
+          requires: index === 0 ? ['t3-tools'] : [season1.missions[index - 1]],
           badge: { id: mission.id, art: `badge-s1-m${index + 1}` },
         });
         expect(mission.badge.name.trim()).not.toBe('');
