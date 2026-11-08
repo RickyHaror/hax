@@ -36,6 +36,8 @@ button:disabled { cursor: default; border-color: var(--muted); color: var(--mute
 :focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; }
 input { display: block; background: var(--bg); color: var(--text); padding: 8px; width: min(100%, 520px); margin: 8px 0 16px; }
 label { display: block; }
+/* Browsers without text security show the letters. */
+.pretend-secret-mask { -webkit-text-security: disc; }
 fieldset { min-width: 0; border: 1px solid var(--muted); border-radius: 12px; margin: 12px 0; }
 .choices { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; }
 .card { flex: 1 1 260px; min-width: 0; border: 1px solid var(--muted); padding: 12px; border-radius: 12px; }

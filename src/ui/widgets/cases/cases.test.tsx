@@ -1,6 +1,6 @@
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { button, click, fill, input, submit, unmount } from '../../test/helpers';
+import { button, click, fill, input, unmount } from '../../test/helpers';
 import { caseWidgets } from './index';
 import { PasswordGuess } from './PasswordGuess';
 import { LogRead } from './LogRead';
@@ -21,42 +21,45 @@ it('registers all three case widgets', () => {
 describe('PasswordGuess', () => {
   it('shows a read only username, profile art, heading, and readable facts', async () => {
     const { root } = await mountCase(PasswordGuess, passwordConfig);
-    expect(input(root, 'Username').value).toBe('pete');
-    expect(input(root, 'Username').readOnly).toBe(true);
+    expect(root.textContent).toContain('Username: pete');
+    expect(root.querySelectorAll('input')).toHaveLength(1);
     expect(root.querySelector('h3')?.textContent).toBe('Pete Pie');
     expect(root.querySelector('svg')?.getAttribute('aria-label')).toBe('Pete Pie');
     expect(root.querySelectorAll('.case-profile .speech-line button')).toHaveLength(3);
   });
-  it('nudges wrong tries, accepts alternatives, and completes once after form submission', async () => {
+  it('nudges wrong tries, accepts alternatives, and completes once with Enter or Check', async () => {
     const { root, deps, onComplete, redraw } = await mountCase(PasswordGuess, passwordConfig);
-    await fill(root, 'Password', 'pizza'); await submit(root);
+    await fill(root, 'Password', 'pizza'); await click(root, 'Check');
     expect(root.textContent).toContain('Look at the profile card for a clue.');
     expect(deps.sound.play).toHaveBeenLastCalledWith('tryAgain');
     expect(onComplete).not.toHaveBeenCalled();
     await fill(root, 'Password', ' NOODLES ');
     input(root, 'Password').focus();
     expect(document.activeElement).toBe(input(root, 'Password'));
-    expect(button(root, 'Check').type).toBe('submit');
-    await submit(root);
+    expect(button(root, 'Check').type).toBe('button');
+    await press(input(root, 'Password'), 'Enter');
     expect(root.textContent).toContain('Access granted');
     expect(root.textContent).not.toContain('Good try.');
     expect(deps.sound.play).toHaveBeenLastCalledWith('success');
     expect(onComplete).toHaveBeenCalledTimes(1);
     const changedCallback = vi.fn();
-    await redraw(false, changedCallback); await submit(root);
+    await redraw(false, changedCallback); await click(root, 'Check');
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(changedCallback).not.toHaveBeenCalled();
   });
   it('toggles password letters with a stable accessible name', async () => {
     const { root } = await mountCase(PasswordGuess, passwordConfig);
     await fill(root, 'Password', 'Noodle');
-    expect(input(root, 'Password').type).toBe('password');
+    expect(input(root, 'Password').type).toBe('text');
+    expect(input(root, 'Password').classList.contains('pretend-secret-mask')).toBe(true);
     await click(root, 'Show letters');
     expect(input(root, 'Password').type).toBe('text');
+    expect(input(root, 'Password').classList.contains('pretend-secret-mask')).toBe(false);
     expect(input(root, 'Password').value).toBe('Noodle');
     expect(button(root, 'Show letters').getAttribute('aria-pressed')).toBe('true');
     await click(root, 'Show letters');
-    expect(input(root, 'Password').type).toBe('password');
+    expect(input(root, 'Password').type).toBe('text');
+    expect(input(root, 'Password').classList.contains('pretend-secret-mask')).toBe(true);
     expect(input(root, 'Password').value).toBe('Noodle');
     expect(button(root, 'Show letters').getAttribute('aria-pressed')).toBe('false');
   });
@@ -69,7 +72,7 @@ describe('PasswordGuess', () => {
     await fill(root, 'Password', 'changed');
     await act(() => { store.revealCount.value += 1; });
     expect(input(root, 'Password').value).toBe('Noodle');
-    await submit(root);
+    await click(root, 'Check');
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
   it('highlights the first fact when no fact contains the password', async () => {

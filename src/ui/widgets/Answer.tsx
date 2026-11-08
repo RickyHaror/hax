@@ -6,6 +6,7 @@ import { useStore } from '../store';
 import { answersMatch } from '../answers';
 import { BigButton } from '../components/BigButton';
 import { SpeechLine } from '../components/SpeechLine';
+import { PretendSecretInput } from '../components/PretendSecretInput';
 export function Answer({ config, showMe, onComplete, password = false }: WidgetProps<AnswerConfig> & { password?: boolean }) {
   const store = useStore();
   const revealCount = store.revealCount.value;
@@ -13,8 +14,7 @@ export function Answer({ config, showMe, onComplete, password = false }: WidgetP
   const [wrong, setWrong] = useState(false);
   const completed = useRef(false);
   useEffect(() => { if (showMe) setValue(config.answer); }, [showMe, config.answer, revealCount]);
-  function check(event: Event) {
-    event.preventDefault();
+  function check() {
     if (completed.current) return;
     if (answersMatch(value, config.answer, config.accept)) {
       completed.current = true; store.sound.play('success'); onComplete();
@@ -22,12 +22,13 @@ export function Answer({ config, showMe, onComplete, password = false }: WidgetP
   }
   const field = { value, autoComplete: 'off',
     onInput: (event: TargetedInputEvent<HTMLInputElement>) => setValue(event.currentTarget.value) };
-  return <form onSubmit={check}>
+  const content = <>
     <SpeechLine line={config.question} />
-    <label>{password ? 'Password' : 'Answer'}
-      {password ? <input type="password" {...field} /> : <input type="text" {...field} />}
-    </label>
-    <BigButton type="submit">Check</BigButton>
+    {password ? <PretendSecretInput {...field} onCheck={check} />
+      : <label>Answer<input type="text" {...field} /></label>}
+    <BigButton type={password ? 'button' : 'submit'} onClick={password ? check : undefined}>Check</BigButton>
     {wrong && <SpeechLine line={{ text: 'Good try. Look at the clue and try again.' }} />}
-  </form>;
+  </>;
+  return password ? <div>{content}</div>
+    : <form onSubmit={(event) => { event.preventDefault(); check(); }}>{content}</form>;
 }

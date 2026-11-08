@@ -11,11 +11,13 @@ describe('start and onboarding', () => {
   it('accepts a normalized password, gives kind feedback, and saves login', async () => {
     const deps = fakeDeps(); const store = createStore(deps); root = await mount(store);
     expect(root.querySelector('h1')?.textContent).toBe('AGENT HQ');
-    expect(input(root, 'Username').value).toBe('agent');
+    expect(root.textContent).toContain('Username: agent');
+    expect(root.querySelectorAll('input')).toHaveLength(1);
     await fill(root, 'Password', 'wrong'); await click(root, 'Check');
     expect(root.textContent).toContain('Good try.'); expect(store.progress.value.completed).toEqual({});
     expect(deps.sound.play).toHaveBeenCalledWith('tryAgain');
-    await fill(root, 'Password', '  bLue    stAR  '); await submit(root);
+    await fill(root, 'Password', '  bLue    stAR  ');
+    await act(() => { input(root, 'Password').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); });
     expect(root.textContent).toContain('You did it!');
     expect(loadProgress(deps.storage).completed.login).toBeTruthy();
     await click(root, 'Next'); expect(store.screen.value.name).toBe('onboarding');
@@ -180,8 +182,8 @@ describe('answer submission', () => {
       store.openMission(mission.id); store.phase(mission.id, { phase: 'step', index: 0 });
     }
     root = await mount(store);
-    await submit(root);
-    await fill(root, screen === 'login' ? 'Password' : 'Answer', '  '); await submit(root);
+    await click(root, 'Check');
+    await fill(root, screen === 'login' ? 'Password' : 'Answer', '  '); await click(root, 'Check');
     expect(root.textContent).toContain('Good try.');
     expect(store.progress.value.completed).toEqual({});
     if (screen === 'player') expect(store.position.value.phase).toBe('step');

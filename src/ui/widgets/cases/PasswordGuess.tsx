@@ -5,6 +5,7 @@ import { answersMatch } from '../../answers';
 import { Art } from '../../components/Art';
 import { BigButton } from '../../components/BigButton';
 import { SpeechLine } from '../../components/SpeechLine';
+import { PretendSecretInput } from '../../components/PretendSecretInput';
 import { useStore } from '../../store';
 import type { WidgetProps } from '../Widget';
 
@@ -25,7 +26,6 @@ export function PasswordGuess({ config, showMe, onComplete }: WidgetProps<Passwo
   const store = useStore();
   const revealCount = store.revealCount.value;
   const [value, setValue] = useState('');
-  const [visible, setVisible] = useState(false);
   const [wrong, setWrong] = useState(false);
   const [granted, setGranted] = useState(false);
   const completed = useRef(false);
@@ -34,8 +34,7 @@ export function PasswordGuess({ config, showMe, onComplete }: WidgetProps<Passwo
   useEffect(() => {
     if (granted && !notified.current) { notified.current = true; onComplete(); }
   }, [granted, onComplete]);
-  function check(event: Event) {
-    event.preventDefault();
+  function check() {
     if (completed.current) return;
     if (answersMatch(value, config.password, config.accept)) {
       completed.current = true;
@@ -46,15 +45,14 @@ export function PasswordGuess({ config, showMe, onComplete }: WidgetProps<Passwo
     onInput: (event: TargetedInputEvent<HTMLInputElement>) => setValue(event.currentTarget.value) };
   return <div class="case-widget case-password">
     <Profile config={config} showMe={showMe} />
-    <form class="case-login" onSubmit={check}>
-      <label>Username<input value={config.username} readOnly /></label>
-      <label>Password{visible ? <input type="text" {...field} /> : <input type="password" {...field} />}</label>
-      <BigButton aria-pressed={visible} onClick={() => setVisible(!visible)}>Show letters</BigButton>
-      <BigButton type="submit">Check</BigButton>
+    <div class="case-login">
+      <p>Username: {config.username}</p>
+      <PretendSecretInput {...field} onCheck={check} />
+      <BigButton type="button" onClick={check}>Check</BigButton>
       <div aria-live="polite">
         {wrong && <SpeechLine line={{ text: 'Good try. Look at the profile card for a clue.' }} />}
         {granted && <SpeechLine line={{ text: 'Access granted' }} />}
       </div>
-    </form>
+    </div>
   </div>;
 }
