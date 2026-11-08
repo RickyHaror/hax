@@ -1,6 +1,8 @@
 import type { ArtComponent } from '../engine/types';
 import { loginArt } from './login';
+import { bootcampArt } from './bootcamp';
 import { sidekickArt } from './sidekicks';
+import { terminalArt } from './terminal';
 
 /**
  * Art registry: key to inline SVG component. The content lane adds art here.
@@ -8,5 +10,7 @@ import { sidekickArt } from './sidekicks';
  */
 export const art: Record<string, ArtComponent> = {
   ...loginArt,
+  ...bootcampArt,
   ...sidekickArt,
+  ...terminalArt,
 };
