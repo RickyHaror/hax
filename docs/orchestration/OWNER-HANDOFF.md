@@ -29,6 +29,13 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 1:10 AM Toronto, 2026-11-08, owner rotation 20261108-000001 (old owner stood down,
+done marker written). E2 VERIFY run 1 stopped at 4e4f885 (e2e 124 pass, 36 fail: seven tall steps at
+1366x768 plus an outdated update.spec). Owner approved E2-V6 (fit as a rule, 1920 scaling) and the
+update.spec rewrite, and launched E2 VERIFY run 2 (hard stop about 3 AM). When it reports: check
+screenshots, accept, have it integrate, confirm CI and the live site, tell the founder to start
+playing, then launch E3. Hourly lane check cron at :46.
+
 Final handoff from owner 20261107-190700-manual at rotation to hax-7b (rotation 20261108-000001),
 about midnight Toronto 2026-11-08: E2 VERIFY coordinator is still running in D:/Dev/hax-engine on
 engine/e2 (committed tip 0838f0c, "compact mission map that points at the next mission"), with worker
