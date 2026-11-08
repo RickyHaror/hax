@@ -29,6 +29,14 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+Updated about 11:45 AM Toronto, 2026-11-08, owner hax-f4. Content C4 BUILD run 1 checkpointed:
+content/c4 pushed at 25fa2eb (six Season 1 missions as data, badges, season test; focused 205 pass; no
+review or gate yet; not yet in the mission index). Owner decided its four questions plus two kid review
+fixes (docs/DECISIONS.md "Season 1 missions in C4"). Next content: C4 BUILD run 2 to apply those
+decisions, then C4 VERIFY. C4 integration waits for E5 on main (it needs the new commands, hack step
+widget, save code v2 and the map showing seasons). Engine E5 BUILD run 2 coordinator still running
+(hard stop about 12:10 PM); its report is forwarded to the next owner. Then: E5 VERIFY run.
+
 Updated about 10:55 AM Toronto, 2026-11-08, owner hax-f4. Schema shipped: main 07f5a43 (merge of
 14eb9e0), CI 42496095473 tests green. Engine coordinator continues E5 BUILD run 2 (hard stop about
 12:10 PM). Content C4 BUILD run 1 launched about 10:55 AM (worktree D:/Dev/hax-content, content/c4, hard

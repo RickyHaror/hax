@@ -68,3 +68,15 @@
 - Machines share prompt colors; up to 4 more tokens allowed if they pass 8:1 and are never amber or red.
 - The picked sidekick (Bit, Pixel, Hoot) stays as the crew voice, drawn in the signal wave avatar style.
 - Flags look like `CLUE{...}`.
+
+## 2026-11-08, owner: Season 1 missions in C4
+
+- Register the six Season 1 missions in `src/missions/index.ts` in C4 (update `missions.test.ts` to match).
+- Retire the cartoon missions m1 to m7 (`retired: true`). Keep the login, Boot Camp b1 to b5 and terminal
+  training t1 to t3. The Playground stays unlocked by `t3-tools`.
+- Ids `s1-m1-toy-shop` to `s1-m6-weak-password`, bits 16 to 21 in that order, are final. Retired bits are
+  never reused.
+- `s1-m1` requires `t3-tools`, so a new player finishes terminal training first.
+- Mission 1 lets him try the login before anyone says the password: hint 1 explains factory passwords,
+  hint 2 says to try admin, Show me types it.
+- A hint never spells a flag out symbol by symbol; the last rung is Show me, which types it for him.

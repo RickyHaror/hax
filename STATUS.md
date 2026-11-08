@@ -11,7 +11,8 @@
 | Engine | E3 finish the experience | engine/e3 | integrated 569e6df, live | 2026-11-08 6:45 AM |
 | Engine | E4 sign-up narration and speech fixes | engine/e4 | integrated cd676a5, live | 2026-11-08 8:15 AM |
 | Owner | Codename and sign up prompt clips (130, 744 chars) | main | done 7e19cdf | 2026-11-08 8:00 AM |
-| Engine | E5 terminal first rebuild | engine/e5 | BUILD running, schema proposal first | 2026-11-08 8:25 AM |
+| Engine | E5 terminal first rebuild | engine/e5 | schema live 07f5a43; BUILD run 2 running | 2026-11-08 11:45 AM |
+| Content | C4 Season 1 missions 1 to 6 | content/c4 | BUILD 1 checkpointed 25fa2eb | 2026-11-08 11:45 AM |
 
 ## Provider state
 
