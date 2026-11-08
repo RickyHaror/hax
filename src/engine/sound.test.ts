@@ -45,7 +45,8 @@ function setup(state: AudioContextState = 'running') {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('sound recipes', () => {
-  it.each<SoundName>(['click', 'success', 'hint', 'key', 'fanfare', 'tryAgain'])(
+  it.each<SoundName>(['click', 'success', 'hint', 'key', 'fanfare', 'tryAgain',
+    'catch', 'lock', 'unlock', 'door', 'badge', 'typing'])(
     'schedules every %s note with its envelope and connections', (name) => {
       const { player, instances } = setup();
       player.play(name);
@@ -74,7 +75,8 @@ describe('sound recipes', () => {
   );
 
   it('keeps all recipes gentle, positive in duration, and immutable', () => {
-    expect(Object.keys(SOUNDS).sort()).toEqual(['click', 'fanfare', 'hint', 'key', 'success', 'tryAgain']);
+    expect(Object.keys(SOUNDS).sort()).toEqual(['badge', 'catch', 'click', 'door', 'fanfare',
+      'hint', 'key', 'lock', 'success', 'tryAgain', 'typing', 'unlock']);
     expect(Object.isFrozen(SOUNDS)).toBe(true);
     for (const notes of Object.values(SOUNDS)) {
       expect(notes.length).toBeGreaterThan(0);
@@ -210,5 +212,101 @@ describe('sound playback', () => {
     const ended = context.oscillators[0]!;
     ended.disconnect.mockImplementation(() => { throw new Error('Closed'); });
     expect(() => ended.onended?.()).not.toThrow();
+  });
+});
+
+function recordedSound() {
+  const fixture = setup();
+  const clips: TestAudio[] = [];
+  class TestAudio {
+    onended: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    play = vi.fn((): Promise<void> => Promise.resolve());
+    pause = vi.fn();
+    constructor(readonly src: string) { clips.push(this); }
+  }
+  const Audio = TestAudio as unknown as typeof globalThis.Audio;
+  const player = createSound({ ...fixture.deps, Audio });
+  player.setManifest({ lines: {}, sfx: { click: 'click.mp3', 'try-again': 'try-again.mp3' } });
+  return { ...fixture, player, Audio, clips };
+}
+
+describe('recorded sounds', () => {
+  it('plays recorded files, mapping tryAgain to try-again, without synthesis', () => {
+    const { player, clips, instances } = recordedSound();
+    player.play('click'); player.play('tryAgain');
+    expect(clips.map((clip) => clip.src)).toEqual(['/audio/sfx/click.mp3', '/audio/sfx/try-again.mp3']);
+    for (const clip of clips) expect(clip.play).toHaveBeenCalledOnce();
+    expect(instances).toHaveLength(0);
+    clips[0]!.onended?.();
+    expect(instances).toHaveLength(0);
+  });
+
+  it.each(['error', 'reject', 'throw'] as const)('synthesizes once on recording %s', async (failure) => {
+    const { Audio, deps, clips, instances } = recordedSound();
+    const Failed = class extends Audio {
+      override play = (): Promise<void> => {
+        if (failure === 'throw') throw Error('Blocked');
+        if (failure === 'reject') return Promise.reject(Error('Blocked'));
+        return Promise.resolve();
+      };
+    };
+    const player = createSound({ ...deps, Audio: Failed });
+    player.setManifest({ lines: {}, sfx: { 'try-again': 'try-again.mp3' } });
+    player.play('tryAgain');
+    const error = clips[0]!.onerror;
+    if (failure === 'error') { error?.(); error?.(); }
+    await Promise.resolve();
+    expect(instances).toHaveLength(1);
+    expect(instances[0]!.oscillators).toHaveLength(SOUNDS.tryAgain.length);
+    expect(instances[0]!.oscillators[0]!.frequency.setValueAtTime).toHaveBeenCalledWith(220, 10);
+  });
+
+  it('uses synthesis for missing files, removed manifests and unavailable Audio', () => {
+    const { player, clips, instances, deps } = recordedSound();
+    player.play('badge');
+    player.setManifest(null); player.play('click');
+    expect(clips).toHaveLength(0);
+    expect(instances[0]!.oscillators).toHaveLength(SOUNDS.badge.length + SOUNDS.click.length);
+    const disabled = createSound({ ...deps, Audio: null });
+    disabled.setManifest({ lines: {}, sfx: { click: 'click.mp3' } });
+    disabled.play('click');
+    expect(instances[1]!.oscillators).toHaveLength(SOUNDS.click.length);
+  });
+
+  it('plays recordings without WebAudio and falls back on a broken constructor', () => {
+    const { Audio, clips, instances, deps } = recordedSound();
+    const player = createSound({ AudioContext: null, Audio });
+    expect(player.supported).toBe(true);
+    player.setManifest({ lines: {}, sfx: { click: 'click.mp3' } });
+    player.play('click');
+    expect(clips[0]!.src).toBe('/audio/sfx/click.mp3');
+    const Broken = class { constructor() { throw Error('Unavailable'); } };
+    const fallback = createSound({ ...deps, Audio: Broken as unknown as typeof Audio });
+    fallback.setManifest({ lines: {}, sfx: { click: 'click.mp3' } });
+    fallback.play('click');
+    expect(instances[0]!.oscillators).toHaveLength(SOUNDS.click.length);
+  });
+
+  it('mutes recordings and synthesis, stops clips, and suppresses delayed failures', async () => {
+    const { player, clips, instances, Audio, deps } = recordedSound();
+    player.setMuted(true); player.play('click'); player.play('badge');
+    expect(clips).toHaveLength(0);
+    expect(instances).toHaveLength(0);
+    player.setMuted(false); player.play('click');
+    const error = clips[0]!.onerror!;
+    player.setMuted(true); error();
+    expect(clips[0]!.pause).toHaveBeenCalled();
+    expect(instances).toHaveLength(0);
+
+    let reject!: (reason: Error) => void;
+    const pending = new Promise<void>((_, fail) => { reject = fail; });
+    const Pending = class extends Audio { override play = () => pending; };
+    const other = createSound({ ...deps, Audio: Pending });
+    other.setManifest({ lines: {}, sfx: { click: 'click.mp3' } });
+    other.play('click'); other.setMuted(true); other.setMuted(false);
+    reject(Error('Stopped'));
+    await Promise.resolve();
+    expect(instances).toHaveLength(0);
   });
 });

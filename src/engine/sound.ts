@@ -1,4 +1,7 @@
-export type SoundName = 'click' | 'success' | 'hint' | 'key' | 'fanfare' | 'tryAgain';
+import type { AudioManifest } from './audio-manifest';
+
+export type SoundName = 'click' | 'success' | 'hint' | 'key' | 'fanfare' | 'tryAgain'
+  | 'catch' | 'lock' | 'unlock' | 'door' | 'badge' | 'typing';
 export interface Note {
   freq: number;
   start: number;
@@ -29,13 +32,23 @@ export const SOUNDS: Readonly<Record<SoundName, readonly Note[]>> = Object.freez
     { freq: 1046.5, start: 0.36, duration: 0.24, type: 'sine', gain: 0.18 },
   ),
   tryAgain: recipe({ freq: 220, start: 0, duration: 0.2, type: 'sine', gain: 0.1 }),
+  catch: recipe({ freq: 740, start: 0, duration: 0.1, type: 'sine', gain: 0.1 }),
+  lock: recipe({ freq: 330, start: 0, duration: 0.08, type: 'triangle', gain: 0.08 }),
+  unlock: recipe({ freq: 660, start: 0, duration: 0.1, type: 'triangle', gain: 0.08 }),
+  door: recipe({ freq: 440, start: 0, duration: 0.2, type: 'sine', gain: 0.08 }),
+  badge: recipe({ freq: 1046.5, start: 0, duration: 0.2, type: 'sine', gain: 0.12 }),
+  typing: recipe({ freq: 800, start: 0, duration: 0.03, type: 'triangle', gain: 0.04 }),
 });
 
-export interface SoundDeps { AudioContext?: (new () => AudioContext) | null }
+export interface SoundDeps {
+  AudioContext?: (new () => AudioContext) | null;
+  Audio?: typeof Audio | null;
+}
 export interface SoundPlayer {
   readonly supported: boolean;
   readonly muted: boolean;
   setMuted(muted: boolean): void;
+  setManifest(m: AudioManifest | null): void;
   play(name: SoundName): void;
 }
 
@@ -70,22 +83,67 @@ function scheduleNote(ctx: AudioContext, note: Note, baseTime: number): void {
   oscillator.stop(end);
 }
 
+function audioConstructor(deps: SoundDeps): SoundDeps['Audio'] {
+  try { return deps.Audio === undefined ? globalThis.Audio : deps.Audio; }
+  catch { return null; }
+}
+
+function playRecording(clip: HTMLAudioElement, fallback: () => void, release: () => boolean): void {
+  let settled = false;
+  const settle = (failed: boolean) => {
+    if (settled) return;
+    settled = true;
+    clip.onerror = null;
+    clip.onended = null;
+    try { clip.pause(); } catch { /* Already stopped. */ }
+    const active = release();
+    if (failed && active) fallback();
+  };
+  clip.onerror = () => settle(true);
+  clip.onended = () => settle(false);
+  try { void Promise.resolve(clip.play()).catch(() => settle(true)); }
+  catch { settle(true); }
+}
+
 export function createSound(deps: SoundDeps = {}, opts?: { muted?: boolean }): SoundPlayer {
   const Context = contextConstructor(deps);
+  const Audio = audioConstructor(deps);
   let context: AudioContext | undefined;
+  let manifest: AudioManifest | null = null;
   let muted = opts?.muted ?? false;
+  const clips = new Set<HTMLAudioElement>();
+  function synthesize(name: SoundName): void {
+    if (muted || !Context) return;
+    try {
+      context ??= new Context();
+      if (context.state === 'suspended') void context.resume().catch(() => {});
+      const baseTime = context.currentTime;
+      for (const note of SOUNDS[name]) scheduleNote(context, note, baseTime);
+    } catch { /* Audio may be blocked or unavailable. */ }
+  }
   return {
-    supported: Boolean(Context),
+    supported: Boolean(Context || Audio),
     get muted() { return muted; },
-    setMuted(value) { muted = value; },
+    setManifest(value) { manifest = value; },
+    setMuted(value) {
+      muted = value;
+      if (!muted) return;
+      for (const clip of clips) {
+        clip.onerror = null;
+        clip.onended = null;
+        try { clip.pause(); } catch { /* Already stopped. */ }
+      }
+      clips.clear();
+    },
     play(name) {
-      if (muted || !Context) return;
-      try {
-        context ??= new Context();
-        if (context.state === 'suspended') void context.resume().catch(() => {});
-        const baseTime = context.currentTime;
-        for (const note of SOUNDS[name]) scheduleNote(context, note, baseTime);
-      } catch { /* Audio may be blocked or unavailable. */ }
+      if (muted) return;
+      const file = manifest?.sfx[name === 'tryAgain' ? 'try-again' : name];
+      if (!file || !Audio) { synthesize(name); return; }
+      let clip: HTMLAudioElement;
+      try { clip = new Audio(`/audio/sfx/${file}`); }
+      catch { synthesize(name); return; }
+      clips.add(clip);
+      playRecording(clip, () => synthesize(name), () => clips.delete(clip));
     },
   };
 }

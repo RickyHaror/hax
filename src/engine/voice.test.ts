@@ -239,3 +239,154 @@ describe('speech availability and failures', () => {
     expect(utterances).toHaveLength(1);
   });
 });
+
+function recordedSetup() {
+  const fixture = setup();
+  const clips: TestAudio[] = [];
+  class TestAudio {
+    onended: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    currentTime = 0;
+    play = vi.fn((): Promise<void> => Promise.resolve());
+    pause = vi.fn();
+    constructor(readonly src: string) { clips.push(this); }
+  }
+  const Audio = TestAudio as unknown as typeof globalThis.Audio;
+  const player = createVoice({ ...fixture.deps, Audio });
+  player.setManifest({ lines: {
+    'bit|Hello': 'bit.mp3', 'pixel|Hello': 'pixel.mp3',
+    'client:pizza|Hello': 'client.mp3', 'narrator|Hello': 'narrator.mp3',
+  }, sfx: {} });
+  return { ...fixture, player, clips, Audio };
+}
+
+describe('recorded voice playback', () => {
+  it('plays default, selected, client, narrator and player voices', () => {
+    const { player, clips, synth } = recordedSetup();
+    player.speak({ text: '  Hello ' });
+    expect(clips[0]!.src).toBe('/audio/lines/bit.mp3');
+    player.setContext({ sidekick: 'pixel', missionId: 'pizza' });
+    player.speakAll([{ text: 'Hello', speaker: 'sidekick' }, { text: 'Hello', speaker: 'client' },
+      { text: 'Hello', speaker: 'narrator' }, { text: 'Hello', speaker: 'player' }]);
+    for (let index = 1; index <= 4; index++) {
+      expect(player.isSpeaking()).toBe(true);
+      expect(clips[index]!.play).toHaveBeenCalledOnce();
+      clips[index]!.onended?.();
+    }
+    expect(clips.map((clip) => clip.src)).toEqual(['/audio/lines/bit.mp3',
+      '/audio/lines/pixel.mp3', '/audio/lines/client.mp3',
+      '/audio/lines/narrator.mp3', '/audio/lines/narrator.mp3']);
+    expect(player.isSpeaking()).toBe(false);
+    expect(synth.speak).not.toHaveBeenCalled();
+  });
+
+  it('uses the override only for sidekick lines and keeps the stored context', () => {
+    const { player, clips } = recordedSetup();
+    player.setContext({ sidekick: 'bit', missionId: 'pizza' });
+    player.speakAll([{ text: 'Hello' }, { text: 'Hello', speaker: 'client' }], { sidekick: 'pixel' });
+    clips[0]!.onended?.();
+    expect(clips.map((clip) => clip.src)).toEqual(['/audio/lines/pixel.mp3', '/audio/lines/client.mp3']);
+    player.speak({ text: 'Hello', speaker: 'sidekick' }, { sidekick: 'pixel' });
+    expect(clips[2]!.src).toBe('/audio/lines/pixel.mp3');
+    player.speak({ text: 'Hello' });
+    expect(clips[3]!.src).toBe('/audio/lines/bit.mp3');
+  });
+
+  it('mixes clips and speech in order, honors say, and completes once', () => {
+    const { player, clips, utterances } = recordedSetup();
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'Shown', say: 'Hello' }, { text: 'Missing' }, { text: 'Hello' }], { onEnd });
+    expect(clips).toHaveLength(1);
+    expect(utterances).toHaveLength(0);
+    const ended = clips[0]!.onended!;
+    ended(); ended();
+    expect(utterances.map((item) => item.text)).toEqual(['Missing']);
+    expect(clips).toHaveLength(1);
+    utterances[0]!.onend?.();
+    expect(clips).toHaveLength(2);
+    expect(onEnd).not.toHaveBeenCalled();
+    const lastEnd = clips[1]!.onended!;
+    lastEnd(); lastEnd();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it.each(['error', 'reject', 'throw'] as const)('falls back once on clip %s', async (failure) => {
+    const { player, clips, utterances, Audio, deps } = recordedSetup();
+    const FailedAudio = class extends Audio {
+      override play = (): Promise<void> => {
+        if (failure === 'throw') throw Error('Blocked');
+        if (failure === 'reject') return Promise.reject(Error('Blocked'));
+        return Promise.resolve();
+      };
+    };
+    const failing = createVoice({ ...deps, Audio: FailedAudio });
+    failing.setManifest({ lines: { 'bit|Hello': 'bit.mp3' }, sfx: {} });
+    const onEnd = vi.fn();
+    failing.speakAll([{ text: 'Hello' }, { text: 'Next' }], { onEnd });
+    const error = clips[0]!.onerror;
+    if (failure === 'error') { error?.(); error?.(); }
+    await Promise.resolve();
+    expect(utterances.map((item) => item.text)).toEqual(['Hello']);
+    expect(failing.isSpeaking()).toBe(true);
+    utterances[0]!.onend?.();
+    expect(utterances.map((item) => item.text)).toEqual(['Hello', 'Next']);
+    utterances[1]!.onend?.();
+    expect(onEnd).toHaveBeenCalledOnce();
+    player.cancel();
+  });
+
+  it('cancels clips and speech, suppressing stale events and rejected play promises', async () => {
+    const { player, clips, synth, utterances } = recordedSetup();
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'Hello' }, { text: 'Missing' }], { onEnd });
+    const end = clips[0]!.onended!;
+    const error = clips[0]!.onerror!;
+    player.cancel(); end(); error();
+    expect(clips[0]!.pause).toHaveBeenCalled();
+    expect(synth.cancel).toHaveBeenCalledTimes(2);
+    expect(utterances).toHaveLength(0);
+    expect(player.isSpeaking()).toBe(false);
+    player.speakAll([{ text: 'Missing' }, { text: 'Hello' }], { onEnd });
+
+    player.cancel(); utterances[0]!.onend?.();
+    expect(clips).toHaveLength(1);
+    expect(onEnd).not.toHaveBeenCalled();
+
+    let reject!: (reason: Error) => void;
+    const pending = new Promise<void>((_, fail) => { reject = fail; });
+    const { Audio, deps } = recordedSetup();
+    const PendingAudio = class extends Audio { override play = () => pending; };
+    const pendingPlayer = createVoice({ ...deps, Audio: PendingAudio });
+    pendingPlayer.setManifest({ lines: { 'bit|Hello': 'bit.mp3' }, sfx: {} });
+    pendingPlayer.speak({ text: 'Hello' }, { onEnd });
+    pendingPlayer.cancel(); reject(Error('Stopped'));
+    await Promise.resolve();
+    expect(deps.synth.speak).not.toHaveBeenCalled();
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it('plays clips without speech APIs and continues past unavailable speech', () => {
+    const { Audio, clips } = recordedSetup();
+    const player = createVoice({ Audio, synth: null, Utterance: null });
+    player.setManifest({ lines: { 'bit|Hello': 'bit.mp3' }, sfx: {} });
+    expect(player.supported).toBe(true);
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'Missing' }, { text: 'Hello' }], { onEnd });
+    expect(player.isSpeaking()).toBe(true);
+    clips[0]!.onended?.();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it('falls back on a throwing Audio constructor and after manifest removal', () => {
+    const { deps, utterances } = setup();
+    const Broken = class { constructor() { throw Error('Unavailable'); } };
+    const player = createVoice({ ...deps, Audio: Broken as unknown as typeof Audio });
+    player.setManifest({ lines: { 'bit|Hello': 'bit.mp3' }, sfx: {} });
+    player.speak({ text: 'Hello' });
+    player.setManifest(null);
+    player.speak({ text: 'Hello' });
+    expect(utterances.map((item) => item.text)).toEqual(['Hello', 'Hello']);
+  });
+});

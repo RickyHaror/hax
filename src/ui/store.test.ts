@@ -1,9 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, type StorageLike } from '../engine/progress';
+import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, toSaveCode, type StorageLike } from '../engine/progress';
 import { createStore } from './store';
 import { client, dependent, fixtureRegistry } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 describe('app store', () => {
+  it('sets voice context at creation, identity, mission, screen and restore changes', () => {
+    const deps = fakeDeps();
+    const store = createStore(deps);
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Bit', missionId: null });
+    store.identify(0, 0, 1);
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: null });
+    store.openMission(client.id);
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: client.id });
+    const resumed = createStore(deps);
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: client.id });
+    resumed.visit({ name: 'settings' });
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: null });
+    resumed.back();
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: client.id });
+    resumed.go({ name: 'player', missionId: 'login' });
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: 'login' });
+    resumed.complete('login');
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Pixel', missionId: null });
+    const restored = setIdentity(createProgress(), { firstWord: 1, secondWord: 1, sidekick: 2 });
+    expect(resumed.restore(toSaveCode(restored, deps.registry.missions)).ok).toBe(true);
+    expect(deps.voice.setContext).toHaveBeenLastCalledWith({ sidekick: 'Hoot', missionId: null });
+  });
+
   it('tracks failed saves and recovers when storage works again', () => {
     const deps = fakeDeps();
     const storage: StorageLike = { ...deps.storage, setItem() { throw new Error('Storage unavailable'); } };

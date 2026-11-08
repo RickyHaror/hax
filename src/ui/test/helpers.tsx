@@ -12,8 +12,8 @@ export function memoryStorage(): StorageLike {
   return { getItem: (key) => data.get(key) ?? null, setItem: vi.fn((key, value) => { data.set(key, value); }), removeItem: (key) => { data.delete(key); } };
 }
 export function fakeDeps() {
-  const voice: Voice = { supported: true, speak: vi.fn(), speakAll: vi.fn(), cancel: vi.fn(), isSpeaking: () => false };
-  const sound: SoundPlayer = { supported: true, muted: false, play: vi.fn(), setMuted: vi.fn() };
+  const voice: Voice = { supported: true, setManifest: vi.fn(), setContext: vi.fn(), speak: vi.fn(), speakAll: vi.fn(), cancel: vi.fn(), isSpeaking: () => false };
+  const sound: SoundPlayer = { supported: true, muted: false, setManifest: vi.fn(), play: vi.fn(), setMuted: vi.fn() };
   return { registry: fixtureRegistry(), storage: memoryStorage(), voice, sound, now: () => new Date('2026-11-07T12:00:00Z') };
 }
 export async function mount(store: AppStore) {

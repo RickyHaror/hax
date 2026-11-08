@@ -42,9 +42,16 @@ function coreStore(deps: StoreDeps) {
     progress.value = next;
     saved.value = saveProgress(deps.storage, next);
     deps.sound.setMuted(next.settings.muted);
+    syncVoice();
   }
   if (progress.value.extraBits !== loaded.extraBits) save(progress.value);
-  function go(next: Screen) { deps.voice.cancel(); screen.value = next; }
+  function syncVoice() {
+    deps.voice.setContext({
+      sidekick: deps.registry.sidekicks[progress.value.sidekick ?? 0]!.id,
+      missionId: screen.value.name === 'player' ? screen.value.missionId : null,
+    });
+  }
+  function go(next: Screen) { deps.voice.cancel(); screen.value = next; syncVoice(); }
   function phase(missionId: string, next: Position) {
     position.value = next;
     save(setCurrent(progress.value, { missionId, stepId: JSON.stringify([next.phase, next.index]) }));
@@ -58,7 +65,7 @@ function coreStore(deps: StoreDeps) {
     go({ name: 'player', missionId });
   }
   return {
-    ...deps, progress, saved, revealCount, screen, position, notice, save, go, phase, openMission,
+    ...deps, progress, saved, revealCount, screen, position, notice, save, go, syncVoice, phase, openMission,
     visit(next: Screen) { returnScreen = screen.value; go(next); },
     back() { go(returnScreen); },
   };
@@ -72,6 +79,7 @@ function initialize(store: ReturnType<typeof coreStore>) {
     store.screen.value = { name: 'player', missionId: mission.id };
   }
   store.sound.setMuted(store.progress.value.settings.muted);
+  store.syncVoice();
 }
 export function createStore(deps: StoreDeps) {
   const store = coreStore(deps);
