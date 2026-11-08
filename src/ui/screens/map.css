@@ -13,16 +13,16 @@
 .map-card-next { border: 2px solid var(--info); background: #3cdcf510; box-shadow: 0 0 0 3px #3cdcf518; }
 .map-card-done { border-color: var(--go); background: #39f28a08; }
 .map-card-locked { color: var(--muted); }
-.map-card > .map-mission { display: grid; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto 1fr auto; align-items: start; gap: 4px 12px; flex: 1; width: 100%; min-height: 132px; margin: 0; padding: 12px; border: 0; background: transparent; text-align: left; font-size: 16px; }
+.map-card > .map-mission { display: grid; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto 1fr auto; align-items: start; gap: 4px 12px; flex: 1; width: 100%; min-width: 44px; min-height: 132px; margin: 0; padding: 12px; border: 0; background: transparent; text-align: left; font-size: 16px; }
 .map-card > .map-mission:hover:enabled { background: #39f28a0d; }
 .map-card > .map-mission:disabled { color: var(--text-2); opacity: 1; }
-.map-title { grid-column: 2; grid-row: 1; padding-right: 48px; font-weight: 700; }
+.map-title { grid-column: 2; grid-row: 1; font-weight: 700; }
 .map-art { grid-column: 1; grid-row: 1 / 4; align-self: center; }
 .map-art svg { display: block; }
 .map-stamp { color: var(--go); }
 .map-blurb { grid-column: 2; grid-row: 2; }
 .map-duration { grid-column: 2; grid-row: 3; color: var(--muted); font: 14px var(--font-mono); }
-.map-card > .read-aloud { position: absolute; top: 6px; right: 6px; margin: 0; }
+.map-card > .read-aloud { position: relative; flex: none; align-self: flex-end; width: 44px; height: 44px; min-width: 44px; min-height: 44px; margin: 0 12px 10px; }
 .map-next, .map-locked { margin: 0; padding: 0 12px 10px; font-size: 14px; }
 .map-next { color: var(--info); font-weight: 700; }
 .map-locked { color: var(--muted); }

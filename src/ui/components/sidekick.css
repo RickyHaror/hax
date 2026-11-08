@@ -44,7 +44,7 @@
 @media (max-width: 599px) {
   .sidekick-comms { height: 64px; display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 8px; padding: 4px 8px; border-bottom: 1px solid var(--line); }
   .comms-header { display: contents; }
-  .comms-identity { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .comms-identity { display: none; }
   .comms-history { max-height: 56px; }
   .comms-bubble { padding: 2px; border: 0; background: transparent; order: 1; }
   .comms-newest { order: 0; }

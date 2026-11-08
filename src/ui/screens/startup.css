@@ -119,7 +119,6 @@
   .startup .comms-bubble .speech-line { font-size: 15px; }
   .startup .comms-bubble { padding: 0; }
   .boot-line { gap: 6px; }
-  .boot-tag { font-size: 12px; }
   .boot-line .speech-line { font: 14px/1.25 var(--font-sans); }
   .hq-signin { padding: 8px; }
   .hq-signin:has(.login-task) { display: block; }
