@@ -7,7 +7,8 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 ## Current state
 
 - Phase 0 (owner): repo scaffold, workflow files, CI with deploy and smoke, placeholder page.
-- Coordinators: none running.
+- Current owner session: rotation id `20261107-190700-manual` (started 7:07 PM Toronto, registered in
+  ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
 
 ## Founder context
 
@@ -17,12 +18,18 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Open external items
 
-- huxton.ca registrar transfer Gandi to Namecheap was pending on 2026-11-07 evening. When Namecheap
-  shows it, set custom nameservers `nova.ns.cloudflare.com` and `roman.ns.cloudflare.com`
-  (founder is logged into Namecheap and Cloudflare in Chrome). Then in Cloudflare Pages, project `hax`,
-  add custom domain `hax.huxton.ca`. Then the Route 53 zone for huxton.ca can be deleted (founder decides).
+- huxton.ca is registered in the founder's AWS account (Route 53 Domains; Gandi is AWS's backend
+  registrar). The Namecheap transfer was cancelled; it is not needed. On 2026-11-07 about 8:15 PM the
+  founder set the nameservers in AWS to `nova.ns.cloudflare.com` and `roman.ns.cloudflare.com` only.
+  Waiting for the .ca registry to show them and for Cloudflare to activate the zone.
+- Then: Cloudflare Pages, project `hax` (host `hax-d7j.pages.dev`), Custom domains, add `hax.huxton.ca`.
+  CI smoke already tests the custom domain once it serves.
+- Later, founder decides: delete the old Route 53 hosted zone for huxton.ca (about $0.50 a month).
+- The owner's safety checks blocked editing registrar nameservers directly; the founder does registrar edits.
 
 ## Next action
 
-1. Push Phase 0 to `main`, confirm CI deploys and smoke passes on the pages.dev URL.
-2. Launch Phase 1: engine coordinator BUILD E1 and content coordinator BUILD C1 in parallel.
+1. Phase 0 is pushed; CI deploy and live smoke passed on `https://hax-d7j.pages.dev`.
+2. Founder standing authorization (2026-11-07): ship accepted batches without asking until launch
+   work is done (docs/DECISIONS.md). Engine BUILD E1 and content BUILD C1 are running (launched about 7:45 PM Toronto, 2026-11-07).
+   When each reports, launch its VERIFY run. Engine E2 follows E1 integration.

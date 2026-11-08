@@ -22,3 +22,10 @@
 - No way out to other websites from inside the game: no external links, strict Content Security Policy,
   the fake browser and email are drawings. Read-aloud is on by default. A big `Stop for today` button.
 - Optional session length set in the parent panel; the game suggests stopping at the next save point.
+
+## 2026-11-07, founder: ship without founder sign-off until launch work is done
+
+- The owner accepts and integrates each batch once its fresh review is clean or adjudicated and the
+  `--e2e` gate passes. Pushing `main` deploys. No founder go-ahead is needed for any Phase 1 or Phase 2
+  batch, polish, or fix until all launch work in the backlog is done.
+- Founder input is still needed for credentials, registrar or account actions, and product decisions.
