@@ -1,3 +1,5 @@
+import type { JSX } from 'preact';
+
 /**
  * Mission schema: the contract between the engine lane and the content lane.
  *
@@ -220,6 +222,21 @@ export interface Step {
   /** True for the "lock it down" fix step at the end of a client mission. */
   lockdown?: boolean;
   config: StepConfig;
+}
+
+/* ---------- Art, sidekicks and hacker names (content lane provides, engine renders) ---------- */
+
+/** Art is a small inline SVG Preact component, registered by key in src/art/index.ts. */
+export type ArtComponent = (props: { size?: number; title?: string }) => JSX.Element;
+
+export interface Sidekick {
+  id: string;
+  name: string;
+  /** Key into the art registry. */
+  art: string;
+  personality: Line;
+  greeting: Line[];
+  goodbye: Line[];
 }
 
 export interface Mission {
