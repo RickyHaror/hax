@@ -240,3 +240,70 @@ it('treats inherited names as missing art and unknown widgets', async () => {
   await click(root, 'I accept'); expect(root.textContent).toContain('This part is still being built.');
   await click(root, 'Next'); expect(store.position.value.phase).toBe('success');
 });
+
+it('shows the chosen buddy beside intro, step, hints, success and outro lines', async () => {
+  const mission = { ...client, steps: [client.steps[0]!] };
+  const deps = fakeDeps(); deps.registry = fixtureRegistry([mission]);
+  const store = identityStore(deps); store.identify(0, 1, 2); store.openMission(mission.id);
+  root = await mount(store); await click(root, 'Tap to begin, Agent!');
+  const expectBuddy = (text: string) => {
+    const line = [...root.querySelectorAll('.speech-line')].find((element) =>
+      element.querySelector('span')?.textContent === text)!;
+    expect(line).toBeTruthy();
+    expect(line.closest('section')?.querySelector('svg[aria-label="Hoot"]')).toBeTruthy();
+    expect(line.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
+  };
+  expectBuddy(mission.intro[0]!.text);
+  await click(root, 'Start mission'); await click(root, 'I accept');
+  expectBuddy(mission.steps[0]!.lines[0]!.text);
+  const instructions = root.querySelector('[role="region"][aria-label="Step instructions"]')!;
+  expect(instructions.classList.contains('reading-box')).toBe(true);
+  expect(instructions.textContent).toContain(mission.steps[0]!.lines[0]!.text);
+  for (const hint of mission.steps[0]!.hints) {
+    await click(root, 'Help me'); expectBuddy(hint.text);
+    const hints = root.querySelector('section[aria-label="Hints"]')!;
+    const read = hints.querySelector<HTMLButtonElement>('button[aria-label="Read aloud"]')!;
+    await act(() => read.click());
+    expect(deps.voice.speak).toHaveBeenLastCalledWith(hint, expect.objectContaining({ sidekick: 'Hoot' }));
+  }
+  await click(root, 'Next'); expectBuddy(mission.steps[0]!.success[0]!.text);
+  await click(root, 'Next'); expectBuddy(mission.outro[0]!.text);
+});
+
+it('honors client, narrator and player speakers across mission phases and hints', async () => {
+  const lines = [
+    { text: 'Please help.', speaker: 'client' as const },
+    { text: 'The box glows.', speaker: 'narrator' as const },
+    { text: 'My turn.', speaker: 'player' as const },
+  ];
+  const step = { ...client.steps[0]!, lines, success: lines,
+    hints: [lines[0]!, lines[1]!, lines[2]!] as const };
+  const mission = { ...client, intro: lines, outro: lines, steps: [step] };
+  const deps = fakeDeps(); deps.registry = fixtureRegistry([mission]);
+  const store = identityStore(deps); store.openMission(mission.id);
+  root = await mount(store); await click(root, 'Tap to begin, Agent!');
+  const expectSpeakers = (container: Element) => {
+    for (const line of lines) {
+      const spoken = [...container.querySelectorAll('.speech-line')].find((element) =>
+        element.querySelector('span')?.textContent === line.text)!;
+      const group = spoken.closest('section')!;
+      if (line.speaker === 'client') expect(group.querySelector('svg[aria-label="Pizza Pals"]')).toBeTruthy();
+      else expect(group.querySelector('[role="img"]')).toBeNull();
+      expect(spoken.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
+    }
+  };
+  expectSpeakers(root.querySelector('.phase-story')!);
+  await click(root, 'Start mission'); await click(root, 'I accept');
+  expectSpeakers(root.querySelector('.step-story')!);
+  for (const hint of step.hints) {
+    await click(root, 'Help me');
+    const hints = root.querySelector('section[aria-label="Hints"]')!;
+    expect(hints.textContent).toContain(hint.text);
+    const portrait = hints.querySelector('svg[role="img"]');
+    if (hint.speaker === 'client') expect(portrait?.getAttribute('aria-label')).toBe('Pizza Pals');
+    else expect(portrait).toBeNull();
+    expect(hints.querySelector('button[aria-label="Read aloud"]')).toBeTruthy();
+  }
+  await click(root, 'Next'); expectSpeakers(root.querySelector('.phase-story')!);
+  await click(root, 'Next'); expectSpeakers(root.querySelector('.phase-story')!);
+});

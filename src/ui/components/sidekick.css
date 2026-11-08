@@ -1,0 +1,13 @@
+.speaker-lines { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.speaker-group { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.speaker-portrait { flex: 0 0 88px; }
+.speaker-portrait > svg { display: block; }
+.speaker-words { flex: 1; min-width: 0; }
+.speaker-lines-compact .speaker-portrait { flex-basis: 64px; }
+.player .step-story { display: flex; flex-direction: column; }
+.player .step-story > .reading-frame { flex: 0 1 auto; min-height: 0; max-height: none; }
+.player .step-story > svg { flex: 0 0 auto; }
+.player .step-work > section[aria-label='Hints'] > .speaker-lines { flex: 1; min-width: 0; }
+@media (min-width: 1000px) {
+  .player .step-work > section[aria-label='Hints'] { align-items: flex-start; }
+}

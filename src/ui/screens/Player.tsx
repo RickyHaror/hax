@@ -6,6 +6,7 @@ import { SpeechLine } from '../components/SpeechLine';
 import { SidekickBubble } from '../components/SidekickBubble';
 import { HintLadder } from '../components/HintLadder';
 import { StepWidget } from '../widgets';
+import { ReadingBox } from '../widgets/tools/ReadingBox';
 export const ethics = { text: 'Only hack what you own or have permission to hack.' };
 function withEthics(lines: Step['lines']) {
   return lines.some((line) => line.text === ethics.text) ? lines : [...lines, ethics];
@@ -26,8 +27,9 @@ function Permission({ mission, accept }: { mission: Mission; accept: () => void 
 function ActiveStep({ mission, step, index }: { mission: Mission; step: Step; index: number }) {
   const store = useStore();
   return <section class="active-step"><div class="step-story"><h2>{step.title}</h2>
-    {step.lockdown && <SpeechLine line={{ text: 'Lock it down!' }} />}
-    <SidekickBubble lines={step.lines} />
+    <ReadingBox label="Step instructions"><SidekickBubble
+      lines={step.lockdown ? [{ text: 'Lock it down!' }, ...step.lines] : step.lines}
+      client={mission.client} bySpeaker compact /></ReadingBox>
     {step.art && <Art artKey={step.art} title={step.title} size={240} />}
     </div><div class="step-work">
     <StepWidget step={step} config={step.config}
@@ -36,8 +38,10 @@ function ActiveStep({ mission, step, index }: { mission: Mission; step: Step; in
     <HintLadder missionId={mission.id} step={step} /></div>
   </section>;
 }
-function MessagePhase({ lines, label, next }: { lines: Step['lines']; label: string; next: () => void }) {
-  return <section class="player-phase"><div class="phase-story"><SidekickBubble lines={lines} /></div>
+function MessagePhase({ lines, label, next, mission }: {
+  lines: Step['lines']; label: string; next: () => void; mission: Mission;
+}) {
+  return <section class="player-phase"><div class="phase-story"><SidekickBubble lines={lines} client={mission.client} bySpeaker /></div>
     <BigButton onClick={next}>{label}</BigButton></section>;
 }
 function PlayerPhase({ mission }: { mission: Mission }) {
@@ -45,14 +49,14 @@ function PlayerPhase({ mission }: { mission: Mission }) {
   const { phase, index } = store.position.value;
   const move = (next: 'step' | 'outro', nextIndex = 0) =>
     store.phase(mission.id, { phase: next === 'step' && !mission.steps[nextIndex] ? 'outro' : next, index: nextIndex });
-  if (phase === 'intro') return <MessagePhase lines={mission.client ? withEthics(mission.intro) : mission.intro}
+  if (phase === 'intro') return <MessagePhase mission={mission} lines={mission.client ? withEthics(mission.intro) : mission.intro}
     label="Start mission" next={() => mission.client
       ? store.phase(mission.id, { phase: 'permission', index: 0 }) : move('step')} />;
   if (phase === 'permission' && mission.client) return <Permission mission={mission} accept={() => move('step')} />;
-  if (phase === 'outro') return <MessagePhase lines={mission.outro} label="Next" next={() => store.complete(mission.id)} />;
+  if (phase === 'outro') return <MessagePhase mission={mission} lines={mission.outro} label="Next" next={() => store.complete(mission.id)} />;
   const step = mission.steps[index];
   if (!step) return <BigButton onClick={() => move('outro')}>Next</BigButton>;
-  if (phase === 'success') return <MessagePhase lines={step.success} label="Next" next={() => move('step', index + 1)} />;
+  if (phase === 'success') return <MessagePhase mission={mission} lines={step.success} label="Next" next={() => move('step', index + 1)} />;
   return <ActiveStep key={`${mission.id}:${step.id}`} mission={mission} step={step} index={index} />;
 }
 export function Player({ mission }: { mission: Mission }) {
