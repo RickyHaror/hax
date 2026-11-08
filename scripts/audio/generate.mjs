@@ -45,7 +45,8 @@ async function loadContent() {
   try {
     const { missions } = await server.ssrLoadModule('/src/missions/index.ts');
     const { sidekicks } = await server.ssrLoadModule('/src/missions/sidekicks.ts');
-    return { missions, sidekicks };
+    const { playground } = await server.ssrLoadModule('/src/missions/playground.ts');
+    return { missions, sidekicks, playground };
   } finally {
     await server.close();
   }
@@ -62,7 +63,7 @@ function linesIn(value, out = []) {
 }
 
 /** Every (role, voice, spoken text) the game can play. Sidekick lines exist in all three sidekick voices. */
-function buildJobs({ missions, sidekicks }) {
+function buildJobs({ missions, sidekicks, playground }) {
   const jobs = new Map();
   const add = (role, voice, spoken) => {
     const key = `${role}|${spoken}`;
@@ -78,6 +79,14 @@ function buildJobs({ missions, sidekicks }) {
       if (speaker === 'client') add(`client:${m.id}`, clientVoice, spoken);
       else if (speaker === 'sidekick') for (const id of sidekickIds) add(id, cast.sidekicks[id], spoken);
       else add('narrator', cast.narrator, spoken);
+    }
+  }
+  // Playground intro and egg lines (sidekick voices). File contents and command output are not voiced.
+  if (playground) {
+    const lines = [...playground.intro, ...playground.eggs.flatMap((e) => e.found)];
+    for (const line of lines) {
+      const spoken = (line.say ?? line.text).trim();
+      for (const id of sidekickIds) add(id, cast.sidekicks[id], spoken);
     }
   }
   for (const s of sidekicks) {

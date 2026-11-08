@@ -29,9 +29,39 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
-1. Phase 0 is pushed; CI deploy and live smoke passed on `https://hax-d7j.pages.dev`.
-2. Founder standing authorization (2026-11-07): ship accepted batches without asking until launch
-   work is done (docs/DECISIONS.md). Engine BUILD E1 and content BUILD C1 are running (launched about 7:45 PM Toronto, 2026-11-07).
-   9:20 PM: C1 integrated and live (d1bed87); Phase 1 voice lines committed (5e7752d). E1 VERIFY running;
-   content C2 BUILD (M4 to M7) running. After E1 VERIFY reports, accept and integrate, then launch
-   engine E2 (widgets plus E2-6 audio playback). After C2 integrates, rerun scripts/audio/generate.mjs.
+Updated about 1:10 AM Toronto, 2026-11-08, owner rotation 20261108-000001 (old owner stood down,
+done marker written). E2 VERIFY run 1 stopped at 4e4f885 (e2e 124 pass, 36 fail: seven tall steps at
+1366x768 plus an outdated update.spec). Owner approved E2-V6 (fit as a rule, 1920 scaling) and the
+update.spec rewrite, and launched E2 VERIFY run 2 (hard stop about 3 AM). When it reports: check
+screenshots, accept, have it integrate, confirm CI and the live site, tell the founder to start
+playing, then launch E3. Hourly lane check cron at :46.
+
+Final handoff from owner 20261107-190700-manual at rotation to hax-7b (rotation 20261108-000001),
+about midnight Toronto 2026-11-08: E2 VERIFY coordinator is still running in D:/Dev/hax-engine on
+engine/e2 (committed tip 0838f0c, "compact mission map that points at the next mission"), with worker
+E2-V4-w1 (fourth fix round, packet build-logs/E2-V4-packet.md) running and uncommitted worker edits in
+src/styles/base.css, src/ui/screens/{Map,Player,Start}.tsx, the widget css files and src/ui tests.
+Do not touch that worktree; wait for the coordinator's terminal report (forwarded by the old owner),
+then review screenshots and accept or send follow-ups. The coordinator hard-stops at about 2 hours
+(launched about 11:05 PM), so expect a checkpoint around 1 AM if it is not green.
+
+Updated 11:15 PM Toronto, 2026-11-07. Founder standing authorization: ship accepted batches without
+asking until launch work is done (docs/DECISIONS.md).
+
+Done and live on main: Phase 0, E1 engine foundation, C1 (login, Boot Camp, Terminal, M1 to M3),
+C2 (M4 to M7), C3 (Agent Playground content), all audio (1,914 voice lines, 12 sfx, 5 music tracks in
+the founder's chosen soft sneaky spy style). Cloudflare zone Browser Cache TTL is "Respect Existing
+Headers" (sw.js must stay no-cache).
+
+1. Running: engine E2 VERIFY (worktree D:/Dev/hax-engine, checkpoint build-logs/E2-checkpoint.md):
+   widgets for every step kind, playthrough driver over all 19 missions, recorded voices plus one steady
+   fallback voice, no real password inputs, service worker update at safe moments, begin tap and
+   visible read-aloud toggle. When it reports: look at its screenshots, accept, let it integrate,
+   confirm CI green and that hax.huxton.ca plays a mission. Tell the founder he can start playing.
+2. Then launch engine E3 (BACKLOG "Batch E3"): ID card, music playback and three-channel audio
+   controls, Playground screen (art keys playground-door and badge-egg, {name} token), parent panel and
+   session timer, visual polish including the login fitting one screen at 1366x768.
+3. Content lane is idle. Optional: check the M1 last-hint path. Owner: parent setup guide (install as
+   app, Edge --app and --kiosk shortcuts). Final: fresh-eyes kid review pass and fixes, then report
+   launch ready to the founder.
+4. ElevenLabs: founder said be careful with usage. Dry-run first; ask before any run over about 5,000 characters.
