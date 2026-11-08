@@ -11,6 +11,7 @@ import { Playground } from './screens/Playground';
 import { Player } from './screens/Player';
 import { Done, Stop, SaveCode, Settings } from './screens/SaveScreens';
 import { Parent } from './screens/Parent';
+import './screens/startup.css';
 function ScreenView() {
   const store = useStore();
   const screen = store.screen.value;
@@ -35,15 +36,17 @@ function Shell() {
   const panel = useRef<HTMLElement>(null);
   const screen = store.screen.value;
   const position = store.position.value;
+  const startup = ['start', 'onboarding', 'savecode'].includes(screen.name);
   useEffect(() => {
     if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
     panel.current?.scrollTo?.(0, 0);
   }, [screen, position]);
-  return <div class={`app-shell${screen.name === 'player' ? ' player-shell' : ''}`}>
-    {screen.name !== 'settings' && screen.name !== 'player' && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
+  return <div class={`app-shell${screen.name === 'player' ? ' player-shell' : ''}${startup ? ' startup-shell' : ''}`}>
+    {screen.name !== 'settings' && screen.name !== 'player' && !startup && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
     <div role="status" aria-live="polite">{store.updatePending.value &&
       <SpeechLine line={{ text: 'New missions arrived!' }} />}</div>
     <ScreenView key={screen.name} />
+    {startup && <div class="startup-tools"><Toolbar compact /></div>}
   </main></div>;
 }
 export function App({ store, onBegin }: { store: AppStore; onBegin?: () => void }) {
@@ -61,8 +64,9 @@ export function App({ store, onBegin }: { store: AppStore; onBegin?: () => void 
     setBegun(true);
   };
   return <StoreContext.Provider value={store}>{begun ? <Shell />
-    : <div class="app-shell"><main class="panel begin-panel">
-      <h1 class="glow">AGENT HQ</h1>
+    : <div class="app-shell startup-shell"><main class="panel begin-panel startup-begin">
+      <span class="startup-tty">hax-os · crew terminal</span>
+      <h1 class="glow">&gt;_HAX</h1>
       <BigButton class="begin-button" onClick={begin}>Tap to begin, Agent!</BigButton>
     </main></div>}</StoreContext.Provider>;
 }

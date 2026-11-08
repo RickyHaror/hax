@@ -39,7 +39,8 @@ async function expectOfflineAudio(page: Page): Promise<void> {
   const finished = page.waitForEvent('requestfinished', {
     predicate: (request) => new URL(request.url()).pathname.startsWith('/audio/lines/'),
   });
-  const read = page.getByRole('button', { name: 'Read aloud', exact: true }).first();
+  const read = page.getByRole('complementary', { name: 'Sidekick rail', exact: true })
+    .getByRole('button', { name: 'Read aloud', exact: true }).first();
   await read.click();
   await finished;
   await expect(read).toHaveAttribute('aria-pressed', 'false', { timeout: 15_000 });

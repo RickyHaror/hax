@@ -16,7 +16,7 @@ describe('start and onboarding', () => {
     const store = createStore(deps);
     store.settings({ autoRead }); store.go({ name: 'onboarding' });
     root = await mount(store); await click(root, 'Tap to begin, Agent!');
-    expect(root.querySelector('h1')?.textContent).toBe('Pick your agent name');
+    expect(root.querySelector('.onboarding-heading h1')?.textContent).toBe('Pick your agent name');
     expect(root.querySelector('h1 button')).toBeNull();
     expect(vi.mocked(deps.voice.speakAll).mock.calls).toEqual(autoRead ? [[[SIGNUP_PROMPT]]] : []);
     expect(deps.voice.speak).not.toHaveBeenCalled();
@@ -31,8 +31,8 @@ describe('start and onboarding', () => {
       expect(vi.mocked(deps.voice.speakAll).mock.calls).toEqual(autoRead
         ? [[buddy.greeting, { sidekick: buddy.id }]] : []);
       expect(deps.voice.cancel).not.toHaveBeenCalled();
-      const bubble = root.querySelector('.bubble')!;
-      expect(bubble.getAttribute('aria-label')).toBe(`${buddy.name} says`);
+      const bubble = root.querySelector('.sidekick-comms')!;
+      expect(bubble.getAttribute('aria-label')).toBe(`${buddy.name}, crew tech, on comms`);
       for (const line of buddy.greeting) expect(bubble.textContent).toContain(line.text);
       expect(bubble.querySelectorAll('button[aria-label="Read aloud"]')).toHaveLength(buddy.greeting.length);
     }
@@ -42,7 +42,7 @@ describe('start and onboarding', () => {
     const deps = fakeDeps(); const store = createStore(deps);
     store.settings({ autoRead: false }); store.go({ name: 'onboarding' });
     root = await mount(store); await click(root, 'Tap to begin, Agent!');
-    const heading = root.querySelector('h1')!;
+    const heading = root.querySelector('.onboarding-heading h1')!;
     const read = heading.parentElement!.querySelector<HTMLButtonElement>('[aria-label="Read aloud"]')!;
     await act(() => read.click());
     expect(deps.voice.speak).toHaveBeenCalledExactlyOnceWith(SIGNUP_PROMPT,

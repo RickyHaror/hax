@@ -21,9 +21,10 @@ test('begin unlocks audio and both reading controls play a clip or speech', asyn
       value: class { constructor(public text: string) {} } });
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'AGENT HQ', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '>_HAX', exact: true })).toBeVisible();
   expect(await page.evaluate(() => window.audioCalls)).toEqual([]);
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'AGENT HQ', exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.audioCalls.length)).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Sound controls', exact: true }).click();
   const toggle = page.getByRole('button', { name: 'Read to me', exact: true });

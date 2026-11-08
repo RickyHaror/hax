@@ -8,6 +8,9 @@ import { SidekickBubble } from '../components/SidekickBubble';
 import { SpeechLine } from '../components/SpeechLine';
 import { Toggles } from '../components/Toolbar';
 import { SessionNudge } from './parent/SessionNudge';
+import { TopBar } from '../components/TopBar';
+import { TerminalWindow } from '../terminal/TerminalWindow';
+import './startup.css';
 export function SecretKey() {
   const store = useStore();
   return <section aria-label="Secret decryption key">
@@ -49,12 +52,19 @@ export function SaveCode() {
   const store = useStore();
   const [key, setKey] = useState('');
   const [error, setError] = useState('');
-  return <><h1>Enter your secret key</h1><form onSubmit={(event) => {
+  return <div class="startup savecode-screen"><TopBar title="HQ" step="Secret key" />
+    <div class="startup-layout"><div class="startup-work">
+    <TerminalWindow title="hax-os" status="RESTORE"><div class="savecode-content">
+    <h1>Enter your secret key</h1><form onSubmit={(event) => {
     event.preventDefault(); const result = store.restore(key);
     if (!result.ok) setError(errors[result.error]);
-  }}><label>Secret key<input value={key} onInput={(event) => setKey(event.currentTarget.value)} autoComplete="off" /></label>
-    <BigButton type="submit">Check</BigButton>
-  </form>{error && <SpeechLine line={{ text: error }} />}<BigButton onClick={store.back}>Back</BigButton></>;
+  }}><label>Secret key<span class="savecode-prompt" aria-hidden="true">&gt;</span>
+    <input value={key} onInput={(event) => setKey(event.currentTarget.value)} autoComplete="off" /></label>
+    <BigButton class="startup-primary" type="submit">Check</BigButton>
+  </form>{error && <SpeechLine line={{ text: error }} />}</div></TerminalWindow>
+    <div class="startup-actions"><BigButton onClick={store.back}>Back</BigButton></div></div>
+    <aside class="startup-rail" aria-label="Sidekick rail"><SidekickBubble rail autoRead={false}
+      lines={[{ text: 'Your secret key brings back your agent.' }]} /></aside></div></div>;
 }
 export function Settings() {
   const store = useStore();

@@ -28,7 +28,7 @@ describe('audio begin screen', () => {
   it('renders only the begin screen and keeps voice and sound idle until tapped', async () => {
     const deps = fakeDeps(); const store = createStore(deps);
     root = await mount(store);
-    expect(root.querySelector('h1')?.textContent).toBe('AGENT HQ');
+    expect(root.querySelector('h1')?.textContent).toBe('>_HAX');
     expect(root.querySelectorAll('button')).toHaveLength(1);
     expect(root.textContent).not.toContain(login.intro[0]!.text);
     expect(deps.voice.speakAll).not.toHaveBeenCalled();

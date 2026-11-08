@@ -35,9 +35,9 @@ export default defineConfig({
   projects: [
     { name: 'chromium-1366', use: { ...devices['Desktop Chrome'], viewport: sizes.laptop } },
     { name: 'chromium-1920', use: { ...devices['Desktop Chrome'], viewport: sizes.desktop } },
-    { name: 'chromium-1366x650', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts'],
+    { name: 'chromium-1366x650', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts', '**/startup.spec.ts'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 650 } } },
-    { name: 'chromium-phone', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts'],
+    { name: 'chromium-phone', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts', '**/startup.spec.ts'],
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 },
         isMobile: true, hasTouch: true, deviceScaleFactor: 3 } },
     ...(edgeInstalled
