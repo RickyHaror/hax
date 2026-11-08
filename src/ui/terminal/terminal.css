@@ -83,7 +83,7 @@
   font: 700 17px var(--font-mono);
   white-space: nowrap;
 }
-.command-chip small { font: 500 13px var(--font-sans); color: var(--muted); }
+.command-chip small { font: 500 16px var(--font-sans); color: var(--muted); }
 .command-chips .command-chip:hover { border-color: var(--text-2); }
 .command-row .command-key {
   display: inline-flex;
@@ -100,10 +100,10 @@
   border-radius: var(--r-chip);
   background: var(--raised);
   color: var(--text);
-  font: 700 14px var(--font-mono);
+  font: 700 16px var(--font-mono);
 }
 .command-row .command-enter { background: var(--go); border-color: var(--go); color: var(--ink-go); }
-.command-options { color: var(--info); font: 15px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.command-options { color: var(--info); font: 16px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 599px) {
   .terminal-body { padding: 12px 14px; font-size: 15.5px; }
   .command-bar { padding: 10px 12px; gap: 10px; }
@@ -112,5 +112,6 @@
   .prompt-full { display: none; }
   .prompt-short { display: inline; }
   .command-chips { order: -1; flex-wrap: nowrap; overflow-x: auto; padding: 4px; }
+  .command-chip small, .command-row .command-key, .command-options { font-size: 14px; }
   .command-row .command-enter { width: 64px; padding: 0; }
 }

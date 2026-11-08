@@ -2,10 +2,13 @@
 .rank-badge > svg { color: var(--go); fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .rank-badge > svg path { stroke-width: 4; }
 .rank-details { flex: 1; min-width: 0; }
-.rank-details .speech-line { font: 14px var(--font-mono); margin: 0; flex-wrap: nowrap; }
+.rank-details .speech-line { font: 16px var(--font-mono); margin: 0; flex-wrap: nowrap; }
 .rank-details .speech-line:first-child { color: var(--go); font-weight: 700; font-size: 20px; }
 .rank-details .speech-line > span { flex: 1; }
 .rank-details progress { display: block; width: 100%; height: 8px; accent-color: var(--go); border: 0; border-radius: 8px; background: var(--line); }
 .rank-details progress::-webkit-progress-bar { background: var(--line); border-radius: 8px; }
 .rank-details progress::-webkit-progress-value { background: var(--go); border-radius: 8px; }
-@media (max-width: 599px) { .rank-badge > svg { width: 68px; height: 68px; } }
+@media (max-width: 599px) {
+  .rank-badge > svg { width: 68px; height: 68px; }
+  .rank-details .speech-line { font-size: 14px; }
+}

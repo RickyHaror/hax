@@ -25,7 +25,7 @@
 .terminal-folders > ul { padding-left: 0; }
 .terminal-tree-entry { display: flex; align-items: baseline; gap: 6px; padding: 2px; }
 .terminal-tree-entry > span { flex-shrink: 0; white-space: nowrap; }
-.terminal-tree-entry > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.terminal-tree-entry > span:nth-child(2) { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .terminal-tree-entry[aria-current='true'] {
   background: var(--panel);
   outline: 2px solid var(--green);

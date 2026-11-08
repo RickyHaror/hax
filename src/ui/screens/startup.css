@@ -88,7 +88,7 @@
 .startup .buddy-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .startup .buddy-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border-color: var(--line-2); }
 .startup .buddy-card > button { flex: none; justify-content: center; min-height: 52px; padding: 4px; }
-.startup .buddy-card .speech-line { font-size: 15px; flex-wrap: nowrap; }
+.startup .buddy-card .speech-line { font-size: 16px; flex-wrap: nowrap; }
 .startup .buddy-card > button > svg { width: 36px; height: 36px; }
 .savecode-content { display: flex; flex-direction: column; gap: 24px; width: min(100%, 620px); padding: 12px 6px; }
 .savecode-content form { display: flex; align-items: flex-end; gap: 12px; padding: 6px; }
