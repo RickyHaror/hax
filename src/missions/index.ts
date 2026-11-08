@@ -1,7 +1,8 @@
 import type { Mission } from '../engine/types';
+import { login } from './login';
 
 /**
  * Mission registry. The content lane adds each mission file here.
  * Order in the game comes from Mission.order, not from this list.
  */
-export const missions: Mission[] = [];
+export const missions: Mission[] = [login];
