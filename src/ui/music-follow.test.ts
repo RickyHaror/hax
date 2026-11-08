@@ -46,19 +46,21 @@ describe('screen music', () => {
     store.position.value = { phase: 'success', index: 0 }; expect(musicTrack(store)).toBe('terminal');
   });
 
-  it('waits for a gesture, follows screens and steps, retries on gestures, and disposes', () => {
-    const { store, music } = setup(); const gestures = new EventTarget();
-    const stop = startMusicFollow(store, music, store.voice, gestures);
+  it('waits for Begin, follows screens and steps, and disposes', () => {
+    const { store, music } = setup();
+    const follow = startMusicFollow(store, music, store.voice);
     expect(music.play).not.toHaveBeenCalled();
-    store.go({ name: 'map' }); gestures.dispatchEvent(new Event('pointerdown'));
+    store.go({ name: 'map' }); document.dispatchEvent(new Event('pointerdown'));
+    document.dispatchEvent(new Event('keydown')); document.dispatchEvent(new Event('click'));
+    expect(music.play).not.toHaveBeenCalled();
+    follow.begin();
     expect(music.play).toHaveBeenLastCalledWith('hq');
     store.openMission('bootcamp'); expect(music.play).toHaveBeenLastCalledWith('bootcamp');
-    gestures.dispatchEvent(new Event('keydown')); expect(music.play).toHaveBeenLastCalledWith('bootcamp');
     store.registry.missions.find((m) => m.id === 'bootcamp')!.steps[0]!.config = { kind: 'key-find' } as StepConfig;
     store.position.value = { phase: 'step', index: 0 }; expect(music.play).toHaveBeenLastCalledWith(null);
     store.position.value = { phase: 'outro', index: 0 }; expect(music.play).toHaveBeenLastCalledWith('bootcamp');
-    stop(); vi.mocked(music.play).mockClear();
-    store.go({ name: 'map' }); gestures.dispatchEvent(new Event('pointerdown'));
+    follow.stop(); vi.mocked(music.play).mockClear();
+    store.go({ name: 'map' }); follow.begin();
     expect(music.play).not.toHaveBeenCalled();
   });
 
@@ -72,11 +74,11 @@ describe('screen music', () => {
     const voice = createVoice({ Audio: Clip as unknown as typeof Audio, synth: null, Utterance: null });
     voice.setManifest({ lines: { 'bit|Hello': 'hello.mp3' }, sfx: {} });
     const { store, music } = setup();
-    const stop = startMusicFollow(store, music, voice, new EventTarget());
+    const follow = startMusicFollow(store, music, voice);
     voice.speak({ text: 'Hello' }); expect(music.duck).toHaveBeenLastCalledWith(true);
     clips[0]!.onended?.(); expect(music.duck).toHaveBeenLastCalledWith(false);
     voice.speak({ text: 'Hello' }); voice.cancel(); expect(music.duck).toHaveBeenLastCalledWith(false);
-    stop(); vi.mocked(music.duck).mockClear(); voice.speak({ text: 'Hello' });
+    follow.stop(); vi.mocked(music.duck).mockClear(); voice.speak({ text: 'Hello' });
     expect(music.duck).not.toHaveBeenCalled(); voice.cancel();
   });
 });

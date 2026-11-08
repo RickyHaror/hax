@@ -45,7 +45,7 @@ function Shell() {
     <ScreenView key={screen.name} />
   </main></div>;
 }
-export function App({ store }: { store: AppStore }) {
+export function App({ store, onBegin }: { store: AppStore; onBegin?: () => void }) {
   const [begun, setBegun] = useState(false);
   const begin = () => {
     store.sound.play('click');
@@ -56,6 +56,7 @@ export function App({ store }: { store: AppStore }) {
       const index = mission?.steps.findIndex((step) => step.config.kind === 'answer') ?? -1;
       if (index >= 0) store.position.value = { phase: 'step', index };
     }
+    onBegin?.();
     setBegun(true);
   };
   return <StoreContext.Provider value={store}>{begun ? <Shell />

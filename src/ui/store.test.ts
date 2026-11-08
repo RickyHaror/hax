@@ -1,10 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createVoice } from '../engine/voice';
 import { createProgress, loadProgress, saveProgress, setCurrent, setIdentity, STORAGE_KEY, isUnlocked, toSaveCode, type StorageLike } from '../engine/progress';
-import { createStore } from './store';
+import { createStore, type Screen } from './store';
 import { client, dependent, fixtureRegistry } from './test/fixtures';
 import { fakeDeps } from './test/helpers';
 describe('app store', () => {
+  it.each(['idcard', 'stop'] as const)('preserves nested Back destinations from %s', (name) => {
+    const store = createStore(fakeDeps()); store.identify(0, 0, 0);
+    store.visit({ name }); store.visit({ name: 'parent' });
+    store.back(); expect(store.screen.value).toEqual({ name });
+    store.back(); expect(store.screen.value).toEqual({ name: 'map' });
+  });
+
+  it('returns from Stop through the parent panel to the exact mission and phase', () => {
+    const store = createStore(fakeDeps()); store.identify(0, 0, 0);
+    store.openMission(client.id); store.phase(client.id, { phase: 'step', index: 1 });
+    store.visit({ name: 'stop' }); store.visit({ name: 'parent' });
+    store.back(); expect(store.screen.value.name).toBe('stop');
+    store.back(); expect(store.screen.value).toEqual({ name: 'player', missionId: client.id });
+    expect(store.position.value).toEqual({ phase: 'step', index: 1 });
+  });
+
+  it.each([false, true])('ignores duplicate visits and discards stale returns, identity: %s', (identity) => {
+    const deps = fakeDeps(); const store = createStore(deps);
+    if (identity) store.identify(0, 0, 0);
+    const home: Screen = { name: identity ? 'map' : 'start' };
+    store.visit({ name: 'settings' }); store.visit({ name: 'settings' });
+    store.visit({ name: 'parent' }); store.visit({ name: 'parent' });
+    store.back(); expect(store.screen.value.name).toBe('settings');
+    store.back(); expect(store.screen.value).toEqual(home);
+    store.visit({ name: 'idcard' }); store.visit({ name: 'parent' });
+    store.go(home); store.visit({ name: 'parent' });
+    store.back(); expect(store.screen.value).toEqual(home);
+    const cancel = vi.mocked(deps.voice.cancel); cancel.mockClear();
+    store.back(); expect(store.screen.value).toEqual(home);
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
   it('reports an asynchronous clip failure once even while the manifest is supported', async () => {
     let reject!: (reason: Error) => void;
     const pending = new Promise<void>((_, fail) => { reject = fail; });

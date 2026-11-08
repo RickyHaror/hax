@@ -75,6 +75,27 @@ test('decoder letters are readable and its controls fit the laptop', async ({ pa
     parseFloat(getComputedStyle(letter).fontSize))).toBeGreaterThan(fonts[0]!);
 });
 
+test('decoder Help me aligns with the answer column at both desktop sizes', async ({ page }) => {
+  for (const viewport of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }]) {
+    await page.setViewportSize(viewport);
+    await resumeLayout(page, missions.find((mission) => mission.id === 'm3-zoo')!);
+    const hints = page.getByRole('region', { name: 'Hints', exact: true });
+    const help = page.getByRole('button', { name: 'Help me', exact: true });
+    for (let rung = 0; rung <= 3; rung++) {
+      const answer = await page.locator('.decoder-tool .answer-form').boundingBox();
+      const wheel = await page.getByRole('slider', { name: 'Decoder wheel', exact: true }).boundingBox();
+      expect(wheel!.width).toBeGreaterThanOrEqual(330);
+      const box = await help.boundingBox();
+      expect(Math.abs(box!.x - answer!.x)).toBeLessThanOrEqual(4);
+      expect(box!.y).toBeGreaterThanOrEqual(answer!.y + answer!.height);
+      expect(await hints.evaluate((element) => getComputedStyle(element).justifyContent)).toBe('flex-start');
+      await expect(help).toBeInViewport({ ratio: 1 });
+      await expectScreenFit(page);
+      if (rung < 3) await help.click();
+    }
+  }
+});
+
 test('start login keeps the note and Check in view', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await page.addInitScript(() => localStorage.clear());

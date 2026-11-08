@@ -18,25 +18,25 @@ export function musicTrack(store: Pick<AppStore, 'screen' | 'position' | 'regist
 }
 
 export function startMusicFollow(
-  store: AppStore, music: MusicPlayer, voice: Voice, gestures: EventTarget = document,
-): () => void {
+  store: AppStore, music: MusicPlayer, voice: Voice,
+) {
   let begun = false;
+  let disposed = false;
   let track: MusicTrack | null = null;
-  const stop = effect(() => {
+  const stopEffect = effect(() => {
     track = musicTrack(store);
     if (begun) music.play(track);
   });
-  const gesture = () => { begun = true; music.play(track); };
   const unsubscribe = voice.onSpeakingChange?.((speaking) => music.duck(speaking));
   music.duck(voice.isSpeaking());
-  gestures.addEventListener('pointerdown', gesture);
-  gestures.addEventListener('keydown', gesture);
-  gestures.addEventListener('click', gesture);
-  return () => {
-    stop(); unsubscribe?.();
-    gestures.removeEventListener('pointerdown', gesture);
-    gestures.removeEventListener('keydown', gesture);
-    gestures.removeEventListener('click', gesture);
-    music.play(null);
+  return {
+    begin() {
+      if (begun || disposed) return;
+      begun = true; music.play(track);
+    },
+    stop() {
+      disposed = true;
+      stopEffect(); unsubscribe?.(); music.play(null);
+    },
   };
 }

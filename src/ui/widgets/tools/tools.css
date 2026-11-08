@@ -18,6 +18,9 @@
   .wheel-turns { display: flex; flex-wrap: wrap; gap: 4px; }
   .step-work .wheel-turns button { flex: 1; margin: 0; padding: 4px; white-space: nowrap; }
   .step-work .decoded-preview { flex: 0 0 auto; }
+  .step-work:has(> .decoder-tool) > section[aria-label='Hints'] {
+    margin-inline-start: calc(50% + 4px); justify-content: flex-start;
+  }
 }
 .source-line { display: block; min-height: 1.5em; }
 .source-tag { color: var(--green); }

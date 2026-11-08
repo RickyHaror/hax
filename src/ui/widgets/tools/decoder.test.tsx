@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { render } from 'preact';
+import { readFileSync } from 'node:fs';
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { caesarDecode } from '../../../engine/cipher';
@@ -7,6 +8,7 @@ import { m3Zoo } from '../../../missions/m3-zoo';
 import { button, click, fill, input, submit } from '../../test/helpers';
 import { fixtureRegistry } from '../../test/fixtures';
 import { Toolbar } from '../../components/Toolbar';
+import { Player } from '../../screens/Player';
 import { createStore, StoreContext } from '../../store';
 import { decoderConfig, mountTool, removeTools } from './test-helpers';
 
@@ -19,7 +21,50 @@ function letterCenter(letter: HTMLElement, diameter: number) {
   const angle = parseFloat(letter.parentElement!.style.transform.slice(7)) * Math.PI / 180 || 0;
   return { x: x * Math.cos(angle) - y * Math.sin(angle), y: x * Math.sin(angle) + y * Math.cos(angle) };
 }
+function viewportStyles(width: number, height: number) {
+  const source = document.createElement('style');
+  source.textContent = ['src/styles/base.css', 'src/ui/widgets/tools/tools.css']
+    .map((path) => readFileSync(path, 'utf8')).join('\n');
+  document.head.append(source);
+  function active(rules: CSSRuleList): string {
+    return [...rules].map((rule) => {
+      if (rule.type === CSSRule.STYLE_RULE) return rule.cssText;
+      if (rule.type !== CSSRule.MEDIA_RULE) return '';
+      const media = rule as CSSMediaRule;
+      const bounds = [...media.conditionText.matchAll(/\((min|max)-(width|height): (\d+)px\)/g)];
+      return bounds.length && bounds.every(([, limit, axis, size]) => {
+        const value = axis === 'width' ? width : height;
+        return limit === 'min' ? value >= Number(size) : value <= Number(size);
+      }) ? active(media.cssRules) : '';
+    }).join('\n');
+  }
+  const styles = active(source.sheet!.cssRules);
+  source.textContent = styles;
+  return source;
+}
 describe('decoder mission', () => {
+  it.each([[1366, 768], [1920, 1080]])('aligns Help me under the answer at %sx%s', async (width, height) => {
+    const styles = viewportStyles(width, height);
+    try {
+      const { root, deps } = await mountTool(decoderConfig);
+      const store = createStore({ ...deps, registry: fixtureRegistry([m3Zoo]) });
+      store.go({ name: 'player', missionId: m3Zoo.id });
+      store.phase(m3Zoo.id, { phase: 'step', index: 0 });
+      await act(() => render(<StoreContext.Provider value={store}><Player mission={m3Zoo} /></StoreContext.Provider>, root));
+      const hints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
+      for (let rung = 0; rung <= 3; rung++) {
+        const style = getComputedStyle(hints);
+        expect(style.display).toBe('flex');
+        expect(style.justifyContent).toBe('flex-start');
+        expect(style.marginInlineStart).toBe('calc(50% + 4px)');
+        if (rung < 3) await click(root, 'Help me');
+      }
+      expect(root.querySelector('.step-work')?.textContent).toContain(m3Zoo.steps[0]!.hints[2]!.text);
+      await act(() => store.phase(m3Zoo.id, { phase: 'step', index: 1 }));
+      const otherHints = root.querySelector<HTMLElement>('section[aria-label="Hints"]')!;
+      expect(getComputedStyle(otherHints).marginInlineStart).not.toBe('calc(50% + 4px)');
+    } finally { styles.remove(); }
+  });
   it.each([{ diameter: 340, font: 24 }, { diameter: 510, font: 36 }])(
     'spaces both alphabets apart at $diameter pixels through every shift', async ({ diameter, font }) => {
       const { root } = await mountTool(decoderConfig);

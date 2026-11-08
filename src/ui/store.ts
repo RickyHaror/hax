@@ -73,6 +73,26 @@ function readingStore(source: Voice) {
   }
   return { voice, reading, readLine };
 }
+function sameScreen(left: Screen, right: Screen): boolean {
+  return left.name === right.name && (!('missionId' in left)
+    || ('missionId' in right && left.missionId === right.missionId));
+}
+function screenNavigation(screen: Signal<Screen>, home: () => Screen, navigate: (next: Screen) => void) {
+  const history: Screen[] = [];
+  return {
+    go(next: Screen) { history.length = 0; navigate(next); },
+    visit(next: Screen) {
+      if (sameScreen(screen.value, next)) return;
+      history.push(screen.value); navigate(next);
+    },
+    back() {
+      let next = history.pop();
+      while (next && sameScreen(screen.value, next)) next = history.pop();
+      next ??= home();
+      if (!sameScreen(screen.value, next)) navigate(next);
+    },
+  };
+}
 function coreStore(deps: StoreDeps) {
   const playback = readingStore(deps.voice);
   const loaded = loadProgress(deps.storage);
@@ -82,7 +102,6 @@ function coreStore(deps: StoreDeps) {
   const screen = signal<Screen>({ name: hasIdentity(progress.value) ? 'map' : 'start' });
   const position = signal<Position>({ phase: 'intro', index: 0 });
   const notice = signal('');
-  let returnScreen: Screen = screen.value;
   function save(next: Progress, persist = true) {
     if (persist) {
       progress.value = next;
@@ -99,7 +118,9 @@ function coreStore(deps: StoreDeps) {
       missionId: screen.value.name === 'player' ? screen.value.missionId : null,
     });
   }
-  function go(next: Screen) { playback.voice.cancel(); screen.value = next; syncVoice(); }
+  function navigate(next: Screen) { playback.voice.cancel(); screen.value = next; syncVoice(); }
+  const navigation = screenNavigation(screen,
+    () => ({ name: hasIdentity(progress.value) ? 'map' : 'start' }), navigate);
   function phase(missionId: string, next: Position) {
     position.value = next;
     save(setCurrent(progress.value, { missionId, stepId: JSON.stringify([next.phase, next.index]) }));
@@ -110,12 +131,10 @@ function coreStore(deps: StoreDeps) {
     const current = progress.value.current;
     phase(missionId, current?.missionId === missionId
       ? resumePosition(mission, current.stepId) : { phase: 'intro', index: 0 });
-    go({ name: 'player', missionId });
+    navigation.go({ name: 'player', missionId });
   }
   return {
-    ...deps, ...playback, progress, saved, revealCount, screen, position, notice, save, go, syncVoice, phase, openMission,
-    visit(next: Screen) { returnScreen = screen.value; go(next); },
-    back() { go(returnScreen); },
+    ...deps, ...playback, ...navigation, progress, saved, revealCount, screen, position, notice, save, syncVoice, phase, openMission,
   };
 }
 function initialize(store: ReturnType<typeof coreStore>) {
@@ -147,12 +166,15 @@ export function createStore(deps: StoreDeps) {
       }
     },
     parentReset() {
-      const cleared = clearPlayground(deps.storage);
-      save(resetProgress(progress.value));
+      const next = resetProgress(progress.value);
+      store.saved.value = clearPlayground(deps.storage) && saveProgress(deps.storage, next);
+      if (!store.saved.value) return false;
+      progress.value = next;
+      save(next, false);
       store.position.value = { phase: 'intro', index: 0 };
       store.revealCount.value = 0; notice.value = '';
       go({ name: 'start' });
-      return cleared && store.saved.value;
+      return true;
     },
     updateReady: signal(false),
     updatePending: signal(false),
