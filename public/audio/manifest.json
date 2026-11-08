@@ -1,0 +1,18 @@
+{
+ "version": 1,
+ "lines": {},
+ "sfx": {
+  "click": "click.mp3",
+  "success": "success.mp3",
+  "hint": "hint.mp3",
+  "key": "key.mp3",
+  "try-again": "try-again.mp3",
+  "catch": "catch.mp3",
+  "lock": "lock.mp3",
+  "unlock": "unlock.mp3",
+  "door": "door.mp3",
+  "fanfare": "fanfare.mp3",
+  "badge": "badge.mp3",
+  "typing": "typing.mp3"
+ }
+}

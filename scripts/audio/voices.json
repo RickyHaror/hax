@@ -1,0 +1,35 @@
+{
+  "model": "eleven_multilingual_v2",
+  "format": "mp3_22050_32",
+  "settings": { "stability": 0.5, "similarity_boost": 0.75, "style": 0.3, "speed": 0.92 },
+  "narrator": "XrExE9yKIg1WjnnlVkGX",
+  "sidekicks": {
+    "bit": "TX3LPaxmHKxFdv7VOQHJ",
+    "pixel": "cgSgspJ2msm6clMCkdW9",
+    "hoot": "JBFqnCBsd6RMkjVDRZzb"
+  },
+  "clients": {
+    "m1-pizza": "IKne3meq5aSn9XLyUdCD",
+    "m2-toys": "FGY2WhTYpPnrIDTdsKH5",
+    "m3-zoo": "pqHfZKP75CvOlQylNhV4",
+    "m4-cupcake": "hpp4J3VqNfWAUOO0d1Us",
+    "m5-moon": "onwK4e9ZLuTAKqWW03F9",
+    "m6-socks": "N2lVS1w4EtoT3dr4eOWO",
+    "m7-graduation": "nPczCjzI2devNBz1zQrb",
+    "default": "iP95p4xoKVk53GoZ742B"
+  },
+  "sfx": {
+    "click": { "prompt": "Soft friendly UI button click, gentle plastic tap, kids game", "seconds": 0.5 },
+    "success": { "prompt": "Friendly cartoon success chime, short sparkly arcade jingle for a kids game", "seconds": 1.5 },
+    "hint": { "prompt": "Gentle magical twinkle, a helpful idea appearing, soft bell, kids game", "seconds": 1 },
+    "key": { "prompt": "Single soft retro computer keyboard key press, clean and quiet", "seconds": 0.5 },
+    "try-again": { "prompt": "Soft friendly cartoon boop, gentle and kind, not a buzzer, kids game", "seconds": 0.7 },
+    "catch": { "prompt": "Bright little pop and sparkle when catching a glowing data packet, arcade, kids game", "seconds": 0.6 },
+    "lock": { "prompt": "Satisfying metal padlock click shut with a small sparkle, kids game", "seconds": 1 },
+    "unlock": { "prompt": "Cheerful padlock unlocking click with a rising chime, kids game", "seconds": 1 },
+    "door": { "prompt": "Futuristic friendly sliding door whoosh opening, spy headquarters, kids game", "seconds": 1.2 },
+    "fanfare": { "prompt": "Short triumphant cheerful fanfare with sparkles for completing a mission, kids video game", "seconds": 3 },
+    "badge": { "prompt": "Shiny badge earned sound, bright chime with a little whoosh, kids game", "seconds": 1.5 },
+    "typing": { "prompt": "Short burst of soft retro computer terminal typing, beeps and clicks, friendly", "seconds": 1 }
+  }
+}
