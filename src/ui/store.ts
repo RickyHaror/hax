@@ -8,15 +8,17 @@ import {
 } from '../engine/progress';
 import type { Voice } from '../engine/voice';
 import type { SoundPlayer } from '../engine/sound';
+import { applyAudioSettings, type MusicPlayer } from '../engine/music';
 import type { Registry } from './registry';
 import type { Line, Mission } from '../engine/types';
 import { isSafeMoment } from './pwa/safe';
 
 export interface StoreDeps {
   registry: Registry; storage: StorageLike | null; voice: Voice; sound: SoundPlayer; now?: () => Date;
+  music?: MusicPlayer;
 }
 export type Screen =
-  | { name: 'start' } | { name: 'onboarding' } | { name: 'map' }
+  | { name: 'start' } | { name: 'onboarding' } | { name: 'map' } | { name: 'playground' }
   | { name: 'player'; missionId: string } | { name: 'done'; missionId: string }
   | { name: 'stop' } | { name: 'savecode' } | { name: 'settings' };
 export interface Position { phase: 'intro' | 'permission' | 'step' | 'success' | 'outro'; index: number }
@@ -76,10 +78,13 @@ function coreStore(deps: StoreDeps) {
   const position = signal<Position>({ phase: 'intro', index: 0 });
   const notice = signal('');
   let returnScreen: Screen = screen.value;
-  function save(next: Progress) {
-    progress.value = next;
-    saved.value = saveProgress(deps.storage, next);
-    deps.sound.setMuted(next.settings.muted);
+  function save(next: Progress, persist = true) {
+    if (persist) {
+      progress.value = next;
+      saved.value = saveProgress(deps.storage, next);
+    }
+    if (next.settings.muted || !next.settings.voices.on) playback.voice.cancel();
+    applyAudioSettings(next.settings, deps.voice, deps.sound, deps.music);
     syncVoice();
   }
   if (progress.value.extraBits !== loaded.extraBits) save(progress.value);
@@ -116,8 +121,7 @@ function initialize(store: ReturnType<typeof coreStore>) {
     store.position.value = resumePosition(mission, current!.stepId);
     store.screen.value = { name: 'player', missionId: mission.id };
   }
-  store.sound.setMuted(store.progress.value.settings.muted);
-  store.syncVoice();
+  store.save(store.progress.value, false);
 }
 export function createStore(deps: StoreDeps) {
   const store = coreStore(deps);

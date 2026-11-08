@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { buildRegistry } from './registry';
 import { client, dependent, login } from './test/fixtures';
+import { playground } from '../missions/playground';
 describe('content registry', () => {
+  it('uses playground content and accepts null or a replacement', () => {
+    expect(buildRegistry().playground).toBe(playground);
+    expect(buildRegistry({ playground: null }).playground).toBeNull();
+    if (!playground) throw new Error('Playground content is required for this test.');
+    const replacement = { ...playground, unlockedBy: 'other' };
+    expect(buildRegistry({ playground: replacement }).playground).toBe(replacement);
+  });
   it('falls back for each empty list without replacing existing lists', () => {
     const registry = buildRegistry({ missions: [], sidekicks: [], firstWords: ['Brave'], secondWords: [], art: {} });
     expect(registry.firstWords).toEqual(['Brave']);

@@ -6,7 +6,7 @@ export function isSafeMoment(screen: Screen, position: Position): boolean {
       return true;
     case 'start': case 'player':
       return position.phase === 'intro' || position.phase === 'success' || position.phase === 'outro';
-    case 'onboarding':
+    case 'onboarding': case 'playground':
       return false;
   }
 }

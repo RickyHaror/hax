@@ -6,6 +6,7 @@ import { SpeechLine } from './components/SpeechLine';
 import { Start } from './screens/Start';
 import { Onboarding } from './screens/Onboarding';
 import { Map } from './screens/Map';
+import { Playground } from './screens/Playground';
 import { Player } from './screens/Player';
 import { Done, Stop, SaveCode, Settings } from './screens/SaveScreens';
 function ScreenView() {
@@ -15,6 +16,7 @@ function ScreenView() {
     case 'start': return <Start />;
     case 'onboarding': return <Onboarding />;
     case 'map': return <Map />;
+    case 'playground': return <Playground />;
     case 'stop': return <Stop />;
     case 'savecode': return <SaveCode />;
     case 'settings': return <Settings />;

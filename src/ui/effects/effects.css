@@ -1,0 +1,17 @@
+.playground-matrix {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2;
+  color: #39ff9f; background: #07141099; border-radius: 10px;
+  font: 24px/1.4 var(--font-code);
+}
+.playground-matrix > span {
+  position: absolute; top: 0; white-space: pre; text-shadow: 0 0 8px #39ff9f;
+  animation: playground-rain 1.5s linear infinite;
+}
+.playground-matrix-still > span { animation: none; }
+@keyframes playground-rain {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(200%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-matrix > span { animation: none; }
+}

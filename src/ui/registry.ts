@@ -1,10 +1,12 @@
-import type { ArtComponent, Mission, Sidekick } from '../engine/types';
+import type { ArtComponent, Mission, Playground, Sidekick } from '../engine/types';
 import { missions } from '../missions';
 import { sidekicks } from '../missions/sidekicks';
 import { firstWords, secondWords } from '../missions/names';
 import { art } from '../art';
+import { playground } from '../missions/playground';
 
 export interface Registry {
+  playground: Playground | null;
   missions: readonly Mission[];
   sidekicks: readonly Sidekick[];
   firstWords: readonly string[];
@@ -20,8 +22,9 @@ const defaults: readonly Sidekick[] = ['Bit', 'Pixel', 'Hoot'].map((name, index)
 const fallbackFirst = ['Turbo', 'Cosmic', 'Happy', 'Brave', 'Swift', 'Sunny', 'Super', 'Clever'];
 const fallbackSecond = ['Falcon', 'Pickle', 'Comet', 'Otter', 'Panda', 'Star', 'Tiger', 'Spark'];
 export function buildRegistry(src: Partial<Registry> = {}): Registry {
-  const source = { missions, sidekicks, firstWords, secondWords, art, ...src };
+  const source = { missions, sidekicks, firstWords, secondWords, art, playground, ...src };
   return {
+    playground: source.playground ?? null,
     missions: (source.missions ?? []).filter((m) => Number.isInteger(m.bit) && m.bit >= 0 && m.bit <= 23)
       .slice().sort((a, b) => a.order - b.order),
     sidekicks: source.sidekicks?.length ? source.sidekicks : defaults,

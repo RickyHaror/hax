@@ -48,6 +48,14 @@ export function Map() {
     </header>
     {store.notice.value && <SpeechLine line={{ text: store.notice.value }} />}
     {!store.registry.missions.length && <SpeechLine line={{ text: 'Missions coming soon' }} />}
+    {store.registry.playground && Object.hasOwn(progress.completed, store.registry.playground.unlockedBy)
+      && <section class="map-playground" aria-label="Playground door">
+        <BigButton aria-label="Agent Playground" onClick={() => store.go({ name: 'playground' })}>
+          <Art artKey="playground-door" title="Agent Playground door" size={88} />
+          <span>Agent Playground</span>
+        </BigButton>
+        <SpeechLine line={{ text: 'Explore your pretend computer. Find fun secrets!' }} />
+      </section>}
     <div class="map-chapters">{chapters.map(([chapter, title]) => {
       const missions = store.registry.missions.filter((mission) => mission.chapter === chapter);
       return missions.length ? <section key={chapter} aria-label={title}>

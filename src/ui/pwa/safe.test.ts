@@ -9,6 +9,9 @@ const screens: Screen[] = [
 ];
 
 describe('safe update moments', () => {
+  it.each(phases)('defers updates during playground free play with a %s position', (phase) => {
+    expect(isSafeMoment({ name: 'playground' }, { phase, index: 0 })).toBe(false);
+  });
   it.each(screens.flatMap((screen) => phases.map((phase) => ({ screen, phase }))))(
     'allows $screen.name with a saved $phase position', ({ screen, phase }) => {
       expect(isSafeMoment(screen, { phase, index: 1 })).toBe(true);

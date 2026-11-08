@@ -30,6 +30,32 @@ function missionButton(title: string): HTMLButtonElement {
 }
 
 describe('mission map', () => {
+  it.each([
+    { available: false, complete: true, visible: false },
+    { available: true, complete: false, visible: false },
+    { available: true, complete: true, visible: true },
+  ])('shows the playground door only with content and its unlock: $available, $complete', async ({ available, complete, visible }) => {
+    const deps = fakeDeps();
+    if (!deps.registry.playground) throw new Error('Playground content is required for this test.');
+    const unlock = deps.registry.playground.unlockedBy;
+    if (!available) deps.registry.playground = null;
+    const store = identityStore(deps);
+    if (complete) store.progress.value = { ...store.progress.value, completed: { [unlock]: 'done' } };
+    root = await mount(store); await click(root, 'Tap to begin, Agent!');
+    const door = root.querySelector('button[aria-label="Agent Playground"]');
+    expect(door !== null).toBe(visible);
+    if (!visible) {
+      expect(root.querySelector('[aria-label="Playground door"]')).toBeNull();
+      return;
+    }
+    const card = door!.parentElement!;
+    expect(card.querySelector('svg')).not.toBeNull();
+    await act(() => card.querySelector<HTMLButtonElement>('button[aria-label="Read aloud"]')!.click());
+    expect(deps.voice.speak).toHaveBeenLastCalledWith(
+      { text: 'Explore your pretend computer. Find fun secrets!' }, expect.any(Object));
+    await click(root, 'Agent Playground'); expect(store.screen.value.name).toBe('playground');
+  });
+
   it('uses singular minute and keeps completed mission names starting with their title', async () => {
     await showMap(undefined, [login.id]);
     expect(missionButton(`✓ ${login.title}`).textContent).toContain('1 minute');
