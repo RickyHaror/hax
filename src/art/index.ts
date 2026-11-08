@@ -5,6 +5,7 @@ import { sidekickArt } from './sidekicks';
 import { terminalArt } from './terminal';
 import { clientArt } from './clients';
 import { m4CupcakeArt } from './m4-cupcake';
+import { m5MoonArt } from './m5-moon';
 
 /**
  * Art registry: key to inline SVG component. The content lane adds art here.
@@ -17,4 +18,5 @@ export const art: Record<string, ArtComponent> = {
   ...terminalArt,
   ...clientArt,
   ...m4CupcakeArt,
+  ...m5MoonArt,
 };

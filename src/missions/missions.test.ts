@@ -16,6 +16,7 @@ const missionTable = [
   ['m2-toys', 'missions'],
   ['m3-zoo', 'missions'],
   ['m4-cupcake', 'missions'],
+  ['m5-moon', 'missions'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
@@ -143,6 +144,14 @@ function checkSolvable(config: StepConfig): void {
       expect(config.correct.length).toBeGreaterThan(0);
       for (const id of config.correct) expect(config.options.map((option) => option.id)).toContain(id);
       break;
+    case 'log-read': {
+      expect(config.lines.length).toBeGreaterThan(0);
+      for (const line of config.lines) expect(line.trim()).not.toBe('');
+      const ids = config.options.map((option) => option.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(ids).toContain(config.correct);
+      break;
+    }
     case 'drag-drop':
       for (const item of config.items) expect(config.zones.map((zone) => zone.id)).toContain(item.goesTo);
       break;
