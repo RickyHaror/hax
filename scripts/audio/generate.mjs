@@ -46,7 +46,9 @@ async function loadContent() {
     const { missions } = await server.ssrLoadModule('/src/missions/index.ts');
     const { sidekicks } = await server.ssrLoadModule('/src/missions/sidekicks.ts');
     const { playground } = await server.ssrLoadModule('/src/missions/playground.ts');
-    return { missions, sidekicks, playground };
+    const { firstWords, secondWords } = await server.ssrLoadModule('/src/missions/names.ts');
+    const { signupRecordings } = await server.ssrLoadModule('/src/engine/codename.ts');
+    return { missions, sidekicks, playground, signup: signupRecordings(firstWords, secondWords) };
   } finally {
     await server.close();
   }
@@ -63,7 +65,7 @@ function linesIn(value, out = []) {
 }
 
 /** Every (role, voice, spoken text) the game can play. Sidekick lines exist in all three sidekick voices. */
-function buildJobs({ missions, sidekicks, playground }) {
+function buildJobs({ missions, sidekicks, playground, signup }) {
   const jobs = new Map();
   const add = (role, voice, spoken) => {
     const key = `${role}|${spoken}`;
@@ -94,6 +96,8 @@ function buildJobs({ missions, sidekicks, playground }) {
     if (!voice) continue;
     for (const line of linesIn(s)) add(s.id, voice, (line.say ?? line.text).trim());
   }
+  // Sign up prompt, the "Your name is" prefix and every codename word, in the narrator voice.
+  for (const { role, spoken } of signup ?? []) add(role, cast.narrator, spoken);
   return [...jobs.values()];
 }
 
