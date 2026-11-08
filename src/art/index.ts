@@ -3,6 +3,7 @@ import { loginArt } from './login';
 import { bootcampArt } from './bootcamp';
 import { sidekickArt } from './sidekicks';
 import { terminalArt } from './terminal';
+import { clientArt } from './clients';
 
 /**
  * Art registry: key to inline SVG component. The content lane adds art here.
@@ -13,4 +14,5 @@ export const art: Record<string, ArtComponent> = {
   ...bootcampArt,
   ...sidekickArt,
   ...terminalArt,
+  ...clientArt,
 };
