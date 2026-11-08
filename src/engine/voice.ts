@@ -10,11 +10,18 @@ export interface VoiceDeps {
 export const SPEECH_RATE = 0.9;
 
 export function pickVoice(voices: readonly SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
-  const english = voices.filter((voice) => voice.lang.toLowerCase().startsWith('en'));
-  const local = english.filter((voice) => voice.localService);
-  return local.find((voice) => voice.lang.toLowerCase() === 'en-us')
-    ?? local.find((voice) => voice.lang.toLowerCase() === 'en-gb')
-    ?? local[0] ?? null;
+  const english = voices.filter((voice) => /^en(?:-|$)/i.test(voice.lang));
+  const rank = (voice: SpeechSynthesisVoice) => [
+    voice.localService ? 0 : 1,
+    /^en-(us|ca)$/i.test(voice.lang) ? 0 : 1,
+    voice.localService && /natural/i.test(voice.name) ? 0 : 1,
+  ];
+  const compare = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+  return english.sort((a, b) => {
+    const left = rank(a), right = rank(b);
+    return left[0]! - right[0]! || left[1]! - right[1]! || left[2]! - right[2]!
+      || compare(a.name, b.name) || compare(a.lang, b.lang) || compare(a.voiceURI, b.voiceURI);
+  })[0] ?? null;
 }
 
 interface SpeakOptions { onEnd?: () => void; sidekick?: string }
@@ -36,16 +43,60 @@ function resolveDeps(deps: VoiceDeps): VoiceDeps {
   return resolved;
 }
 
-function localVoice(synth: SpeechSynthesis | null | undefined): SpeechSynthesisVoice | null {
-  // Read the live list so late voices and voice changes take effect.
-  try { return synth ? pickVoice(synth.getVoices()) : null; } catch { return null; }
+function readVoices(synth: SpeechSynthesis): SpeechSynthesisVoice[] | null {
+  try { return synth.getVoices(); } catch { return null; }
+}
+
+function waitForVoices(synth: SpeechSynthesis, ready: (voices: SpeechSynthesisVoice[]) => void): () => void {
+  let settled = false;
+  const cleanup = () => {
+    settled = true;
+    clearTimeout(timer);
+    synth.removeEventListener('voiceschanged', changed);
+  };
+  const finish = (voices: SpeechSynthesisVoice[]) => {
+    if (settled) return;
+    cleanup();
+    ready(voices);
+  };
+  const changed = () => {
+    const voices = readVoices(synth);
+    if (voices?.length) finish(voices);
+  };
+  const timer = setTimeout(() => finish(readVoices(synth) ?? []), 1500);
+  synth.addEventListener('voiceschanged', changed);
+  return cleanup;
+}
+
+function createVoiceSelection(synth: VoiceDeps['synth']) {
+  let cached: SpeechSynthesisVoice | null = null;
+  let picked = false;
+  let cancelWait = () => {};
+  const select = (voices: SpeechSynthesisVoice[]) => {
+    picked = true;
+    const present = cached && voices.some((voice) => voice.voiceURI === cached!.voiceURI
+      && voice.name === cached!.name && voice.lang === cached!.lang
+      && voice.localService === cached!.localService);
+    if (!present) cached = pickVoice(voices);
+    return cached;
+  };
+  return {
+    cancel: () => { cancelWait(); cancelWait = () => {}; },
+    get(ready: (voice: SpeechSynthesisVoice | null) => void) {
+      if (!synth) { ready(null); return; }
+      const voices = readVoices(synth);
+      if (!voices) { ready(null); return; }
+      if (voices.length || picked) { ready(select(voices)); return; }
+      cancelWait = waitForVoices(synth, (loaded) => ready(select(loaded)));
+    },
+  };
 }
 
 function speakText(
-  deps: VoiceDeps, text: string, current: () => boolean, next: () => void, fail: () => void,
+  deps: VoiceDeps, voice: SpeechSynthesisVoice | null, text: string,
+  current: () => boolean, next: () => void, fail: () => void,
 ): void {
   const { synth, Utterance } = deps;
-  const voice = localVoice(synth);
   if (!synth || !Utterance || !voice) { next(); return; }
   try {
     const utterance = new Utterance(text);
@@ -99,16 +150,22 @@ function stopPlayback(state: PlaybackState, { synth, Utterance }: VoiceDeps): bo
 
 function playLines(lines: readonly Line[], playback: {
   state: PlaybackState; deps: VoiceDeps; fileFor: (line: Line) => string | undefined;
+  selection: ReturnType<typeof createVoiceSelection>;
   current: () => boolean; finish: () => void;
 }): void {
-  const { state, deps, current, finish, fileFor } = playback;
+  const { state, deps, current, finish, fileFor, selection } = playback;
   let index = 0;
   function next(): void {
     if (!current()) return;
     state.clip = undefined;
     const line = lines[index++];
     if (!line) { finish(); return; }
-    const fallback = () => speakText(deps, line.say ?? line.text, current, next, finish);
+    const fallback = () => {
+      if (!deps.synth || !deps.Utterance) { next(); return; }
+      selection.get((voice) => {
+        if (current()) speakText(deps, voice, line.say ?? line.text, current, next, finish);
+      });
+    };
     const file = fileFor(line);
     if (!file || !deps.Audio) { fallback(); return; }
     try { state.clip = new deps.Audio(`/audio/lines/${file}`); }
@@ -124,7 +181,8 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
   let manifest: AudioManifest | null = null;
   let context: VoiceContext = { sidekick: 'bit' };
   const state: PlaybackState = { revision: 0, speaking: false };
-  const stop = () => stopPlayback(state, resolved);
+  const selection = createVoiceSelection(synth);
+  const stop = () => { selection.cancel(); return stopPlayback(state, resolved); };
 
   function speakAll(lines: readonly Line[], opts?: SpeakOptions): void {
     const stopped = stop();
@@ -141,14 +199,14 @@ export function createVoice(deps: VoiceDeps = {}): Voice {
     };
     if (!stopped) { finish(); return; }
     state.speaking = true;
-    playLines(queue, { state, deps: resolved, current, finish,
+    playLines(queue, { state, deps: resolved, selection, current, finish,
       fileFor: (line) => manifest?.lines[lineKey(line, lineRole(line, ctx))] });
   }
 
   return {
     get supported() {
       return Boolean(Audio && manifest && Object.keys(manifest.lines).length)
-        || Boolean(synth && Utterance && localVoice(synth));
+        || Boolean(synth && Utterance && pickVoice(readVoices(synth) ?? []));
     },
     setManifest: (value) => { manifest = value; },
     setContext: (value) => { context = { ...value }; },

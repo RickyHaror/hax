@@ -11,8 +11,8 @@ class TestUtterance {
   constructor(readonly text: string) {}
 }
 
-function voice(lang: string, localService = true): SpeechSynthesisVoice {
-  return { lang, localService, default: false, name: lang, voiceURI: lang };
+function voice(lang: string, localService = true, name = lang): SpeechSynthesisVoice {
+  return { lang, localService, default: false, name, voiceURI: name };
 }
 
 function setup() {
@@ -28,21 +28,50 @@ function setup() {
   return { synth, utterances, deps, player: createVoice(deps) };
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('voice selection', () => {
-  it('prefers local English, ordered US, GB, then other English', () => {
+  it('prefers local English, then US or CA, with remote English as a fallback', () => {
     const remote = voice('en-US', false);
     const other = voice('en-AU');
     const gb = voice('EN-gb');
     const us = voice('EN-us');
     const french = voice('fr-FR');
+    const ca = voice('en-CA');
     expect(pickVoice([remote, french, other, gb, us])).toBe(us);
+    expect(pickVoice([remote, french, other, gb, ca])).toBe(ca);
+    expect(pickVoice([remote, french, other, gb, ca, us])).toBe(us);
     expect(pickVoice([remote, french, other, gb])).toBe(gb);
     expect(pickVoice([remote, french, other])).toBe(other);
-    expect(pickVoice([french, remote])).toBeNull();
+    expect(pickVoice([french, remote])).toBe(remote);
     expect(pickVoice([french])).toBeNull();
     expect(pickVoice([])).toBeNull();
+  });
+
+  it('orders shuffled inputs by locale, local Natural names, then name', () => {
+    const alpha = voice('en-US', true, 'Alpha');
+    const beta = voice('en-CA', true, 'Beta');
+    const natural = voice('en-CA', true, 'Zed Natural');
+    const otherNatural = voice('en-GB', true, 'Other Natural');
+    const remoteNatural = voice('en-US', false, 'Remote Natural');
+    const input = [beta, alpha, natural, otherNatural, remoteNatural];
+    for (let index = 0; index < input.length; index++) {
+      const shuffled = [...input.slice(index), ...input.slice(0, index)];
+      expect(pickVoice(shuffled)).toBe(natural);
+      expect(pickVoice([...shuffled].reverse())).toBe(natural);
+    }
+    expect(pickVoice([otherNatural, beta, alpha])).toBe(alpha);
+    expect(pickVoice([beta, alpha])).toBe(alpha);
+    expect(input).toEqual([beta, alpha, natural, otherNatural, remoteNatural]);
+  });
+
+  it('does not favor remote Natural names over name or locale order', () => {
+    const alpha = voice('en-US', false, 'Alpha');
+    const natural = voice('en-CA', false, 'Zed Natural');
+    const other = voice('en-GB', false, 'A Natural');
+    expect(pickVoice([natural, other, alpha])).toBe(alpha);
+    expect(pickVoice([alpha, other, natural].reverse())).toBe(alpha);
+    expect(pickVoice([voice('enochian'), voice('fr-FR')])).toBeNull();
   });
 });
 
@@ -68,38 +97,114 @@ describe('speech playback', () => {
     expect(player.isSpeaking()).toBe(false);
   });
 
-  it('recognizes late local voices and reselects after voiceschanged', () => {
+  it('waits for voiceschanged and keeps the first voice when more voices load', () => {
+    vi.useFakeTimers();
     const { player, synth, utterances } = setup();
+    const add = vi.spyOn(synth, 'addEventListener');
+    const remove = vi.spyOn(synth, 'removeEventListener');
     synth.getVoices.mockReturnValue([]);
     expect(player.supported).toBe(false);
     const onEnd = vi.fn();
-    player.speak({ text: 'Wait.' }, { onEnd });
+    player.speakAll([{ text: 'Wait.' }, { text: 'Two.' }], { onEnd });
     expect(synth.speak).not.toHaveBeenCalled();
-    expect(onEnd).toHaveBeenCalledOnce();
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(player.isSpeaking()).toBe(true);
+    expect(add).toHaveBeenCalledWith('voiceschanged', expect.any(Function));
     const first = voice('en-AU');
     synth.getVoices.mockReturnValue([first]);
     synth.dispatchEvent(new Event('voiceschanged'));
     expect(player.supported).toBe(true);
-    player.speakAll([{ text: 'One.' }, { text: 'Two.' }]);
     expect(utterances[0]!.voice).toBe(first);
-    const loaded = voice('en-GB');
-    synth.getVoices.mockReturnValue([loaded]);
+    const loaded = voice('en-US', true, 'New Natural');
+    synth.getVoices.mockReturnValue([loaded, first]);
     synth.dispatchEvent(new Event('voiceschanged'));
+    expect(utterances).toHaveLength(1);
     utterances[0]!.onend?.();
-    expect(utterances[1]).toMatchObject({ voice: loaded, lang: 'en-GB', rate: SPEECH_RATE });
+    expect(utterances[1]!.voice).toBe(first);
+    utterances[1]!.onend?.();
+    vi.advanceTimersByTime(1500);
+    expect(utterances).toHaveLength(2);
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledWith('voiceschanged', add.mock.calls[0]![1]);
+    expect(vi.getTimerCount()).toBe(0);
+    player.speak({ text: 'Later.' });
+    expect(utterances[2]!.voice).toBe(first);
   });
 
-  it('finishes a queue safely when its local voices disappear', () => {
+  it('reselects only when the cached voice disappears, then keeps its replacement', () => {
+    const { player, synth, utterances } = setup();
+    const first = voice('en-US');
+    const replacement = voice('en-AU');
+    const preferred = voice('en-CA', true, 'New Natural');
+    synth.getVoices.mockReturnValue([first]);
+    player.speakAll([{ text: 'One.' }, { text: 'Two.' }, { text: 'Three.' }]);
+    expect(utterances[0]!.voice).toBe(first);
+    synth.getVoices.mockReturnValue([replacement]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    utterances[0]!.onend?.();
+    expect(utterances[1]!.voice).toBe(replacement);
+    synth.getVoices.mockReturnValue([preferred, replacement]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    utterances[1]!.onend?.();
+    expect(utterances[2]!.voice).toBe(replacement);
+  });
+
+  it('finishes a queue safely when all English voices disappear', () => {
     const { player, synth, utterances } = setup();
     const onEnd = vi.fn();
     player.speakAll([{ text: 'One.' }, { text: 'Two.' }], { onEnd });
-    synth.getVoices.mockReturnValue([voice('en-US', false)]);
+    synth.getVoices.mockReturnValue([voice('fr-FR')]);
     synth.dispatchEvent(new Event('voiceschanged'));
     utterances[0]!.onend?.();
     expect(player.supported).toBe(false);
     expect(player.isSpeaking()).toBe(false);
     expect(synth.speak).toHaveBeenCalledOnce();
     expect(onEnd).toHaveBeenCalledOnce();
+  });
+
+  it.each([false, true])('uses the timeout safety net with late voices: %s', (loaded) => {
+    vi.useFakeTimers();
+    const { player, synth, utterances } = setup();
+    const chosen = voice('en-CA');
+    synth.getVoices.mockReturnValue([]);
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'One.' }, { text: 'Two.' }], { onEnd });
+    vi.advanceTimersByTime(1499);
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(player.isSpeaking()).toBe(true);
+    if (loaded) synth.getVoices.mockReturnValue([chosen]);
+    vi.advanceTimersByTime(1);
+    if (loaded) {
+      expect(utterances[0]!.voice).toBe(chosen);
+      utterances[0]!.onend?.();
+      expect(utterances[1]!.voice).toBe(chosen);
+      utterances[1]!.onend?.();
+    } else expect(synth.speak).not.toHaveBeenCalled();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    expect(vi.getTimerCount()).toBe(0);
+    expect(utterances).toHaveLength(loaded ? 2 : 0);
+  });
+
+  it.each(['cancel', 'replace'] as const)('cleans up voice loading on %s', (action) => {
+    vi.useFakeTimers();
+    const { player, synth, utterances } = setup();
+    const remove = vi.spyOn(synth, 'removeEventListener');
+    synth.getVoices.mockReturnValue([]);
+    const onEnd = vi.fn();
+    player.speakAll([{ text: 'Old.' }, { text: 'Stale.' }], { onEnd });
+    if (action === 'cancel') player.cancel();
+    else player.speak({ text: 'New.' });
+    expect(remove).toHaveBeenCalledWith('voiceschanged', expect.any(Function));
+    synth.getVoices.mockReturnValue([voice('en-US')]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    vi.advanceTimersByTime(1500);
+    expect(utterances.map((item) => item.text)).toEqual(action === 'cancel' ? [] : ['New.']);
+    utterances[0]?.onend?.();
+    expect(player.isSpeaking()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('advances only on end or error and completes once after the last line', () => {
@@ -156,8 +261,8 @@ describe('speech playback', () => {
 });
 
 describe('speech availability and failures', () => {
-  it.each([{ voices: [] }, { voices: [voice('en-US', false)] }, { voices: [voice('fr-FR')] }])(
-    'never uses a default or remote voice without local English: $voices', ({ voices }) => {
+  it.each([{ voices: [voice('fr-FR')] }, { voices: [voice('enochian')] }])(
+    'never uses a non-English default voice: $voices', ({ voices }) => {
       const { player, synth } = setup();
       synth.getVoices.mockReturnValue(voices);
       const onEnd = vi.fn();
@@ -169,6 +274,17 @@ describe('speech availability and failures', () => {
       expect(onEnd).toHaveBeenCalledTimes(2);
     },
   );
+
+  it('uses remote English only when no local English voice exists', () => {
+    const { player, synth, utterances } = setup();
+    const remote = voice('en-CA', false);
+    synth.getVoices.mockReturnValue([voice('fr-FR'), remote]);
+    expect(player.supported).toBe(true);
+    player.speak({ text: 'Hello.' });
+    expect(utterances[0]!.voice).toBe(remote);
+    utterances[0]!.onend?.();
+    expect(player.isSpeaking()).toBe(false);
+  });
 
   it('speaks with the local voice from a mixed list', () => {
     const { player, synth, utterances } = setup();
@@ -263,6 +379,8 @@ function recordedSetup() {
 describe('recorded voice playback', () => {
   it('plays default, selected, client, narrator and player voices', () => {
     const { player, clips, synth } = recordedSetup();
+    synth.getVoices.mockImplementation(() => { throw Error('Clips need no speech voices'); });
+    expect(player.supported).toBe(true);
     player.speak({ text: '  Hello ' });
     expect(clips[0]!.src).toBe('/audio/lines/bit.mp3');
     player.setContext({ sidekick: 'pixel', missionId: 'pizza' });
@@ -278,6 +396,33 @@ describe('recorded voice playback', () => {
       '/audio/lines/narrator.mp3', '/audio/lines/narrator.mp3']);
     expect(player.isSpeaking()).toBe(false);
     expect(synth.speak).not.toHaveBeenCalled();
+    expect(synth.getVoices).not.toHaveBeenCalled();
+  });
+
+  it('keeps one fallback voice across mixed queues, sidekicks and later calls', () => {
+    const { player, clips, synth, utterances } = recordedSetup();
+    const chosen = voice('en-AU');
+    const preferred = voice('en-US', true, 'New Natural');
+    synth.getVoices.mockReturnValue([chosen]);
+    player.speakAll([{ text: 'Hello' }, { text: 'One' }, { text: 'Hello' }, { text: 'Two' }]);
+    expect(synth.getVoices).not.toHaveBeenCalled();
+    expect(synth.speak).not.toHaveBeenCalled();
+    clips[0]!.onended?.();
+    expect(utterances[0]!.voice).toBe(chosen);
+    synth.getVoices.mockReturnValue([preferred, chosen]);
+    synth.dispatchEvent(new Event('voiceschanged'));
+    utterances[0]!.onend?.();
+    expect(utterances).toHaveLength(1);
+    clips[1]!.onended?.();
+    expect(utterances[1]!.voice).toBe(chosen);
+    utterances[1]!.onend?.();
+    player.speak({ text: 'Later' }, { sidekick: 'pixel' });
+    expect(utterances[2]!.voice).toBe(chosen);
+    utterances[2]!.onend?.();
+    const other = createVoice({ synth: synth as unknown as SpeechSynthesis,
+      Utterance: TestUtterance as unknown as typeof SpeechSynthesisUtterance });
+    other.speak({ text: 'New session' });
+    expect(utterances[3]!.voice).toBe(preferred);
   });
 
   it('uses the override only for sidekick lines and keeps the stored context', () => {
