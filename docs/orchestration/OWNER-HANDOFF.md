@@ -7,8 +7,8 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 ## Current state
 
 - Phase 0 (owner): repo scaffold, workflow files, CI with deploy and smoke, placeholder page.
-- Current owner session: rotation id `20261107-190700-manual` (started 7:07 PM Toronto, registered in
-  ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
+- Current owner session: hax-fb, rotation id `20261108-030000` (started 3:00 AM Toronto 2026-11-08,
+  registered in ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
 
 ## Founder context
 
@@ -28,6 +28,36 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 - The owner's safety checks blocked editing registrar nameservers directly; the founder does registrar edits.
 
 ## Next action
+
+Final handoff from owner hax-fb (rotation 20261108-030000) to hax-44 (rotation 20261108-060001), about
+6:05 AM Toronto 2026-11-08. E3 VERIFY coordinator is still running in D:/Dev/hax-engine on engine/e3
+(pushed, candidate 1fc96c2 = 1136059 plus fixes aad91e2 and 1fc96c2). Review: E3-r1 3 findings and E3-r2
+1 finding, all fixed; 1fc96c2 itself has had no independent review (small change). Gate run 1 on aad91e2:
+e2e 200 pass 8 fail, all decoder, fixed in 1fc96c2 (focused 28/28). Gate run 2 on 1fc96c2 is mid e2e
+(build-logs/gate-E3-20261108T104714Z.log). Checkpoint build-logs/E3-verify-checkpoint.md. Open low items:
+reset partial failure edge, no e2e screenshots of Playground, ID card and parent panel, m4 file tree
+truncates baker.txt. hax-fb did not accept E3; its terminal report will be forwarded to hax-44, who
+accepts and has it integrate. Lane check cron deleted.
+
+Updated about 4:15 AM Toronto, 2026-11-08, owner hax-fb (rotation 20261108-030000; old owner
+20261108-000001 stood down, done marker written). E3 BUILD checkpointed at engine/e3 1136059 (all six
+items built, unit 1282 pass, Edge and full --e2e not yet run). Owner decided: keep `hax.v1.playground`
+key, emoji avatars, adult wording in the parent panel (docs/DECISIONS.md). E3 VERIFY run launched about
+4:15 AM (hard stop about 6:15 AM): fresh review of 6690253..1136059, fix the decoder `Help me` placement,
+full gate --e2e, screenshot review, report. Under standing authorization: when clean, accept and have it
+integrate, confirm CI and the live site. Hourly lane check cron at :46.
+
+Final handoff from owner 20261108-000001 to hax-fb (rotation 20261108-030000), 3:00 AM Toronto
+2026-11-08 (earlier "3:15 AM" timestamps below were estimates; E3 launched just before 3 AM).
+Engine E3 BUILD coordinator is still running in D:/Dev/hax-engine on branch engine/e3 (tip 6690253,
+no E3 commits yet; uncommitted worker edits in src/engine/{progress,sound}.ts, e2e specs and more).
+Wave 1 workers: AU-4 music and audio controls, E3-1 Playground (both running), polish A (done, held
+uncommitted because SaveScreens.tsx is shared with AU-4). Remaining items: E2-4 ID card, parent panel
+and timer, polish B, update-handling gap check. Hard stop about 5 AM, checkpoint
+build-logs/E3-checkpoint.md. Any exported type change in src/engine/types.ts must come to the owner
+first. Its terminal report will be forwarded to hax-fb. Then: E3 VERIFY run (fresh reviewer,
+gate --e2e, screenshot pass), accept and ship. Content lane idle. Founder has been told E2 is live
+and the boy can start playing.
 
 Updated about 3:15 AM Toronto, 2026-11-08. E2 accepted and live (main 6eea4b2, e2e 160/160, CI
 42457870537 green, live assets match; 16 missions in the registry, all play through). Engine E3 BUILD
