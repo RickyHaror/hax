@@ -13,8 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:reading": "node scripts/checks/reading-level.mjs",
-    "check:links": "node scripts/checks/no-external.mjs",
-    "check:copy": "node scripts/checks/no-dashes.mjs",
+    "check:links": "vitest run scripts/checks",
+    "check:copy": "vitest run scripts/checks",
     "e2e": "playwright test",
     "e2e:smoke": "playwright test --config playwright.smoke.config.ts",
     "gate": "bash scripts/orchestration/gate.sh"
@@ -23,7 +23,6 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@fontsource/atkinson-hyperlegible": "5.3.0",
     "@fontsource/inter": "5.3.0",
     "@fontsource/jetbrains-mono": "5.3.0",
     "@preact/signals": "2.11.4",
