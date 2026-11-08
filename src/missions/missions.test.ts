@@ -17,6 +17,7 @@ const missionTable = [
   ['m3-zoo', 'missions'],
   ['m4-cupcake', 'missions'],
   ['m5-moon', 'missions'],
+  ['m6-socks', 'missions'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
@@ -150,6 +151,18 @@ function checkSolvable(config: StepConfig): void {
       const ids = config.options.map((option) => option.id);
       expect(new Set(ids).size).toBe(ids.length);
       expect(ids).toContain(config.correct);
+      break;
+    }
+    case 'phish-spot': {
+      const ids = config.clues.map((clue) => clue.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      const fields = [config.email.from, config.email.subject, ...config.email.body, config.email.link ?? ''];
+      for (const clue of config.clues) {
+        expect(clue.match.trim()).not.toBe('');
+        expect(fields.some((field) => field.includes(clue.match)), clue.match).toBe(true);
+      }
+      expect(config.needed).toBeGreaterThanOrEqual(1);
+      expect(config.needed).toBeLessThanOrEqual(config.clues.length);
       break;
     }
     case 'drag-drop':
