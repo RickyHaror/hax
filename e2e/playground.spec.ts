@@ -3,12 +3,15 @@ import { playground } from '../src/missions/playground';
 import { missions } from '../src/missions';
 import { begin } from './support/play';
 import { prerequisites, seedProgress } from './support/seed';
+import { checkLayout } from './support/layout-check';
 
 async function run(page: Page, command: string) {
   const input = page.getByRole('textbox', { name: 'Command', exact: true });
   await input.fill(command); await input.press('Enter');
+  await checkLayout(page, `playground-command-${command}`);
 }
 async function expectFit(page: Page) {
+  await checkLayout(page, 'playground');
   const sizes = await page.evaluate(() => {
     const panel = document.querySelector('main')!;
     return { pageWidth: document.documentElement.scrollWidth, width: innerWidth,
@@ -31,6 +34,7 @@ test('finds every playground egg through the terminal and keeps discoveries on r
   if (!unlock) throw new Error('The playground unlock mission must exist.');
   await seedProgress(page, { completed: [...prerequisites(unlock, missions), unlock.id] });
   await page.goto('/'); await begin(page);
+  await checkLayout(page, 'playground-map');
   await page.getByRole('button', { name: 'Agent Playground', exact: true }).click();
   await expectFit(page);
   await expect(page.getByText('Type a command. Press Enter to run it.', { exact: true })).toBeInViewport();
@@ -52,9 +56,11 @@ test('finds every playground egg through the terminal and keeps discoveries on r
   await expect(page.getByText(count, { exact: true })).toBeVisible();
   await expectFit(page);
   await page.reload(); await begin(page);
+  await checkLayout(page, 'playground-reloaded-map');
   await page.getByRole('button', { name: 'Agent Playground', exact: true }).click();
   await expect(page.getByText(count, { exact: true })).toBeVisible();
   await expectFit(page);
   await page.getByRole('button', { name: 'Back to the map', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Agent Playground', exact: true })).toBeVisible();
+  await checkLayout(page, 'playground-returned-map');
 });

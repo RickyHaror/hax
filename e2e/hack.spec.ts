@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { build } from 'vite';
 import preact from '@preact/preset-vite';
+import { checkLayout } from './support/layout-check';
 
 const assets = new Map<string, { contentType: string; body: string | Buffer }>();
 test.beforeAll(async () => {
@@ -36,17 +37,25 @@ async function openFixture(page: Page) {
     }
   });
   await page.goto('/__hack_fixture__/');
+  await expect(page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true })).toBeVisible();
+  await checkLayout(page, 'hack-begin');
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Start mission', exact: true })).toBeVisible();
+  await checkLayout(page, 'hack-intro');
   await page.getByRole('button', { name: 'Start mission', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'I accept', exact: true })).toBeVisible();
+  await checkLayout(page, 'hack-permission');
   await page.getByRole('button', { name: 'I accept', exact: true }).click();
 }
 
 async function run(page: Page, text: string, label = 'Command') {
   const input = page.getByRole('textbox', { name: label, exact: true });
   await input.fill(text); await input.press('Enter');
+  await checkLayout(page, `hack-after-${label}`);
 }
 
 async function expectFit(page: Page) {
+  await checkLayout(page, 'hack-step');
   const sizes = await page.evaluate(() => {
     const main = document.querySelector('main')!;
     const work = document.querySelector('.step-work')!;
@@ -70,7 +79,9 @@ test('plays connected hack steps with secret input, hints, alarms and a fitted t
   await openFixture(page); await expectFit(page);
   await page.getByRole('button', { name: 'connect shop-pc', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Command', exact: true })).toHaveValue('connect shop-pc ');
+  await checkLayout(page, 'hack-connect-chip');
   await page.getByRole('textbox').press('Enter');
+  await checkLayout(page, 'hack-user-prompt');
   await run(page, 'admin', 'User name:');
   await run(page, 'wrong-code', 'Password:');
   await expect(page.getByRole('meter', { name: 'Alarm', exact: true })).toHaveAttribute('aria-valuenow', '1');
@@ -81,25 +92,38 @@ test('plays connected hack steps with secret input, hints, alarms and a fitted t
   await expect(output).toContainText('HQ pulled you out. Your work is safe.');
   const command = page.getByRole('textbox', { name: 'Command', exact: true });
   await command.fill('connect sh'); await command.press('Tab'); await expect(command).toHaveValue('connect shop-pc ');
-  await command.press('Enter'); await run(page, 'admin', 'User name:');
+  await checkLayout(page, 'hack-completed-command');
+  await command.press('Enter');
+  await checkLayout(page, 'hack-reconnected-user-prompt');
+  await run(page, 'admin', 'User name:');
   const secret = page.getByRole('textbox', { name: 'Password:', exact: true });
   await secret.pressSequentially('apple-code'); await expect(secret).toHaveValue('**********');
   await expect(page.locator('body')).not.toContainText('apple-code');
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
-  await secret.press('Enter'); await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await checkLayout(page, 'hack-masked-password');
+  await secret.press('Enter');
+  await checkLayout(page, 'hack-visit-success');
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.locator('.command-row .prompt-full')).toHaveText('admin@shop-pc:~$');
   await expect(output).toContainText('Password: **********');
   await run(page, 'help'); await run(page, 'help'); await expectFit(page);
   await page.getByRole('button', { name: 'Help me', exact: true }).click();
+  await checkLayout(page, 'hack-send-hint-1');
   await page.getByRole('button', { name: '2 Bigger hint', exact: true }).click();
+  await checkLayout(page, 'hack-send-hint-2');
   await page.getByRole('button', { name: '3 Show me', exact: true }).click();
+  await checkLayout(page, 'hack-send-show-me');
   await page.getByRole('button', { name: 'Close hints', exact: true }).click();
+  await checkLayout(page, 'hack-send-hints-closed');
   await expect(command).toHaveValue('submit clue.txt');
   await page.getByRole('button', { name: 'Show me', exact: true }).click();
   await expect(command).toHaveValue('submit clue.txt');
   await expect(page.getByRole('heading', { name: 'Send the clue', exact: true })).toBeVisible();
   await expectFit(page); await command.press('Enter');
+  await checkLayout(page, 'hack-send-success');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await checkLayout(page, 'hack-outro');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Great work, Agent!', exact: true })).toBeVisible();
+  await checkLayout(page, 'hack-done');
 });

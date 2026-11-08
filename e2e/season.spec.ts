@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { build } from 'vite';
 import preact from '@preact/preset-vite';
+import { checkLayout } from './support/layout-check';
 
 const assets = new Map<string, { contentType: string; body: string | Buffer }>();
 test.beforeAll(async () => {
@@ -34,10 +35,13 @@ async function openFixture(page: Page) {
     }
   });
   await page.goto('/__season_fixture__/');
+  await expect(page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true })).toBeVisible();
+  await checkLayout(page, 'season-begin');
   await page.getByRole('button', { name: 'Tap to begin, Agent!', exact: true }).click();
 }
 
-async function expectFit(page: Page) {
+async function expectFit(page: Page, label: string) {
+  await checkLayout(page, label);
   await page.evaluate(() => document.fonts.ready);
   const sizes = await page.evaluate(() => {
     const panel = document.querySelector('main')!;
@@ -71,33 +75,41 @@ test('walks the season map, contract, clue finish, and learned commands', async 
   await expect(town.locator('.map-title')).toHaveText(['✓ First clue', '✓ Next clue', 'Shop clue']);
   const harbor = page.getByRole('region', { name: 'Season 2 · Harbor', exact: true });
   await expect(harbor.locator('.map-mission')).toBeDisabled();
-  await expectFit(page);
+  await expectFit(page, 'season-map');
   await town.getByRole('button', { name: /^Shop clue/ }).click();
   const contract = page.getByRole('region', { name: 'Mission briefing', exact: true });
   for (const text of ['Sam', 'Shop owner', 'Find our clue.', 'Send our clue to HQ.',
     'Only hack what you own or have permission to hack.', 'shop-pc']) await expect(contract).toContainText(text);
-  await expectFit(page);
+  await expectFit(page, 'season-contract');
   await page.getByRole('button', { name: 'Start mission', exact: true }).click();
   const command = page.getByRole('textbox', { name: 'Command', exact: true });
+  await expect(command).toBeVisible();
+  await checkLayout(page, 'season-step-before');
   await command.fill('submit clue.txt'); await command.press('Enter');
+  await checkLayout(page, 'season-step-success');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await checkLayout(page, 'season-outro');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'ACCESS GRANTED', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Captured clue', exact: true })).toContainText('CLUE{shop-safe}');
   await expect(page.getByText('Rank up! Rookie to Agent', { exact: true })).toBeVisible();
   await expect(page.getByRole('status', { name: 'Clue found', exact: true })).toContainText('+20 XP');
-  await expectFit(page);
+  await expectFit(page, 'season-access-granted');
   const key = page.getByRole('region', { name: 'Secret decryption key', exact: true }).locator('output');
   await key.scrollIntoViewIfNeeded(); await expect(key).toBeInViewport();
+  await checkLayout(page, 'season-save-key');
   await expect(key).toHaveText(/^HAX-([0-9A-Z]{4}-){3}[0-9A-Z]{4}$/);
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(harbor.locator('.map-mission')).toBeEnabled();
+  await checkLayout(page, 'season-unlocked-map');
   await page.getByRole('button', { name: 'My agent card', exact: true }).click();
   const learned = page.getByRole('region', { name: 'Commands learned', exact: true });
   await expect(learned.locator('li .speech-line > span')).toHaveText(['cat', 'submit', 'ls']);
   await expect(page.getByRole('progressbar', { name: 'XP to next rank', exact: true })).toHaveAttribute('value', '60');
-  await expectFit(page);
+  await expectFit(page, 'season-agent-card');
   await learned.scrollIntoViewIfNeeded(); await expect(learned).toBeInViewport();
+  await checkLayout(page, 'season-learned-commands');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(town).toBeVisible();
+  await checkLayout(page, 'season-returned-map');
 });

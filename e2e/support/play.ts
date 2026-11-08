@@ -1,12 +1,15 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { normalizeShift } from '../../src/engine/cipher';
 import { VirtualFs } from '../../src/engine/fs';
+import { HackSession, hackGoalMet } from '../../src/engine/hack';
+import { tokenize } from '../../src/engine/shell';
 import { goalMet, Shell } from '../../src/engine/shell';
 import type {
-  DragDropConfig, FileExplorerConfig, Mission, Step, StepConfig, TerminalConfig,
+  DragDropConfig, FileExplorerConfig, HackConfig, Mission, Step, StepConfig, TerminalConfig,
   TypingGameConfig,
 } from '../../src/engine/types';
 import { solveTerminal } from '../../src/ui/widgets/terminal/solve';
+import { checkLayout } from './layout-check';
 
 interface PlayOptions {
   hints: 'none' | 'all';
@@ -16,6 +19,7 @@ interface PlayOptions {
 export async function begin(page: Page): Promise<void> {
   const tap = button(page, 'Tap to begin, Agent!');
   await tap.waitFor({ state: 'visible', timeout: 10_000 });
+  await checkLayout(page, 'begin');
   await tap.click();
 }
 
@@ -26,12 +30,15 @@ function button(page: Page, name: string): Locator {
 async function screen(page: Page, opts: PlayOptions, label: string): Promise<void> {
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
   await opts.onScreen?.(label);
+  await checkLayout(page, label);
 }
 
 async function showHints(page: Page, opts: PlayOptions, label: string): Promise<void> {
   if (opts.hints !== 'all') return;
-  for (let rung = 0; rung < 3; rung++) await button(page, 'Help me').click();
-  await screen(page, opts, `${label}-show-me`);
+  for (let rung = 0; rung < 3; rung++) {
+    await button(page, 'Help me').click();
+    await screen(page, opts, rung === 2 ? `${label}-show-me` : `${label}-hint-${rung + 1}`);
+  }
 }
 
 async function checkAnswer(
@@ -188,11 +195,68 @@ export function missionCard(page: Page, mission: Mission, completed = false): Lo
   return page.getByRole('button', { name: new RegExp(completed ? `^✓\\s+${title}(?:\\s|$)` : title) });
 }
 
-async function solveStep(page: Page, mission: Mission, step: Step, opts: PlayOptions): Promise<void> {
+function hackAnswer(mission: Mission, session: HackSession, config: HackConfig, command: string): string {
+  const pending = session.pendingInput();
+  const parsed = tokenize(command);
+  const tokens = parsed.ok ? parsed.tokens : [];
+  const host = tokens[0] === 'connect' ? tokens[1]
+    : command === '' ? config.start ?? session.prompt().host : session.prompt().host;
+  const machine = mission.machines?.find((entry) => entry.host === host);
+  if (pending?.label === 'New passphrase:' || pending?.label === 'Type it once more:') return 'milk-rocket-tuba-cloud';
+  if (pending?.label === 'User name:' && machine?.login) return machine.login.user;
+  const changed = session.events.some((event) => event.type === 'passwd' && event.host === host);
+  const password = tokens[0] === 'sudo' ? machine?.sudo?.password
+    : changed ? 'milk-rocket-tuba-cloud' : (machine?.login ?? machine?.sudo)?.password;
+  if (!password) throw new Error(`No fixture credential for ${mission.id} on ${host}.`);
+  return password;
+}
+
+async function hackInputs(
+  page: Page, mission: Mission, session: HackSession, config: HackConfig, command: string, opts: PlayOptions,
+): Promise<void> {
+  while (session.pendingInput()) {
+    const pending = session.pendingInput()!;
+    const input = page.getByRole('textbox', { name: pending.label, exact: true });
+    await expect(input).toBeVisible();
+    await screen(page, opts, `hack-input-${pending.label.replace(/\W+/g, '-').toLowerCase()}`);
+    const answer = hackAnswer(mission, session, config, command);
+    await input.fill(answer);
+    if (pending.secret) await expect(input).toHaveValue('*'.repeat(answer.length));
+    await input.press('Enter');
+    session.run(answer, config.commands);
+  }
+}
+
+async function runHack(
+  page: Page, mission: Mission, step: Step, config: HackConfig, opts: PlayOptions, session: HackSession,
+): Promise<void> {
+  await hackInputs(page, mission, session, config, '', opts);
+  const commands = [...new Set([...(config.chips ?? []).map((chip) => chip.command), config.showMe])];
+  for (const [index, command] of commands.entries()) {
+    if (hackGoalMet(config.goal, session)) break;
+    const chip = config.chips?.find((entry) => entry.command === command);
+    if (chip && (opts.hints === 'none' || command !== config.showMe)) await button(page, command).click();
+    else {
+      if (!await button(page, 'Show me').isVisible()) {
+        await showHints(page, { ...opts, hints: 'all' }, `step-${step.id}-command-${index + 1}`);
+      }
+      await button(page, 'Show me').click();
+    }
+    const input = page.getByRole('textbox', { name: 'Command', exact: true });
+    await expect(input).toHaveValue(new RegExp(`^${escapePattern(command)}\\s*$`));
+    await screen(page, opts, `step-${step.id}-command-${index + 1}`);
+    await input.press('Enter');
+    session.run(command, config.commands);
+    await hackInputs(page, mission, session, config, command, opts);
+  }
+  expect(hackGoalMet(config.goal, session), `${mission.id}/${step.id}: hack goal`).toBe(true);
+}
+
+async function solveStep(page: Page, mission: Mission, step: Step, opts: PlayOptions, hack: HackSession): Promise<void> {
   const { config } = step;
   const known = ['story', 'answer', 'click-targets', 'drag-drop', 'key-find', 'typing-game',
     'file-explorer', 'choice', 'passphrase', 'terminal', 'web-source', 'decoder',
-    'password-guess', 'log-read', 'phish-spot'];
+    'password-guess', 'log-read', 'phish-spot', 'hack'];
   if (!known.includes(config.kind)) {
     throw new Error(`Unknown step kind "${config.kind}" in mission "${mission.id}".`);
   }
@@ -228,6 +292,7 @@ async function solveStep(page: Page, mission: Mission, step: Step, opts: PlayOpt
       }
       await button(page, 'Check').click(); return;
     case 'terminal': await runTerminal(page, config, hints); return;
+    case 'hack': await runHack(page, mission, step, config, opts, hack); return;
     default: await solveTools(page, config, hints);
   }
 }
@@ -260,11 +325,12 @@ export async function playMission(page: Page, mission: Mission, opts: PlayOption
     await screen(page, opts, 'permission');
     await button(page, 'I accept').click();
   }
+  const hack = new HackSession(mission);
   for (const step of mission.steps) {
     await expect(page.getByRole('heading', { name: step.title, level: 2, exact: true })).toBeVisible();
     await screen(page, opts, `step-${step.id}-before`);
     await showHints(page, opts, `step-${step.id}`);
-    await solveStep(page, mission, step, opts);
+    await solveStep(page, mission, step, opts, hack);
     await expect(button(page, 'Help me')).toHaveCount(0);
     await expect(button(page, 'Next')).toBeVisible();
     await screen(page, opts, `step-${step.id}-after`);
@@ -274,6 +340,7 @@ export async function playMission(page: Page, mission: Mission, opts: PlayOption
   await expect(button(page, 'Next')).toBeVisible();
   await screen(page, opts, 'outro');
   await button(page, 'Next').click();
-  await expect(page.getByRole('heading', { name: 'Great work, Agent! Mission saved.', exact: true })).toBeVisible();
+  const done = mission.contract ? 'ACCESS GRANTED' : 'Great work, Agent! Mission saved.';
+  await expect(page.getByRole('heading', { name: done, exact: true })).toBeVisible();
   await screen(page, opts, 'done');
 }

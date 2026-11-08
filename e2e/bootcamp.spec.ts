@@ -1,12 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 import { missions } from '../src/missions';
 import { trackForeignRequests } from './support/guards';
+import { checkLayout } from './support/layout-check';
 import { begin, missionCard, playMission } from './support/play';
 import { prerequisites, seedProgress } from './support/seed';
 
 test.describe.configure({ retries: 0, timeout: 240_000 });
 
 async function expectTrainingFit(page: Page, label: string) {
+  await checkLayout(page, label);
   await page.evaluate(() => document.fonts.ready);
   const sizes = await page.evaluate(() => ({
     width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
@@ -43,14 +45,17 @@ test('finishes b1 through b5 with mouse and keyboard and saves every badge', asy
   await seedProgress(page, { completed: prerequisites(training[0]!, missions) });
   const foreign = trackForeignRequests(page, baseURL!);
   await page.goto('/'); await begin(page);
+  await checkLayout(page, 'bootcamp-map');
   for (const mission of training) {
     await playMission(page, mission, {
       hints: 'none', onScreen: (label) => expectTrainingFit(page, `${mission.id}-${label}`),
     });
     await page.getByRole('button', { name: 'Next', exact: true }).click();
     await expect(missionCard(page, mission, true)).toBeVisible();
+    await checkLayout(page, `${mission.id}-completed-map`);
   }
   await page.reload(); await begin(page);
+  await checkLayout(page, 'bootcamp-reloaded-map');
   for (const mission of training) await expect(missionCard(page, mission, true)).toBeVisible();
   expect(foreign).toEqual([]);
 });

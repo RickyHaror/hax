@@ -2,17 +2,23 @@ import { expect, test, type Page } from '@playwright/test';
 import { missions } from '../src/missions';
 import { begin } from './support/play';
 import { seedProgress } from './support/seed';
+import { checkLayout } from './support/layout-check';
 
 async function holdLogo(page: Page) {
   const logo = page.getByRole('button', { name: 'HAX', exact: true });
   await logo.hover(); await page.mouse.down();
   await page.clock.fastForward(3000); await page.mouse.up();
   await expect(page.getByRole('heading', { name: 'Grown-up settings', exact: true })).toBeVisible();
+  await checkLayout(page, 'parent-pin-panel');
 }
 async function digits(page: Page, pin: string) {
-  for (const digit of pin) await page.getByRole('button', { name: digit, exact: true }).click();
+  for (const [index, digit] of [...pin].entries()) {
+    await page.getByRole('button', { name: digit, exact: true }).click();
+    await checkLayout(page, `parent-pin-digit-${index + 1}`);
+  }
 }
 async function expectFit(page: Page) {
+  await checkLayout(page, 'parent-settings');
   const sizes = await page.evaluate(() => {
     const panel = document.querySelector('main')!;
     const screen = document.querySelector('.parent-screen')!;
@@ -41,6 +47,7 @@ test('sets a parent PIN, reviews progress, saves settings and checks the PIN on 
   if (!mission) throw new Error('A registered mission is required.');
   await seedProgress(page, { completed: [mission.id] });
   await page.clock.install(); await page.goto('/'); await begin(page);
+  await checkLayout(page, 'parent-map');
   await holdLogo(page); await expectFit(page);
   await expect(page.getByText('Set a grown-up PIN', { exact: true })).toBeVisible();
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
@@ -60,6 +67,7 @@ test('sets a parent PIN, reviews progress, saves settings and checks the PIN on 
   await page.getByRole('button', { name: 'Change PIN', exact: true }).scrollIntoViewIfNeeded();
   await expectFit(page);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await checkLayout(page, 'parent-returned-map');
   await holdLogo(page);
   await expect(page.getByText('Enter your grown-up PIN', { exact: true })).toBeVisible();
   await expectFit(page);
@@ -67,17 +75,23 @@ test('sets a parent PIN, reviews progress, saves settings and checks the PIN on 
   await expect(page.getByRole('region', { name: 'Completed missions', exact: true })).toContainText(mission.title);
   await expect(page.getByRole('button', { name: '30 minutes', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(lock).toBeChecked(); await expectFit(page);
-  await page.reload(); await begin(page); await holdLogo(page); await digits(page, '2468');
+  await page.reload(); await begin(page);
+  await checkLayout(page, 'parent-reloaded-map');
+  await holdLogo(page); await digits(page, '2468');
   await page.getByRole('button', { name: 'Check PIN', exact: true }).click();
   await expect(page.getByRole('button', { name: '30 minutes', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(lock).toBeChecked();
+  await checkLayout(page, 'parent-reloaded-settings');
   await page.getByRole('button', { name: 'Change PIN', exact: true }).click();
   await expectFit(page);
   await digits(page, '1357'); await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expectFit(page);
   await digits(page, '1357'); await page.getByRole('button', { name: 'Save PIN', exact: true }).click();
   await expect(sections).toBeVisible();
-  await page.getByRole('button', { name: 'Back', exact: true }).click(); await holdLogo(page);
+  await checkLayout(page, 'parent-changed-pin-settings');
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await checkLayout(page, 'parent-changed-pin-map');
+  await holdLogo(page);
   for (let attempt = 0; attempt < 5; attempt++) {
     await digits(page, '0000'); await page.getByRole('button', { name: 'Check PIN', exact: true }).click();
     await expect(page.getByText(attempt === 4 ? 'Please wait 30 seconds. Then try again.'

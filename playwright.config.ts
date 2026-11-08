@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Full browser suite. Runs against the production build served by `vite preview`
  * so the service worker and offline mode are exercised for real.
- * Projects cover Chromium and Microsoft Edge at 1366x768 and 1920x1080.
+ * Projects cover Chromium and Microsoft Edge at four laptop, desktop and phone sizes.
  */
 const sizes = {
   laptop: { width: 1366, height: 768 },
@@ -35,15 +35,18 @@ export default defineConfig({
   projects: [
     { name: 'chromium-1366', use: { ...devices['Desktop Chrome'], viewport: sizes.laptop } },
     { name: 'chromium-1920', use: { ...devices['Desktop Chrome'], viewport: sizes.desktop } },
-    { name: 'chromium-1366x650', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts', '**/startup.spec.ts', '**/hack.spec.ts', '**/season.spec.ts', '**/idcard.spec.ts'],
+    { name: 'chromium-1366x650',
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 650 } } },
-    { name: 'chromium-phone', testMatch: ['**/fit.spec.ts', '**/layout.spec.ts', '**/startup.spec.ts', '**/hack.spec.ts', '**/season.spec.ts', '**/idcard.spec.ts'],
+    { name: 'chromium-phone',
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 },
         isMobile: true, hasTouch: true, deviceScaleFactor: 3 } },
     ...(edgeInstalled
       ? [
           { name: 'edge-1366', use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: sizes.laptop } },
           { name: 'edge-1920', use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: sizes.desktop } },
+          { name: 'edge-1366x650', use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1366, height: 650 } } },
+          { name: 'edge-phone', use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 390, height: 844 },
+            isMobile: true, hasTouch: true, deviceScaleFactor: 3 } },
         ]
       : []),
   ],

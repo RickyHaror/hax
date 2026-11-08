@@ -1,12 +1,13 @@
-import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Browser, type Page, type TestInfo } from '@playwright/test';
 import { STORAGE_KEY } from '../src/engine/progress';
 import type { Mission } from '../src/engine/types';
 import { missions } from '../src/missions';
 import { trackForeignRequests } from './support/guards';
+import { checkLayout } from './support/layout-check';
 import { begin, missionCard, playMission } from './support/play';
 import { prerequisites, seedProgress } from './support/seed';
+import { shot } from './support/shots';
 
 test.describe.configure({ retries: 0, timeout: 240_000 });
 
@@ -19,10 +20,11 @@ async function checkAxe(page: Page): Promise<void> {
 type ScreenCheck = (page: Page, label: string) => Promise<void>;
 
 function screenChecks(info: TestInfo, mission: Mission, hints: 'none' | 'all'): ScreenCheck {
-  let index = 0;
   return async (page: Page, label: string): Promise<void> => {
     await expect(page.locator('input[type="password"]')).toHaveCount(0);
     await page.evaluate(() => document.fonts.ready);
+    await shot(page, info, `${mission.id}-${hints}`, label);
+    await checkLayout(page, label);
     const size = await page.evaluate(() => ({
       width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
       viewportWidth: innerWidth, viewportHeight: innerHeight,
@@ -51,9 +53,6 @@ function screenChecks(info: TestInfo, mission: Mission, hints: 'none' | 'all'): 
       return;
     }
     await checkAxe(page);
-    const number = String(++index).padStart(2, '0');
-    const safeLabel = label.replace(/[^a-z0-9-]/gi, '-');
-    await page.screenshot({ path: join('screenshots', info.project.name, mission.id, `${number}-${safeLabel}.png`) });
   };
 }
 
