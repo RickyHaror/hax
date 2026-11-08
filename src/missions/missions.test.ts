@@ -18,6 +18,7 @@ const missionTable = [
   ['m4-cupcake', 'missions'],
   ['m5-moon', 'missions'],
   ['m6-socks', 'missions'],
+  ['m7-graduation', 'missions'],
 ] as const;
 
 function configLines(config: StepConfig): Line[] {
