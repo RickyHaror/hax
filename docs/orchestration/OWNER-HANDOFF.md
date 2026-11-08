@@ -29,6 +29,13 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+PAUSED by the founder about 2:10 PM Toronto, 2026-11-08, until 10:00 AM Toronto Monday 2026-11-09.
+Until then: launch no coordinator or worker, create no lane check cron, run nothing. An owner session that
+starts before 10:00 AM Monday reads this, stands down the previous owner as usual, and otherwise stays idle.
+At 10:00 AM Monday it is a weekday: no tests until 5:15 PM, so resume with planning, packets and worker code
+only (workers told not to run tests), E5 layout rerun and VERIFY after 5:15 PM. Engine E5 BUILD run 4 was
+told to checkpoint and stop (see build-logs/E5-checkpoint.md run 4). Content C4 checkpointed at 9fe935f.
+
 Updated about 1:50 PM Toronto, 2026-11-08, owner hax-03. E5 BUILD run 3 checkpointed at engine/e5
 c2ba7b3 (pushed): E5-5 season map, E5-6 Boot Camp and parent panel restyle, clip check, layout check at all
 four sizes with 364 screenshots, check:reading fixed. Chromium e2e 104 pass, 148 fail on real layout findings
