@@ -1,0 +1,27 @@
+.explorer-widget { max-height: min(44vh, 360px); overflow: auto; font-size: 24px; padding: 8px; }
+.explorer-widget button { min-height: 48px; min-width: 48px; }
+.explorer-widget button:focus-visible { outline: 4px solid #fff3a1; outline-offset: 3px; }
+.explorer-widget .speech-line { margin: 6px 0; }
+.choice-options { display: grid; gap: 8px; }
+.choice-options > div { border-radius: 10px; padding: 4px; }
+.choice-options > div > button { display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); text-align: left; }
+.choice-revealed { outline: 2px solid var(--green); box-shadow: 0 0 12px var(--green); }
+.choice-hint { display: flex; align-items: center; gap: 12px; color: var(--green); }
+.word-tiles { display: flex; flex-wrap: wrap; gap: 4px; }
+.passphrase-preview .speech-line > span { font-family: var(--font-code); font-size: 30px; overflow-wrap: anywhere; }
+.passphrase-widget meter { width: 100%; height: 28px; accent-color: var(--green); }
+.file-window { background: var(--bg); border: 2px solid var(--green); border-radius: 12px; }
+.file-title { background: var(--panel); padding: 4px 12px; border-radius: 8px; }
+.file-title .speech-line > span { font-weight: bold; }
+.file-crumbs { display: flex; flex-wrap: wrap; }
+.file-items { display: flex; flex-wrap: wrap; align-items: start; gap: 8px; padding: 8px; min-height: 110px; }
+.file-entry { flex: 0 1 190px; min-width: 120px; text-align: center; }
+.file-icon { display: flex; align-items: center; flex-direction: column; width: calc(100% - 8px); min-height: 104px; touch-action: none; transition: transform 180ms ease-out; }
+.file-icon svg { fill: var(--panel); stroke: var(--green); stroke-width: 3; }
+.file-dragging { position: relative; z-index: 2; pointer-events: none; transition: none; opacity: .8; }
+.file-highlight { outline: 4px solid var(--green); box-shadow: 0 0 14px var(--green); }
+.file-viewer { border: 2px solid var(--muted); border-radius: 8px; max-height: 170px; overflow: auto; padding: 8px; }
+.file-viewer .speech-line > span { white-space: pre-wrap; }
+@media (prefers-reduced-motion: reduce) {
+  .explorer-widget *, .explorer-widget *::before, .explorer-widget *::after { animation: none; transition: none; }
+}

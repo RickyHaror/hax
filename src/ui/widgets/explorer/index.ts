@@ -1,2 +1,11 @@
 import type { WidgetMap } from '../Widget';
-export const explorerWidgets: WidgetMap = {};
+import { FileExplorer } from './FileExplorer';
+import { Choice } from './Choice';
+import { Passphrase } from './Passphrase';
+import './explorer.css';
+
+export const explorerWidgets: WidgetMap = {
+  'file-explorer': FileExplorer,
+  choice: Choice,
+  passphrase: Passphrase,
+};
