@@ -7,7 +7,7 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 ## Current state
 
 - Phase 0 (owner): repo scaffold, workflow files, CI with deploy and smoke, placeholder page.
-- Current owner session: hax-08, rotation id `20261109-000000` (started 12:00 AM Toronto 2026-11-09,
+- Current owner session: hax-47, rotation id `20261109-030000` (started 3:00 AM Toronto 2026-11-09,
   registered in ~/.claude/handoffs/hax-owner-scripts/rotation-state.json). A new owner messages it to stand down.
 
 ## Founder context
@@ -28,6 +28,11 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 - The owner's safety checks blocked editing registrar nameservers directly; the founder does registrar edits.
 
 ## Next action
+
+Final handoff from owner hax-08 (rotation 20261109-000000) to hax-47 (rotation 20261109-030000), about
+3:00 AM Toronto 2026-11-09. Nothing changed: hax-a4 stood down (marker written), the pause stays until
+10:00 AM Monday, no agent ran, no lane check cron was made, no founder messages, voice decision still owed.
+Engine worktree unchanged (6434896 plus the uncommitted catalog worker diff), content at 9fe935f.
 
 Final handoff from owner hax-a4 (rotation 20261108-210000) to hax-08 (rotation 20261109-000000), about
 12:00 AM Toronto 2026-11-09. Nothing changed: the pause stays until 10:00 AM Monday, no agent ran, no lane
