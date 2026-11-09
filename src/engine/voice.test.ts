@@ -2,6 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createVoice, pickVoice, SPEECH_RATE } from './voice';
 import { codenameLines } from './codename';
+import { speechCatalog } from '../ui/speech-catalog';
 
 class TestUtterance {
   volume = 1;
@@ -433,7 +434,7 @@ describe('recorded name parts', () => {
 
   it.each(Object.keys(nameFiles).flatMap((missing) => [
     { missing, local: true }, { missing, local: false },
-  ]))('falls back to the whole line for $missing, local voice: $local', ({ missing, local }) => {
+  ]))('reports missing name clips without synthesis for $missing, local voice: $local', ({ missing, local }) => {
     const { player, clips, synth, utterances } = recordedSetup();
     player.setManifest({ lines: Object.fromEntries(Object.entries(nameFiles)
       .filter(([key]) => key !== missing)), sfx: {} });
@@ -441,9 +442,8 @@ describe('recorded name parts', () => {
     const onEnd = vi.fn(), onUnavailable = vi.fn();
     player.speakParts(nameWhole, codenameLines('Turbo', 'Falcon'), { onEnd, onUnavailable });
     expect(clips).toHaveLength(0);
-    expect(utterances.map((item) => item.text)).toEqual(local ? [nameWhole.text] : []);
-    if (local) utterances[0]!.onend?.();
-    expect(onUnavailable).toHaveBeenCalledTimes(local ? 0 : 1);
+    expect(utterances).toHaveLength(0);
+    expect(onUnavailable).toHaveBeenCalledOnce();
     expect(onEnd).toHaveBeenCalledOnce();
     expect(player.isSpeaking()).toBe(false);
   });
@@ -458,14 +458,16 @@ describe('recorded name parts', () => {
     expect(synth.speak).not.toHaveBeenCalled();
   });
 
-  it.each(['manifest', 'Audio', 'parts'] as const)('uses the whole line without %s', (missing) => {
+  it.each(['manifest', 'Audio', 'parts'] as const)('never synthesizes the name without %s', (missing) => {
     const { deps, utterances } = setup();
     const { Audio, clips } = recordedSetup();
     const player = createVoice({ ...deps, Audio: missing === 'Audio' ? null : Audio });
     player.setManifest(missing === 'manifest' ? null : { lines: nameFiles, sfx: {} });
-    player.speakParts(nameWhole, missing === 'parts' ? [] : codenameLines('Turbo', 'Falcon'));
-    expect(utterances.map((item) => item.text)).toEqual([nameWhole.text]);
+    const onUnavailable = vi.fn();
+    player.speakParts(nameWhole, missing === 'parts' ? [] : codenameLines('Turbo', 'Falcon'), { onUnavailable });
+    expect(utterances).toHaveLength(0);
     expect(clips).toHaveLength(0);
+    expect(onUnavailable).toHaveBeenCalledOnce();
   });
 
   it('stops mid-sequence and ignores stale events without finishing or reporting unavailable', () => {
@@ -504,6 +506,29 @@ describe('recorded name parts', () => {
 });
 
 describe('recorded voice playback', () => {
+  it('reports missing catalog clips without trying an available browser voice', () => {
+    const { player, synth, clips } = recordedSetup();
+    const onUnavailable = vi.fn(), onEnd = vi.fn();
+    player.speak(speechCatalog.boot.toolsReady, { onUnavailable, onEnd });
+    expect(clips).toHaveLength(0);
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onUnavailable).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledOnce();
+    expect(player.isSpeaking()).toBe(false);
+  });
+
+  it('does not synthesize a catalog line after its recorded clip fails', () => {
+    const { player, synth, clips } = recordedSetup();
+    player.setManifest({ lines: { 'bit|Crew tools are ready.': 'boot.mp3' }, sfx: {} });
+    const onUnavailable = vi.fn(), onEnd = vi.fn();
+    player.speak(speechCatalog.boot.toolsReady, { onUnavailable, onEnd });
+    expect(clips[0]!.src).toBe('/audio/lines/boot.mp3');
+    clips[0]!.onerror?.();
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(onUnavailable).toHaveBeenCalledOnce();
+    expect(onEnd).toHaveBeenCalledOnce();
+  });
+
   it('updates clip volume and ends ducking on disable, errors, and rejected playback', async () => {
     const { player, clips, synth } = recordedSetup();
     const change = vi.fn(); player.onSpeakingChange(change);

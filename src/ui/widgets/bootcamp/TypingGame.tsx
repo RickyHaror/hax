@@ -1,3 +1,4 @@
+import { screenLines, speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { TypingGameConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -26,7 +27,7 @@ function usePackets({ config, showMe, onComplete }: WidgetProps<TypingGameConfig
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.key.length !== 1 || model.current.caught >= config.goal) return;
     const currentWord = config.words[model.current.caught % config.words.length] ?? '';
     if (!sameKey(event.key, currentWord[model.current.letters] ?? '')) {
-      setNudge('Good try. Find the next bright letter.'); store.sound.play('tryAgain'); return;
+      setNudge(speechCatalog.bootcamp.typingNudge.text); store.sound.play('tryAgain'); return;
     }
     if (event.key === ' ') event.preventDefault();
     store.sound.play('key'); model.current.letters += 1; setNudge('');
@@ -36,7 +37,7 @@ function usePackets({ config, showMe, onComplete }: WidgetProps<TypingGameConfig
     if (showMe || reduced || state.caught >= config.goal) return;
     const timer = window.setInterval(() => {
       const next = fall(model.current.position, model.current.speed, 0.05);
-      if (next.position === 0) setNudge('Here it comes again. Take your time.');
+      if (next.position === 0) setNudge(speechCatalog.bootcamp.fallingNudge.text);
       model.current = { ...model.current, ...next }; publish();
     }, 50);
     return () => window.clearInterval(timer);
@@ -48,8 +49,8 @@ export function TypingGame(props: WidgetProps<TypingGameConfig>) {
   const done = state.caught >= props.config.goal;
   return <TrainingPanel label="Packet catcher">
     <div class="bc-score">
-    <div aria-live="polite"><SpeechLine line={{ text: `Caught ${state.caught} of ${props.config.goal}` }} /></div>
-    {props.showMe && !done && <div class="bc-next-letter"><SpeechLine line={{ text: `Type ${keyName(word[state.letters] ?? '')}` }} /></div>}
+    <div aria-live="polite"><SpeechLine line={screenLines.caught(state.caught, props.config.goal)} /></div>
+    {props.showMe && !done && <div class="bc-next-letter"><SpeechLine line={screenLines.type(keyName(word[state.letters] ?? ''))} /></div>}
     </div>
     <div class="bc-play-area">{!done && <BigButton aria-label={`Catch ${word}`} class="bc-packet"
       style={{ transform: `translate(-50%, ${state.position * 1.4}px)` }}

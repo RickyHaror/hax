@@ -1,3 +1,4 @@
+import { screenLines, speechCatalog } from '../../speech-catalog';
 import { useEffect, useState } from 'preact/hooks';
 import type { PassphraseConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -27,22 +28,22 @@ export function Passphrase({ config, showMe, onComplete }: WidgetProps<Passphras
     store.sound.play('click');
   }
   const left = config.count - picked.length;
-  const strength = left === 0 ? 'Super strong!' : picked.length ? 'Getting stronger!' : 'Pick your word team.';
+  const strength = left === 0 ? speechCatalog.passphrase.strong.text : picked.length ? speechCatalog.passphrase.stronger.text : speechCatalog.passphrase.pickTeam.text;
   return <section class="explorer-widget passphrase-widget" aria-label="Build a passphrase">
     <div class="word-tiles">{[...new Set(config.words)].map((word) =>
       <BigButton key={word} aria-label={word} aria-pressed={picked.includes(word)}
         onClick={() => toggle(word)}>{word}</BigButton>)}</div>
     <div class="passphrase-preview" aria-live="polite">
-      <SpeechLine line={{ text: picked.length ? picked.join('-') : 'Your words go here.' }} />
+      <SpeechLine line={{ text: picked.length ? picked.join('-') : speechCatalog.passphrase.preview.text }} />
     </div>
     <meter aria-label="Strength" min={0} max={config.count} value={picked.length}
       aria-valuetext={strength} />
     <div class="passphrase-status">
     <SpeechLine line={{ text: strength }} />
     <div aria-live="polite"><SpeechLine line={{ text: left > 0
-      ? `Pick ${left} more ${left === 1 ? 'word' : 'words'}.` : 'Your word team is ready.' }} /></div>
+      ? screenLines.wordsLeft(left).text : speechCatalog.passphrase.ready.text }} /></div>
     </div>
-    {full && <SpeechLine line={{ text: 'Your team is full. Tap a word to swap it.' }} />}
+    {full && <SpeechLine line={speechCatalog.passphrase.full} />}
     <BigButton disabled={left !== 0} onClick={() => { if (left === 0) finish(); }}>Check</BigButton>
   </section>;
 }

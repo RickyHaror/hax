@@ -1,3 +1,4 @@
+import { speechCatalog } from '../speech-catalog';
 import type { ComponentChildren, RefObject } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { AudioLevel } from '../../engine/progress';
@@ -26,7 +27,7 @@ export function AudioControls() {
         onClick={() => store.settings({ [key]: { ...channel, level } })}>
         <span aria-hidden="true">{['▂', '▂▄', '▂▄▆'][index]}</span> {level}
       </BigButton>)}</div>
-      {locked && <SpeechLine line={{ text: 'Music is locked off by a grown-up.' }} />}
+      {locked && <SpeechLine line={speechCatalog.app.musicLocked} />}
     </div>;
   })}</div>;
 }

@@ -1,3 +1,4 @@
+import { keyPromptLine } from '../../speech-catalog';
 export interface KeyCap { key: string; width: number }
 export function keyLayout(): KeyCap[][] {
   const letters = (row: string) => [...row].map((key) => ({ key, width: 1 }));
@@ -11,9 +12,7 @@ export function keyLayout(): KeyCap[][] {
 }
 export function keyName(key: string): string { return key === ' ' ? 'Space' : key.length === 1 ? key.toUpperCase() : key; }
 export function keyPrompt(key: string): string {
-  if (key === ' ') return 'Find the Space bar.';
-  if (/^[0-9]$/.test(key)) return `Find the number ${key}.`;
-  return key.length === 1 ? `Find the letter ${key.toUpperCase()}.` : `Find the ${key} key.`;
+  return keyPromptLine(key).text;
 }
 export function sameKey(left: string, right: string): boolean { return left.toLowerCase() === right.toLowerCase(); }
 export function typingSpeed(speed: number, caught: boolean): number {

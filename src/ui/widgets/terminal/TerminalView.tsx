@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { complete } from '../../../engine/complete';
 import type { VirtualFs } from '../../../engine/fs';
@@ -17,7 +18,7 @@ export interface TerminalViewProps {
   onRun?: (result: RunResult) => void;
 }
 interface DisplayLine { kind: OutLine['kind'] | 'echo' | 'folder'; text: string; prompt?: string }
-const welcome: DisplayLine = { kind: 'out', text: 'Type a command. Press Enter to run it.' };
+const welcome: DisplayLine = { kind: 'out', text: speechCatalog.widgets.typeCommand.text };
 
 function useTerminal(shell: Shell, onRun?: TerminalViewProps['onRun']) {
   const store = useStore();
@@ -111,7 +112,7 @@ export function TerminalView({ shell, chips = [], commands = KNOWN_COMMANDS, sol
   }
   const controls = <>
     {!!solution?.length && <div class="terminal-solution">
-      <SpeechLine line={{ text: 'Show me types a command. Then press Enter.' }} />
+      <SpeechLine line={speechCatalog.widgets.showMe} />
       <button type="button" onClick={() => {
         const command = solution[0]!;
         completion.change(command.endsWith(' ') ? command : `${command} `); input.current?.focus();

@@ -1,3 +1,4 @@
+import { screenLines } from '../speech-catalog';
 import { RANKS, rankFor } from '../../engine/progress';
 import { SpeechLine } from './SpeechLine';
 import './rank-badge.css';
@@ -13,10 +14,10 @@ export function RankBadge({ xp }: { xp: number }) {
       {stripes === RANKS.length && <path d="M28 80h40" />}
     </svg>
     <div class="rank-details"><SpeechLine line={{ text: rank.name }} />
-      <SpeechLine line={{ text: rank.next ? `${xp} / ${rank.next.xp} XP` : `${xp} XP. Top rank!` }} />
+      <SpeechLine line={screenLines.rankScore(xp, rank.next?.xp)} />
       <progress aria-label="XP to next rank" value={rank.next ? xp : rank.xp}
         max={rank.next?.xp ?? rank.xp} />
-      {rank.next && <SpeechLine line={{ text: `Next: ${rank.next.name}` }} />}
+      {rank.next && <SpeechLine line={screenLines.nextRank(rank.next.name)} />}
     </div>
   </div>;
 }

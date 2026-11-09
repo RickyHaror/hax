@@ -1,3 +1,4 @@
+import { speechCatalog } from '../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { TargetedInputEvent } from 'preact';
 import type { AnswerConfig } from '../../engine/types';
@@ -27,7 +28,7 @@ export function Answer({ config, showMe, onComplete, password = false }: WidgetP
     {password ? <PretendSecretInput {...field} onCheck={check} />
       : <label>Answer<input type="text" {...field} /></label>}
     <BigButton type={password ? 'button' : 'submit'} onClick={password ? check : undefined}>Check</BigButton>
-    {wrong && <SpeechLine line={{ text: 'Good try. Look at the clue and try again.' }} />}
+    {wrong && <SpeechLine line={speechCatalog.widgets.answerNudge} />}
   </>;
   return password ? <div class="answer-form">{content}</div>
     : <form class="answer-form" onSubmit={(event) => { event.preventDefault(); check(); }}>{content}</form>;

@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { WebSourceConfig } from '../../../engine/types';
 import { BigButton } from '../../components/BigButton';
@@ -38,7 +39,7 @@ function PretendPage({ page }: { page: WebSourceConfig['page'] }) {
       ? <BigButton key={index} onClick={() => { setPretend(true); store.sound.play('click'); }}>{block.text}</BigButton>
       : block.type === 'heading' ? <h3 key={index}><SpeechLine line={{ text: block.text }} /></h3>
         : <div role="paragraph" key={index}><SpeechLine line={{ text: block.text }} /></div>)}
-    {pretend && <SpeechLine line={{ text: 'This is just a pretend page.' }} />}
+    {pretend && <SpeechLine line={speechCatalog.tools.pretendPage} />}
   </section></ReadingBox>;
 }
 export function WebSource({ step, config, showMe, onComplete }: WidgetProps<WebSourceConfig>) {
@@ -58,7 +59,7 @@ export function WebSource({ step, config, showMe, onComplete }: WidgetProps<WebS
       {viewCode ? <SourcePanel source={config.source} answer={config.answer} reveal={showMe} />
         : <PretendPage page={config.page} />}
     </div>
-    <Answer config={{ kind: 'answer', question: { text: 'What secret did you find?' }, answer: config.answer }}
+    <Answer config={{ kind: 'answer', question: speechCatalog.tools.secretQuestion, answer: config.answer }}
       step={step} showMe={showMe} onComplete={onComplete} />
   </section>;
 }

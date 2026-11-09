@@ -1,3 +1,4 @@
+import { speechCatalog } from '../speech-catalog';
 import { useCallback, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { useStore } from '../store';
 import { DecoderWheel } from '../widgets/tools';
@@ -65,8 +66,8 @@ function DecoderPanel({ close, opener }: { close: () => void; opener: { current:
   const [shift, setShift] = useState(0);
   useDecoderFocus(panel, close, opener);
   return <div class="decoder-overlay" ref={panel}>
-    <div class="decoder-dialog" role="dialog" aria-modal="true" aria-label="Decoder wheel">
-      <h2><SpeechLine line={{ text: 'Decoder wheel' }} /></h2>
+    <div class="decoder-dialog" role="dialog" aria-modal="true" aria-label={speechCatalog.tools.decoder.text}>
+      <h2><SpeechLine line={speechCatalog.tools.decoder} /></h2>
       <BigButton onClick={close}>Close</BigButton>
       <label>Secret message<input type="text" value={message} autoComplete="off"
         onInput={(event) => setMessage(event.currentTarget.value)} /></label>

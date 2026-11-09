@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { setPin } from '../../../engine/progress';
 import { useStore } from '../../store';
@@ -37,7 +38,7 @@ export function PinPad({ changing = false, onOpen }: { changing?: boolean; onOpe
     if (busy || locked || value.length !== 4) return;
     if (setting && first === null) { setFirst(value); setValue(''); setMessage(''); return; }
     if (setting && first !== value) {
-      setFirst(null); setValue(''); setMessage('Those PINs differ. Try both again.'); return;
+      setFirst(null); setValue(''); setMessage(speechCatalog.parent.differentPins.text); return;
     }
     setBusy(true);
     try {
@@ -49,17 +50,17 @@ export function PinPad({ changing = false, onOpen }: { changing?: boolean; onOpe
         if (!active.current) return;
         setTime((store.now?.() ?? new Date()).getTime());
         if (result === 'ok') onOpen();
-        else { setValue(''); setMessage(result === 'wrong' ? 'That PIN did not match. Try again.' : ''); }
+        else { setValue(''); setMessage(result === 'wrong' ? speechCatalog.parent.wrongPin.text : ''); }
       }
-    } catch { if (active.current) setMessage('The PIN could not be checked. Try again.'); }
+    } catch { if (active.current) setMessage(speechCatalog.parent.failedPin.text); }
     finally { if (active.current) setBusy(false); }
   }
-  const title = setting ? first === null ? 'Set a grown-up PIN' : 'Enter the PIN again' : 'Enter your grown-up PIN';
+  const title = setting ? first === null ? speechCatalog.parent.setPin.text : speechCatalog.parent.repeatPin.text : speechCatalog.parent.enterPin.text;
   return <section aria-label={title} class="parent-pin">
     <h2><SpeechLine line={{ text: title }} /></h2>
-    <SpeechLine line={{ text: 'Use four digits.' }} />
+    <SpeechLine line={speechCatalog.parent.fourDigits} />
     <Digits value={value} setValue={setValue} disabled={busy || locked} />
-    <div role="status">{locked ? <SpeechLine line={{ text: 'Please wait 30 seconds. Then try again.' }} />
+    <div role="status">{locked ? <SpeechLine line={speechCatalog.parent.wait} />
       : message && <SpeechLine line={{ text: message }} />}</div>
     <BigButton disabled={busy || locked || value.length !== 4} onClick={() => { void submit(); }}>
       {setting ? first === null ? 'Next' : 'Save PIN' : 'Check PIN'}

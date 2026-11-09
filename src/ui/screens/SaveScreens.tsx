@@ -1,3 +1,4 @@
+import { saveKeySpeech, screenLines, speechCatalog } from '../speech-catalog';
 import { useState } from 'preact/hooks';
 import { rankFor, toSaveCode, xpEarned, XP_PER_MISSION } from '../../engine/progress';
 import type { Mission } from '../../engine/types';
@@ -17,9 +18,9 @@ export function SecretKey() {
   const store = useStore();
   const code = toSaveCode(store.progress.value, store.registry.missions);
   return <section aria-label="Secret decryption key">
-    <SpeechLine line={{ text: 'Your secret decryption key. Copy it into your notebook.' }} />
+    <SpeechLine line={speechCatalog.save.secretKey} />
     <output class="secret-key" style={{ overflowWrap: 'anywhere' }}>{code}</output>
-    <ReadAloudButton line={{ text: code, say: code.split('').join(' ') }} />
+    <ReadAloudButton {...saveKeySpeech(code)} />
   </section>;
 }
 export function Done({ mission }: { mission: Mission }) {
@@ -33,23 +34,23 @@ export function Done({ mission }: { mission: Mission }) {
     {Array.from({ length: 12 }, (_, index) => <i key={index} style={{ '--spark': index }} />)}
     </div>{mission.contract && <ClueToast xp={gained} />}
     <div class="done-scroll" tabIndex={0} aria-label="Mission rewards">
-    <h2 class="done-access" aria-label="ACCESS GRANTED"><SpeechLine line={{ text: 'ACCESS GRANTED' }} /></h2>
-    <div class="done-unlocked"><SpeechLine line={{ text: 'UNLOCKED' }} /></div>
+    <h2 class="done-access" aria-label={speechCatalog.save.accessGranted.text}><SpeechLine line={speechCatalog.save.accessGranted} /></h2>
+    <div class="done-unlocked"><SpeechLine line={speechCatalog.save.unlocked} /></div>
     <div class="done-summary">
     <div class="done-badge"><Art artKey={mission.badge.art} title={mission.badge.name} size={80} /></div><div>
-    <div class="done-saved"><h1>{store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!'}</h1>
-      <ReadAloudButton line={{ text: store.saved.value ? 'Great work, Agent! Mission saved.' : 'Great work, Agent!' }} /></div>
-    {!store.saved.value && <SpeechLine line={{ text: 'Write your secret key in your notebook. This computer could not save.' }} />}
+    <div class="done-saved"><h1>{store.saved.value ? speechCatalog.save.saved.text : speechCatalog.save.greatWork.text}</h1>
+      <ReadAloudButton line={{ text: store.saved.value ? speechCatalog.save.saved.text : speechCatalog.save.greatWork.text }} /></div>
+    {!store.saved.value && <SpeechLine line={speechCatalog.save.notSaved} />}
     <SpeechLine line={{ text: mission.badge.name }} />
     </div></div>
     {mission.contract && <section class="done-flag" aria-label="Captured clue">
       <SpeechLine line={{ text: mission.contract.flag }} /></section>}
-    <div class="done-rewards"><div><SpeechLine line={{ text: `+${gained} XP` }} />
-      {before.name !== after.name && <SpeechLine line={{ text: `Rank up! ${before.name} to ${after.name}` }} />}
+    <div class="done-rewards"><div><SpeechLine line={screenLines.earnedXp(gained)} />
+      {before.name !== after.name && <SpeechLine line={screenLines.rankUp(before.name, after.name)} />}
       <RankBadge xp={xp} /></div><SecretKey /></div>
     <section class="done-cheer" aria-label={`${buddy.name} says`}>
       <Art artKey={buddy.art} title={buddy.name} size={48} />
-      <SpeechLine line={{ text: 'You did it! I am so proud of you.' }} sidekick={buddy.id} />
+      <SpeechLine line={speechCatalog.save.proud} sidekick={buddy.id} />
     </section></div>
     <div class="parent-session-actions"><BigButton onClick={() => store.go({ name: 'map' })}>Next</BigButton>
       <BigButton onClick={() => store.visit({ name: 'idcard' })}>My agent card</BigButton>
@@ -62,10 +63,10 @@ export function Stop() {
     <BigButton onClick={store.back}>Back</BigButton></>;
 }
 const errors = {
-  checksum: 'One letter looks different. Check your notebook again.',
-  'wrong-length': 'Your key looks too short or long. Check your notebook.',
-  'bad-character': 'That mark is not in our keys. Check your notebook.',
-  'unknown-version': 'This key uses a new code. Ask your grown-up.',
+  checksum: speechCatalog.save.checksum.text,
+  'wrong-length': speechCatalog.save.wrongLength.text,
+  'bad-character': speechCatalog.save.badCharacter.text,
+  'unknown-version': speechCatalog.save.unknownVersion.text,
 };
 export function SaveCode() {
   const store = useStore();
@@ -83,7 +84,7 @@ export function SaveCode() {
   </form>{error && <SpeechLine line={{ text: error }} />}</div></TerminalWindow>
     <div class="startup-actions"><BigButton onClick={store.back}>Back</BigButton></div></div>
     <aside class="startup-rail" aria-label="Sidekick rail"><SidekickBubble rail autoRead={false}
-      lines={[{ text: 'Your secret key brings back your agent.' }]} /></aside></div></div>;
+      lines={[speechCatalog.save.restoreHelp]} /></aside></div></div>;
 }
 export function Settings() {
   const store = useStore();

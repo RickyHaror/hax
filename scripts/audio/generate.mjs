@@ -1,5 +1,6 @@
 // Pre-generates every spoken line and sound effect with ElevenLabs, at build time, on the owner's machine.
-// The game never calls ElevenLabs: it plays these files and falls back to the browser voice when one is missing.
+// The game never calls ElevenLabs. Catalog screen speech only plays recordings.
+// Other dynamic output can use a local browser voice when a recording is missing.
 //
 //   node scripts/audio/generate.mjs --dry-run     count lines and characters, no key needed, no calls
 //   node scripts/audio/generate.mjs --max-chars N generate whatever is missing, spending at most N characters
@@ -41,14 +42,18 @@ function readKey() {
 }
 
 async function loadContent() {
-  const server = await createServer({ root: contentRoot, configFile: false, logLevel: 'error', server: { middlewareMode: true }, appType: 'custom' });
+  const server = await createServer({ root: contentRoot, configFile: false, logLevel: 'error',
+    optimizeDeps: { noDiscovery: true, include: [] },
+    server: { middlewareMode: true }, appType: 'custom' });
   try {
     const { missions } = await server.ssrLoadModule('/src/missions/index.ts');
     const { sidekicks } = await server.ssrLoadModule('/src/missions/sidekicks.ts');
     const { playground } = await server.ssrLoadModule('/src/missions/playground.ts');
     const { firstWords, secondWords } = await server.ssrLoadModule('/src/missions/names.ts');
     const { signupRecordings } = await server.ssrLoadModule('/src/engine/codename.ts');
-    return { missions, sidekicks, playground, signup: signupRecordings(firstWords, secondWords) };
+    const { catalogEntries } = await server.ssrLoadModule('/src/ui/speech-catalog.ts');
+    return { missions, sidekicks, playground, signup: signupRecordings(firstWords, secondWords),
+      catalog: catalogEntries() };
   } finally {
     await server.close();
   }
@@ -65,7 +70,7 @@ function linesIn(value, out = []) {
 }
 
 /** Every (role, voice, spoken text) the game can play. Sidekick lines exist in all three sidekick voices. */
-function buildJobs({ missions, sidekicks, playground, signup }) {
+function buildJobs({ missions, sidekicks, playground, signup, catalog }) {
   const jobs = new Map();
   const add = (role, voice, spoken) => {
     const key = `${role}|${spoken}`;
@@ -98,7 +103,24 @@ function buildJobs({ missions, sidekicks, playground, signup }) {
   }
   // Sign up prompt, the "Your name is" prefix and every codename word, in the narrator voice.
   for (const { role, spoken } of signup ?? []) add(role, cast.narrator, spoken);
+  for (const { line } of catalog ?? []) {
+    const spoken = (line.say ?? line.text).trim();
+    if (!spoken) continue;
+    if (!line.speaker || line.speaker === 'sidekick') {
+      for (const id of sidekickIds) add(id, cast.sidekicks[id], spoken);
+    } else add('narrator', cast.narrator, spoken);
+  }
   return [...jobs.values()];
+}
+
+function listCatalog(entries) {
+  let chars = 0;
+  for (const { key, line } of entries) {
+    const spoken = (line.say ?? line.text).trim();
+    chars += spoken.length;
+    console.log(`catalog ${key}: ${spoken.length} characters, ${line.speaker ?? 'sidekick'}: ${spoken}`);
+  }
+  console.log(`catalog: ${entries.length} lines, ${chars} characters`);
 }
 
 const fileFor = (job) =>
@@ -132,10 +154,13 @@ async function main() {
   let failures = 0;
 
   if (!sfxOnly) {
-    const jobs = buildJobs(await loadContent());
+    const content = await loadContent();
+    const jobs = buildJobs(content);
+    if (dryRun) listCatalog(content.catalog);
     const missing = jobs.filter((j) => !existsSync(join(outLines, fileFor(j))));
     const chars = missing.reduce((n, j) => n + j.spoken.length, 0);
     console.log(`lines: ${jobs.length} total, ${missing.length} to generate, about ${chars} characters`);
+    console.log(`overall: ${jobs.length} jobs, ${jobs.reduce((sum, job) => sum + job.spoken.length, 0)} characters`);
     // Credit guard (founder 2026-11-07: be careful with usage). Refuse big runs unless the budget allows it.
     if (!dryRun && chars > maxChars) {
       throw new Error(`refusing: ${chars} characters exceeds --max-chars ${maxChars}. Run --dry-run, check the content is final, then pass a budget.`);

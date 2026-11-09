@@ -1,3 +1,4 @@
+import { screenLines } from '../../speech-catalog';
 import { useRef, useState } from 'preact/hooks';
 import type { PhishSpotConfig } from '../../../engine/types';
 import { ReadAloudButton, SpeechLine } from '../../components/SpeechLine';
@@ -46,8 +47,8 @@ export function PhishSpot({ config, showMe, onComplete }: WidgetProps<PhishSpotC
   return <section class="case-widget case-phish">
     <ReadingBox>
     <div class="case-email" role="region" aria-label="Pretend email" tabIndex={0}>
-      <EmailLine parts={split.fields[0]!} prefix="From: " {...actions} />
-      <EmailLine parts={split.fields[1]!} prefix="Subject: " {...actions} />
+      <EmailLine parts={split.fields[0]!} prefix={screenLines.emailFrom('').text} {...actions} />
+      <EmailLine parts={split.fields[1]!} prefix={screenLines.emailSubject('').text} {...actions} />
       {config.email.body.map((_, index) => <EmailLine key={index} parts={split.fields[index + 2]!} {...actions} />)}
       {config.email.link !== undefined && <div class="case-pretend-link">
         <EmailLine parts={split.fields.at(-1)!} {...actions} />
@@ -64,7 +65,7 @@ export function PhishSpot({ config, showMe, onComplete }: WidgetProps<PhishSpotC
     </div>
     </ReadingBox>
     <div class="case-count" aria-live="polite">
-      <SpeechLine line={{ text: `Found ${found.length} of ${config.needed}` }} />
+      <SpeechLine line={screenLines.found(found.length, config.needed)} />
     </div>
   </section>;
 }

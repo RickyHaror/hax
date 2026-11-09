@@ -18,6 +18,7 @@ export interface VoiceContent {
     eggs: readonly { found: readonly Line[] }[];
   } | null;
   signup?: readonly { role: string; spoken: string }[];
+  catalog?: readonly Line[];
 }
 
 export interface VoiceJob { role: string; voice: string; spoken: string }
@@ -66,6 +67,13 @@ export function buildVoiceJobs(content: VoiceContent, cast: VoiceCast): VoiceJob
     for (const line of linesIn(buddy)) add(buddy.id, voice, (line.say ?? line.text).trim());
   }
   for (const { role, spoken } of content.signup ?? []) add(role, cast.narrator, spoken);
+  for (const line of content.catalog ?? []) {
+    const spoken = (line.say ?? line.text).trim();
+    if (!spoken) continue;
+    if (!line.speaker || line.speaker === 'sidekick') {
+      for (const [id, voice] of buddies) add(id, voice, spoken);
+    } else add('narrator', cast.narrator, spoken);
+  }
   return [...jobs.values()];
 }
 

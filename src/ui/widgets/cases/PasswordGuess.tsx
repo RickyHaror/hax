@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import type { TargetedInputEvent } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { PasswordGuessConfig } from '../../../engine/types';
@@ -51,8 +52,8 @@ export function PasswordGuess({ config, showMe, onComplete }: WidgetProps<Passwo
       <PretendSecretInput {...field} onCheck={check} />
       <BigButton type="button" onClick={check}>Check</BigButton>
       <div aria-live="polite">
-        {wrong && <SpeechLine line={{ text: 'Good try. Look at the profile card for a clue.' }} />}
-        {granted && <SpeechLine line={{ text: 'Access granted' }} />}
+        {wrong && <SpeechLine line={speechCatalog.widgets.passwordNudge} />}
+        {granted && <SpeechLine line={speechCatalog.widgets.accessGranted} />}
       </div>
     </div>
   </div>;

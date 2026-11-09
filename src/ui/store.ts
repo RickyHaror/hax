@@ -1,3 +1,4 @@
+import { speechCatalog } from './speech-catalog';
 import { computed, signal, type Signal } from '@preact/signals';
 import { createContext } from 'preact';
 import { useContext } from 'preact/hooks';
@@ -207,7 +208,7 @@ export function createStore(deps: StoreDeps) {
     restore(code: string) {
       const result = applySaveCode(progress.value, code, deps.registry.missions, now());
       if (result.ok) {
-        save(setCurrent(result.progress, null)); notice.value = 'Your key worked. Welcome back!'; go({ name: 'map' });
+        save(setCurrent(result.progress, null)); notice.value = speechCatalog.save.restored.text; go({ name: 'map' });
       }
       return result;
     },

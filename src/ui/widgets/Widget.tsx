@@ -1,3 +1,4 @@
+import { speechCatalog } from '../speech-catalog';
 import type { ComponentType } from 'preact';
 import { useRef } from 'preact/hooks';
 import type { Step, StepKind, StepConfig } from '../../engine/types';
@@ -27,6 +28,6 @@ export function StepWidget(props: WidgetProps) {
   const Widget = (Object.hasOwn(widgets, props.config.kind)
     ? widgets[props.config.kind] : undefined) as ComponentType<WidgetProps> | undefined;
   if (Widget) return <Widget {...props} />;
-  return <><SpeechLine line={{ text: 'This part is still being built.' }} />
+  return <><SpeechLine line={speechCatalog.widgets.unfinished} />
     <BigButton onClick={() => { if (!completed.current) { completed.current = true; props.onComplete(); } }}>Next</BigButton></>;
 }

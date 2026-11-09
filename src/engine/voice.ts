@@ -1,6 +1,7 @@
 import type { Line } from './types';
 import { clampVolume } from './music';
 import { lineKey, lineRole, type AudioManifest, type VoiceContext } from './audio-manifest';
+import { isCatalogSpeech } from '../ui/speech-catalog';
 
 export interface VoiceDeps {
   synth?: SpeechSynthesis | null;
@@ -175,6 +176,7 @@ function playLines(lines: readonly Line[], playback: {
     const line = lines[index++];
     if (!line) { finish(heard); return; }
     const fallback = () => {
+      if (isCatalogSpeech(line)) { next(); return; }
       if (!deps.synth || !deps.Utterance) { next(); return; }
       selection.get((voice) => {
         if (current()) speakText(deps, voice, line.say ?? line.text, current, next, () => finish(heard), state);

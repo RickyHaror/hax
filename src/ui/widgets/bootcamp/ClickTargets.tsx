@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useRef, useState } from 'preact/hooks';
 import type { ClickTargetsConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -34,6 +35,6 @@ export function ClickTargets({ config, showMe, onComplete }: WidgetProps<ClickTa
       <Art artKey={target.art} title={target.label} />
       <span>{target.label} {hit.includes(target.id) && <span aria-hidden="true">✓</span>}</span>
     </BigButton>)}</div>
-    {pulse && <SpeechLine line={{ text: 'Click two times, fast!' }} />}
+    {pulse && <SpeechLine line={speechCatalog.bootcamp.doubleClick} />}
   </TrainingPanel>;
 }

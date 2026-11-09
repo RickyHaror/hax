@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useRef, useState } from 'preact/hooks';
 import type { FileExplorerConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -25,7 +26,7 @@ export function useExplorer({ config, showMe, onComplete }: WidgetProps<FileExpl
     const node = findNode(currentTree.current, path);
     if (!node) return;
     if (node.type === 'file' && node.locked) {
-      setMessage('This file is locked. Try another file.');
+      setMessage(speechCatalog.explorer.locked.text);
       store.sound.play('tryAgain'); return;
     }
     if (node.type === 'dir') navigate(path);
@@ -35,7 +36,7 @@ export function useExplorer({ config, showMe, onComplete }: WidgetProps<FileExpl
   function select(path: string) {
     setSelected(path);
     setMessage(findNode(currentTree.current, path)?.type === 'dir'
-      ? 'Click two times to open it.' : 'Open this file, or choose its folder.');
+      ? speechCatalog.explorer.openFolder.text : speechCatalog.explorer.openFile.text);
     store.sound.play('click');
   }
   function move(file: string, toDir: string) {
@@ -44,11 +45,11 @@ export function useExplorer({ config, showMe, onComplete }: WidgetProps<FileExpl
       !done.current.has(i) && item.file === file && item.toDir === toDir);
     const next = index < 0 ? undefined : applyMove(currentTree.current, file, toDir);
     if (!next) {
-      setMessage('Good try. Let us find this file a different home.');
+      setMessage(speechCatalog.explorer.wrongHome.text);
       store.sound.play('tryAgain'); return;
     }
     currentTree.current = next; setTree(next); done.current.add(index);
-    setSelected(null); setViewer(null); setMessage('A snug home! Keep going.');
+    setSelected(null); setViewer(null); setMessage(speechCatalog.explorer.moved.text);
     if (done.current.size === config.task.moves.length) finish();
     else store.sound.play('success');
   }

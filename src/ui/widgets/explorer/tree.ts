@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import type { FsDir, FsNode } from '../../../engine/types';
 
 export function joinPath(folder: string, name: string): string {
@@ -32,11 +33,11 @@ export function parentPath(path: string): string {
 }
 
 export function folderName(path: string): string {
-  return path === '/' ? 'This computer' : path.slice(path.lastIndexOf('/') + 1);
+  return path === '/' ? speechCatalog.explorer.thisComputer.text : path.slice(path.lastIndexOf('/') + 1);
 }
 
 export function breadcrumbs(path: string) {
-  const result = [{ path: '/', name: 'This computer' }];
+  const result = [{ path: '/', name: speechCatalog.explorer.thisComputer.text }];
   for (const name of path.split('/').filter(Boolean)) {
     result.push({ path: joinPath(result[result.length - 1]!.path, name), name });
   }

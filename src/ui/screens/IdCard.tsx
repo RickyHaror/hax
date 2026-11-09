@@ -1,5 +1,6 @@
+import { agentNameSpeech, speechCatalog } from '../speech-catalog';
 import { badgesEarned, xpEarned } from '../../engine/progress';
-import { hackerName, useStore } from '../store';
+import { useStore } from '../store';
 import { Art } from '../components/Art';
 import { AVATARS, Avatar } from '../components/Avatar';
 import { BigButton } from '../components/BigButton';
@@ -12,12 +13,12 @@ function EarnedBadges() {
   const store = useStore();
   const badges = badgesEarned(store.progress.value, store.registry.missions);
   return <section class="idcard-badges" aria-label="Earned badges">
-    <h2><SpeechLine line={{ text: 'Your badges' }} /></h2>
+    <h2><SpeechLine line={speechCatalog.idCard.badges} /></h2>
     <ReadingBox label="Badge collection">
       {badges.length ? <ul>{badges.map((badge) => <li key={badge.id}>
         <Art artKey={badge.art} title={badge.name} size={64} />
         <SpeechLine line={{ text: badge.name }} />
-      </li>)}</ul> : <SpeechLine line={{ text: 'Finish a mission to earn your first badge.' }} />}
+      </li>)}</ul> : <SpeechLine line={speechCatalog.idCard.firstBadge} />}
     </ReadingBox>
   </section>;
 }
@@ -25,13 +26,13 @@ function EarnedBadges() {
 function PhotoPicker() {
   const store = useStore();
   const chosen = store.progress.value.avatar;
-  const word = chosen === null ? 'Pick your photo' : AVATARS[chosen]!.word;
+  const word = chosen === null ? speechCatalog.idCard.pickPhoto.text : AVATARS[chosen]!.word;
   return <section class="idcard-photos" aria-label="Agent photos">
     <div class="idcard-photo" role="group" aria-label="Your photo">
       <Avatar index={chosen} /><SpeechLine line={{ text: word }} />
     </div>
-    <h2><SpeechLine line={{ text: 'Choose a photo' }} /></h2>
-    <div class="avatar-picker" role="group" aria-label="Choose a photo">
+    <h2><SpeechLine line={speechCatalog.idCard.photo} /></h2>
+    <div class="avatar-picker" role="group" aria-label={speechCatalog.idCard.photo.text}>
       {AVATARS.map((avatar, index) => <div class="avatar-tile" key={avatar.word}>
         <BigButton aria-label={avatar.word} aria-pressed={chosen === index}
           onClick={() => store.avatar(index)}><Avatar index={index} /></BigButton>
@@ -46,11 +47,11 @@ function CommandsLearned() {
   const commands = [...new Set(store.registry.missions
     .filter((mission) => Object.hasOwn(store.progress.value.completed, mission.id))
     .flatMap((mission) => mission.teaches ?? []))];
-  return <section class="idcard-commands" aria-label="Commands learned">
-    <h2><SpeechLine line={{ text: 'Commands learned' }} /></h2>
+  return <section class="idcard-commands" aria-label={speechCatalog.idCard.commands.text}>
+    <h2><SpeechLine line={speechCatalog.idCard.commands} /></h2>
     {commands.length ? <ul>{commands.map((command) => <li key={command}>
       <SpeechLine line={{ text: command }} /></li>)}</ul>
-      : <SpeechLine line={{ text: 'Learn commands as you play.' }} />}
+      : <SpeechLine line={speechCatalog.idCard.learnCommands} />}
   </section>;
 }
 
@@ -59,10 +60,11 @@ export function IdCard() {
   const progress = store.progress.value;
   const buddy = store.registry.sidekicks[progress.sidekick ?? 0] ?? store.registry.sidekicks[0]!;
   return <div class="idcard-screen">
-    <h1 aria-label="Agent ID card"><SpeechLine line={{ text: 'Agent ID card' }} /></h1>
+    <h1 aria-label={speechCatalog.idCard.title.text}><SpeechLine line={speechCatalog.idCard.title} /></h1>
     <div class="idcard-body">
       <div class="idcard-details">
-        <SpeechLine line={{ text: hackerName(store.progress, store.registry) }} />
+        <SpeechLine {...agentNameSpeech(store.registry.firstWords[progress.firstWord ?? 0] ?? store.registry.firstWords[0]!,
+          store.registry.secondWords[progress.secondWord ?? 0] ?? store.registry.secondWords[0]!)} />
         <RankBadge xp={xpEarned(progress, store.registry.missions)} />
         <section class="idcard-sidekick" aria-label="Your sidekick">
           <span class="profile-signal"><svg width="40" height="40" viewBox="0 0 24 24"

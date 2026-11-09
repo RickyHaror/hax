@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { DragDropConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -18,7 +19,7 @@ function usePlacements({ config, showMe, onComplete }: WidgetProps<DragDropConfi
     const item = config.items.find((item) => item.id === id);
     select('');
     if (!item || item.goesTo !== zone) {
-      setNudge('Good try. Let us find its home.'); store.sound.play('tryAgain'); return;
+      setNudge(speechCatalog.bootcamp.dragNudge.text); store.sound.play('tryAgain'); return;
     }
     placed.current.add(id); setIds([...placed.current]); setNudge(''); store.sound.play('success');
     if (placed.current.size === config.items.length) finish();

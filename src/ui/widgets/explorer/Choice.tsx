@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useState } from 'preact/hooks';
 import type { ChoiceConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -27,7 +28,7 @@ export function Choice({ config, showMe, onComplete }: WidgetProps<ChoiceConfig>
           {option.label}
         </BigButton>
         {revealed && <div class="choice-hint"><span aria-hidden="true">✓</span>
-          <SpeechLine line={{ text: 'This one!' }} /></div>}
+          <SpeechLine line={speechCatalog.widgets.thisOne} /></div>}
       </div>;
     })}</div>
     <div aria-live="polite">{feedback && <SpeechLine line={feedback} />}</div>

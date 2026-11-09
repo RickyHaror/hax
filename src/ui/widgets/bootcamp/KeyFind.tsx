@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { KeyFindConfig } from '../../../engine/types';
 import type { WidgetProps } from '../Widget';
@@ -20,7 +21,7 @@ function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>)
     setFlash(key); window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setFlash(''), 450);
     if (!sameKey(key, target)) {
-      setNudge('Good try. Look for the glowing key.'); store.sound.play('tryAgain'); return;
+      setNudge(speechCatalog.bootcamp.keyNudge.text); store.sound.play('tryAgain'); return;
     }
     store.sound.play('key'); setNudge(''); index.current += 1; setNext(index.current);
     if (index.current === config.keys.length) { store.sound.play('success'); finish(); }
@@ -41,7 +42,7 @@ function useKeyQuest({ config, showMe, onComplete }: WidgetProps<KeyFindConfig>)
 export function KeyFind(props: WidgetProps<KeyFindConfig>) {
   const { target, flash, nudge, press } = useKeyQuest(props);
   return <TrainingPanel label="Key practice">
-    <SpeechLine line={{ text: target === undefined ? 'You found every key!' : keyPrompt(target) }} />
+    <SpeechLine line={{ text: target === undefined ? speechCatalog.bootcamp.keysDone.text : keyPrompt(target) }} />
     <ReadingBox><div class={`bc-keyboard ${props.showMe ? 'bc-key-help' : ''}`} aria-label="Practice keyboard">{keyLayout().map((row, index) => <div class="bc-key-row" key={index}>
       {row.map((cap, position) => <BigButton key={position} aria-label={keyName(cap.key)} tabIndex={props.showMe ? 0 : -1}
         class={`${target !== undefined && sameKey(cap.key, target) ? 'bc-key-target' : ''} ${sameKey(cap.key, flash) ? 'bc-key-flash' : ''}`}

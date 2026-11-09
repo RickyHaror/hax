@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useRef, useState } from 'preact/hooks';
 import type { LogReadConfig } from '../../../engine/types';
 import { BigButton } from '../../components/BigButton';
@@ -31,8 +32,8 @@ export function LogRead({ config, showMe, onComplete }: WidgetProps<LogReadConfi
     <div class="case-options">{config.options.map((option) => <div key={option.id}>
       <BigButton class={showMe && option.id === config.correct ? 'case-glow' : undefined}
         onClick={() => choose(option.id)}>{option.label}</BigButton>
-      {showMe && option.id === config.correct && <SpeechLine line={{ text: 'This one!' }} />}
+      {showMe && option.id === config.correct && <SpeechLine line={speechCatalog.widgets.thisOne} />}
     </div>)}</div>
-    <div aria-live="polite">{wrong && <SpeechLine line={{ text: 'Good try. Read the log for a clue.' }} />}</div>
+    <div aria-live="polite">{wrong && <SpeechLine line={speechCatalog.widgets.logNudge} />}</div>
   </section>;
 }

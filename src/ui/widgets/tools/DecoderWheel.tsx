@@ -1,3 +1,4 @@
+import { screenLines, speechCatalog } from '../../speech-catalog';
 import type { ComponentChildren, TargetedKeyboardEvent, TargetedPointerEvent } from 'preact';
 import { useRef } from 'preact/hooks';
 import { ALPHABET, caesarDecode, normalizeShift } from '../../../engine/cipher';
@@ -79,7 +80,7 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage,
   }
   return <section class="decoder-wheel">
     <div class="wheel-layout">
-      <div class="wheel-space"><div class="wheel-control" role="slider" tabIndex={0} aria-label="Decoder wheel"
+      <div class="wheel-space"><div class="wheel-control" role="slider" tabIndex={0} aria-label={speechCatalog.tools.decoder.text}
         aria-valuemin={0} aria-valuemax={25} aria-valuenow={current} aria-valuetext={`Shift: ${current}`}
         onKeyDown={keyDown} {...drag}>
         <WheelFace current={current} />
@@ -98,7 +99,7 @@ export function DecoderWheel({ message, shift, onShift, children, secretMessage,
           <BigButton onClick={() => turn(-1)}>Turn left</BigButton>
           <BigButton onClick={() => turn(1)}>Turn right</BigButton>
         </div>
-        <div aria-live="polite"><SpeechLine line={{ text: `Shift: ${current}` }} /></div>
+        <div aria-live="polite"><SpeechLine line={screenLines.shift(current)} /></div>
         {footer}
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { createContext } from 'preact';
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { complete } from '../../../engine/complete';
@@ -16,7 +17,7 @@ export interface HackRun { session: HackSession; mission: Mission; lines: Displa
 export const HackContext = createContext<HackRun | null>(null);
 export function createHackRun(mission: Mission): HackRun {
   return { mission, session: new HackSession(mission),
-    lines: [{ kind: 'out', text: 'Type a command. Press Enter to run it.' }] };
+    lines: [{ kind: 'out', text: speechCatalog.widgets.typeCommand.text }] };
 }
 
 function promptFor(session: HackSession) {
@@ -85,7 +86,7 @@ function HackStep(props: WidgetProps<HackConfig> & { run: HackRun }) {
   useEffect(() => { if (props.showMe) type(config.showMe); }, [props.showMe, config.showMe]);
   const controls = <>
     {props.showMe && <div class="terminal-solution">
-      <SpeechLine line={{ text: 'Show me types a command. Then press Enter.' }} />
+      <SpeechLine line={speechCatalog.widgets.showMe} />
       <button type="button" onClick={() => type(config.showMe)}>Show me</button>
     </div>}
     <CommandBar prompt={terminal.pending?.label ?? promptFor(run.session)} secret={terminal.pending?.secret}

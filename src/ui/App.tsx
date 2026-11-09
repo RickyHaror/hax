@@ -1,3 +1,4 @@
+import { speechCatalog } from './speech-catalog';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { BigButton } from './components/BigButton';
 import { StoreContext, type AppStore, useStore } from './store';
@@ -44,7 +45,7 @@ function Shell() {
   return <div class={`app-shell${screen.name === 'player' ? ' player-shell' : ''}${startup ? ' startup-shell' : ''}`}>
     {screen.name !== 'settings' && screen.name !== 'player' && !startup && <Toolbar />}<main class="panel" tabIndex={-1} ref={panel}>
     <div role="status" aria-live="polite">{store.updatePending.value &&
-      <SpeechLine line={{ text: 'New missions arrived!' }} />}</div>
+      <SpeechLine line={speechCatalog.app.newMissions} />}</div>
     <ScreenView key={screen.name} />
     {startup && <div class="startup-tools"><Toolbar compact /></div>}
   </main></div>;

@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useState } from 'preact/hooks';
 import type { DecoderConfig } from '../../../engine/types';
 import { normalizeShift } from '../../../engine/cipher';
@@ -13,7 +14,7 @@ export function Decoder({ step, config, showMe, onComplete }: WidgetProps<Decode
   useEffect(() => { if (showMe) setShift(normalizeShift(config.shift)); }, [showMe, config.shift, revealCount]);
   return <section class="mission-tool decoder-tool">
     <DecoderWheel message={config.message} shift={shift} onShift={setShift}
-      footer={<Answer config={{ kind: 'answer', question: { text: 'What does the note say?' }, answer: config.answer }}
+      footer={<Answer config={{ kind: 'answer', question: speechCatalog.tools.noteQuestion, answer: config.answer }}
         step={step} showMe={showMe} onComplete={onComplete} />}
       secretMessage={<div class="secret-message" aria-label="Secret message"><SpeechLine line={{ text: config.message }} /></div>}>
       {config.clue && <SpeechLine line={config.clue} />}

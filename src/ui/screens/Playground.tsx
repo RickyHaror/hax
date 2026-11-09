@@ -1,3 +1,4 @@
+import { screenLines } from '../speech-catalog';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { PlaygroundShell } from '../../engine/playground';
 import type { Playground as PlaygroundData, PlaygroundEgg } from '../../engine/types';
@@ -34,7 +35,7 @@ function FreeTerminal({ data }: { data: PlaygroundData }) {
   }
   return <div class="playground-screen">
     <header class="playground-heading"><h1>Agent Playground</h1>
-      <SpeechLine line={{ text: `Eggs found: ${progress.found.length} of ${data.eggs.length}` }} />
+      <SpeechLine line={screenLines.eggs(progress.found.length, data.eggs.length)} />
     </header>
     <div class="playground-body">
       <ReadingBox label="Playground stories">

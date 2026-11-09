@@ -1,3 +1,4 @@
+import { speechCatalog } from '../../speech-catalog';
 import { useEffect, useState } from 'preact/hooks';
 import { useStore } from '../../store';
 import { SpeechLine } from '../../components/SpeechLine';
@@ -14,7 +15,7 @@ export function SessionNudge() {
   }, [remaining]);
   if (remaining !== 0) return null;
   return <><SpeechLine line={{ text: store.saved.value
-    ? 'Great time to stop. Your mission is saved.'
-    : 'Great time to stop. Write your secret key first.' }} />
+    ? speechCatalog.parent.stopSaved.text
+    : speechCatalog.parent.stopUnsaved.text }} />
     <BigButton onClick={() => store.visit({ name: 'stop' })}>Stop for today</BigButton></>;
 }

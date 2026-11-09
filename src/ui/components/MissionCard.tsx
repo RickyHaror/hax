@@ -1,9 +1,10 @@
+import { speechCatalog } from '../speech-catalog';
 import type { Mission } from '../../engine/types';
 import { BigButton } from './BigButton';
 import { SpeechLine } from './SpeechLine';
 import './mission-card.css';
 
-export const contractEthics = { text: 'Only hack what you own or have permission to hack.' };
+export const contractEthics = speechCatalog.widgets.ethics;
 
 export function MissionCard({ mission, start }: { mission: Mission; start: () => void }) {
   const contract = mission.contract!;
