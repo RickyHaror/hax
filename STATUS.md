@@ -11,8 +11,8 @@
 | Engine | E3 finish the experience | engine/e3 | integrated 569e6df, live | 2026-11-08 6:45 AM |
 | Engine | E4 sign-up narration and speech fixes | engine/e4 | integrated cd676a5, live | 2026-11-08 8:15 AM |
 | Owner | Codename and sign up prompt clips (130, 744 chars) | main | done 7e19cdf | 2026-11-08 8:00 AM |
-| Engine | E5 terminal first rebuild | engine/e5 | paused by founder; BUILD 5 checkpointing | 2026-11-09 10:08 AM |
-| Content | C4 Season 1 missions 1 to 6 | content/c4 | BUILD 2 checkpointed 9fe935f | 2026-11-08 12:25 PM |
+| Engine | E5 terminal first rebuild | engine/e5 | project paused; BUILD 5 checkpointed 7c4cb1c, E5-F5 uncommitted | 2026-11-09 6:10 PM |
+| Content | C4 Season 1 missions 1 to 6 | content/c4 | project paused; BUILD 2 checkpointed 9fe935f | 2026-11-09 6:10 PM |
 
 ## Provider state
 

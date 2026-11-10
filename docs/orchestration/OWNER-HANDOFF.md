@@ -29,6 +29,30 @@ The owner updates this file at every terminal point (batch launched, checkpoint,
 
 ## Next action
 
+PROJECT PAUSED INDEFINITELY by the founder about 6:10 PM Toronto 2026-11-09 ("pausing this project all
+together"). Owner hax-e9 (rotation 20261109-180001) wrote this; hax-8e stood down (marker written). Nothing
+runs: no coordinator, worker, reviewer or cron. Do nothing until the founder says resume.
+
+Where everything stands:
+- main 42b7158 plus this entry; live site hax.huxton.ca serves E4 (main cd676a5 content). E5 and C4 are not live.
+- Engine: D:/Dev/hax-engine on engine/e5 at 7c4cb1c (pushed). Uncommitted, unreviewed worker E5-F5 edits
+  (8 files, Player.tsx spoken lines into the speech catalog) sit in that worktree; a copy is saved at
+  ~/.claude/handoffs/hax-engine-e5/E5-F5-uncommitted-20261109.patch. Checkpoint build-logs/E5-checkpoint.md
+  ("BUILD run 5"). Packets ready: E5-P1 unit proof, E5-F6 tap target and clip order checks, E5-P2 layout, E5-VERIFY.
+- Content: D:/Dev/hax-content on content/c4 at 9fe935f (pushed, clean). Checkpoint build-logs/C4-checkpoint.md.
+  C4 integrates only after E5 is on main.
+- Founder decisions owed: (1) voice recording cost: preliminary dry run 159,487 characters for all three
+  sidekick voices against a 40k monthly ElevenLabs plan (options: fewer voices, spread over months, bigger
+  plan); get a final dry run total first. (2) Owner decision: about 70 terminal output lines (shell.ts,
+  hack*.ts) still use the browser voice: record them or rule them dynamic output.
+- Rotation scheduled tasks 'Hax owner rotation' and 'Hax owner close' were still enabled at pause time; the
+  founder disables them (see ~/.claude/handoffs/hax-owner-scripts/README-rotation.md).
+
+On resume: re-enable the rotation tasks if wanted, create the :46 lane check cron, check the worktrees
+still match the above (reapply the patch if the E5-F5 edits were lost), review and commit E5-F5, then outside
+weekday quiet hours run the generate.mjs dry run total for the founder, E5-P1, E5-F6, E5-P2, E5 VERIFY,
+integrate E5, then C4 VERIFY and integrate. Release bar from docs/DECISIONS.md applies to every VERIFY.
+
 Final handoff from owner hax-8e (rotation 20261109-150001) to hax-e9 (rotation 20261109-180001), about
 6:00 PM Toronto 2026-11-09. Nothing changed: hax-45 stood down (marker written), the founder pause stays
 in force (no end time), no agent ran, no lane check cron was made, no founder messages. Engine worktree
