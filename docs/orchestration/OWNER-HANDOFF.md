@@ -45,8 +45,8 @@ Where everything stands:
   sidekick voices against a 40k monthly ElevenLabs plan (options: fewer voices, spread over months, bigger
   plan); get a final dry run total first. (2) Owner decision: about 70 terminal output lines (shell.ts,
   hack*.ts) still use the browser voice: record them or rule them dynamic output.
-- Rotation scheduled tasks 'Hax owner rotation' and 'Hax owner close' were still enabled at pause time; the
-  founder disables them (see ~/.claude/handoffs/hax-owner-scripts/README-rotation.md).
+- Rotation scheduled tasks 'Hax owner rotation' and 'Hax owner close' were disabled at pause time (about 6:15 PM);
+  re-enable them with Enable-ScheduledTask (see ~/.claude/handoffs/hax-owner-scripts/README-rotation.md).
 
 On resume: re-enable the rotation tasks if wanted, create the :46 lane check cron, check the worktrees
 still match the above (reapply the patch if the E5-F5 edits were lost), review and commit E5-F5, then outside
